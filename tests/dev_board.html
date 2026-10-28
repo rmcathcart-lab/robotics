@@ -1,0 +1,17 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../assets/rl.css"><link rel="stylesheet" href="../assets/app.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+</head><body><div id="x" style="max-width:1100px;margin:20px auto"></div>
+<script>window.RL={esc:function(s){return String(s)}};</script>
+<script src="../js/kit/board.js"></script>
+<script>
+var parts={
+ v5:{type:'wire',from:'5V',to:'L+2',color:'red',via:[[10,230],[6,52],[200,40],[392,48]],name:'Red wire'},
+ gnd:{type:'wire',from:'GNDd',to:'L-3',color:'black',name:'Black wire'},
+ r1:{type:'res',from:'e5',to:'f5',ohms:220,name:'220 Ω'},
+ l1:{type:'led',a:'j5',k:'R-5',color:'red',label:'RED'},
+ w1:{type:'wire',from:'D12',to:'a5',color:'yellow'},
+ b1:{type:'button',at:'e23'},
+ br1:{type:'wire',from:'L+29',to:'R+29',color:'red',via:[[400,560],[690,560]]}
+};
+var B=RL.Board.render({parts:parts}); document.getElementById('x').appendChild(B.svg); B.setLit('l1',1);
+</script></body></html>
