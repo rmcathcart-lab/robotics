@@ -33,7 +33,7 @@
     var tabs = el('nav', 'dash-tabs');
     var toGrade = D ? D.subs.filter(function (s) { return s.status === 'submitted'; }).length : 0;
     var online = D ? Object.keys(D.live || {}).filter(function (n) { return Date.now() - D.live[n].at < 75000; }).length : 0;
-    [['live', 'Live' + (online ? '<span class="cnt c">' + online + '</span>' : '')], ['subs', 'Submissions' + (toGrade ? '<span class="cnt">' + toGrade + '</span>' : '')], ['progress', 'Progress'], ['calendar', 'Calendar'], ['roster', 'Roster']].forEach(function (t) {
+    [['live', 'Live' + (online ? '<span class="cnt c">' + online + '</span>' : '')], ['subs', 'Submissions' + (toGrade ? '<span class="cnt">' + toGrade + '</span>' : '')], ['progress', 'Progress'], ['calendar', 'Calendar'], ['equipment', 'Equipment'], ['roster', 'Roster']].forEach(function (t) {
       var x = el('button', TAB === t[0] ? 'on' : '', t[1]); x.type = 'button'; x.addEventListener('click', function () { TAB = t[0]; ls('tab', TAB); render(); }); tabs.appendChild(x);
     });
     topbar.appendChild(tabs);
@@ -78,8 +78,8 @@
   function render() {
     timers.splice(0).forEach(clearInterval);
     drawTop(); view.innerHTML = '';
-    if (!CUR && TAB !== 'roster') TAB = 'roster';
-    ({ live: liveTab, subs: subsTab, progress: progTab, calendar: calTab, roster: rosterTab })[TAB]();
+    if (!CUR && TAB !== 'roster' && TAB !== 'equipment') TAB = 'roster';
+    ({ live: liveTab, subs: subsTab, progress: progTab, calendar: calTab, equipment: equipTab, roster: rosterTab })[TAB]();
   }
 
   /* ---------- Live ---------- */
@@ -209,7 +209,7 @@
       side.appendChild(rf);
       // notes from the guide + checkpoints
       var notes = Object.keys(s.answers || {}).filter(function (k) { return /^n-/.test(k) && String(s.answers[k]).trim(); });
-      if (notes.length) { var nb = el('div', 'g-refl'); nb.appendChild(el('h3', '', 'Notes from the guide')); var lab = { 'n-res': 'Swapping resistors', 'n-design': 'Housing design decision', 'n-improve': 'Improvement challenge' }; notes.forEach(function (k) { nb.appendChild(el('div', '', '<div class="q">' + esc(lab[k] || k) + '</div><div class="a">' + esc(s.answers[k]) + '</div>')); }); side.appendChild(nb); }
+      if (notes.length) { var nb = el('div', 'g-refl'); nb.appendChild(el('h3', '', 'Notes from the guide')); var lab = { 'n-res': 'Swapping resistors', 'n-design': 'Housing design decision', 'n-improve': 'Improvement challenge' }; notes.forEach(function (k) { nb.appendChild(el('div', '', '<div class="q">' + esc(lab[k] || (k.replace(/^n-/, '').replace(/[-_]/g, ' ').replace(/^./, function (c) { return c.toUpperCase(); }))) + '</div><div class="a">' + esc(s.answers[k]) + '</div>')); }); side.appendChild(nb); }
       var ck = s.checks || {}, qs = Object.keys(ck).filter(function (k) { return /^q-/.test(k); }), first = qs.filter(function (k) { return ck[k] && ck[k].first; }).length, done = qs.filter(function (k) { return ck[k] && ck[k].ok; }).length;
       var sims = Object.keys(ck).filter(function (k) { return /-pass$/.test(k); }).map(function (k) { return '<span class="tag ' + (ck[k] ? 'go' : 'sig') + '">' + esc(k.replace(/^sim-|-pass$/g, '')) + ' ' + (ck[k] ? 'PASS' : 'RETRY') + '</span>'; }).join('');
       side.appendChild(el('div', '', '<h3>Checkpoints</h3><p class="small" style="margin:4px 0 6px">' + done + ' answered correctly · ' + first + ' right on the first try · ' + s.done.length + ' / ' + (g.steps ? g.steps.length : '?') + ' steps done</p><div class="chips">' + sims + '</div>'));
@@ -357,6 +357,91 @@
     render();
     clearTimeout(saveT);
     saveT = setTimeout(function () { post({ kind: 'setcal', 'class': CUR, cal: CALW }).then(function (r) { if (!r || !r.ok) toast('Calendar not saved: ' + ((r && r.error) || 'error'), true); }, function () { toast('Calendar not saved — check your connection.', true); }); }, 700);
+  }
+
+  /* ---------- Equipment: extra materials per mission + an order email to Carla ---------- */
+  var ORDER_TO = 'cmutch@rockyview.ab.ca';
+  function eqState() { var st = null; try { st = JSON.parse(ls('equip') || 'null'); } catch (e) {} st = st || {}; st.pick = st.pick || {}; st.qty = st.qty || {}; st.custom = st.custom || []; return st; }
+  function eqSave(st) { ls('equip', JSON.stringify(st)); }
+  function equipTab() {
+    var st = eqState(), totalStudents = CLASSES.reduce(function (a, c) { return a + (c.count || 0); }, 0);
+    if (!st.groupSize) st.groupSize = 2;
+    var groups = st.groups || Math.max(1, Math.ceil(totalStudents / st.groupSize)), sections = st.sections || Math.max(1, CLASSES.length);
+    view.appendChild(el('div', 'dhead', '<div><div class="label">Arduino unit</div><h1>Equipment</h1></div>'));
+    view.appendChild(el('p', 'muted', 'What each mission needs besides the ELEGOO kits, in calendar order. Tick what you want, check the quantities, and email the list to Carla. Links open an Amazon.ca search so she can pick the brand and price.'));
+    var set = el('div', 'eq-set panel');
+    set.innerHTML = '<label>Groups <input type="number" min="1" max="60" class="eq-groups" value="' + groups + '"></label>' +
+      '<label>Class sections <input type="number" min="1" max="8" class="eq-sections" value="' + sections + '"></label>' +
+      '<span class="small muted">' + totalStudents + ' student' + (totalStudents === 1 ? '' : 's') + ' on your rosters' + (totalStudents ? ' · about ' + Math.ceil(totalStudents / 2) + ' pairs' : '') + '</span>';
+    view.appendChild(set);
+    set.querySelector('.eq-groups').addEventListener('change', function (e) { st.groups = Math.max(1, Number(e.target.value) || 1); eqSave(st); render(); });
+    set.querySelector('.eq-sections').addEventListener('change', function (e) { st.sections = Math.max(1, Number(e.target.value) || 1); eqSave(st); render(); });
+    var L = D && D.cal ? C.layout(D.cal, NS) : null, today = C.today();
+    var order = RL.missionList().slice();
+    if (L) order.sort(function (a, b) { var x = L.span[a.id], y = L.span[b.id]; return (x ? x.start : '9') < (y ? y.start : '9') ? -1 : 1; });
+    function qtyOf(m, it, i) { var k = m.id + ':' + i; if (st.qty[k] != null) return st.qty[k]; return it.per === 'group' ? it.qty * groups : it.qty * sections; }
+    function picked(m, it, i) { var k = m.id + ':' + i; if (st.pick[k] != null) return st.pick[k]; var sp = L && L.span[m.id]; return !!(sp && sp.end >= today && C.classDaysBetween(D.cal, NS, today, sp.start) <= 15); }
+    var list = el('div', 'eq-list'); view.appendChild(list);
+    order.forEach(function (m) {
+      var items = (RL.ORDERS || {})[m.id] || [], sp = L && L.span[m.id], card = el('div', 'eq-card panel');
+      card.style.setProperty('--u', RL.unitColour(m.unit));
+      card.innerHTML = '<div class="eq-h"><div><div class="label">Mission ' + esc(m.num) + (sp ? ' · ' + esc(C.nice(sp.start, { month: 'short', day: 'numeric' })) + ' – ' + esc(C.nice(sp.end)) : '') + '</div><h3>' + esc(m.title) + '</h3></div>' +
+        (sp && sp.end < today ? '<span class="tag">Done</span>' : sp && sp.start <= today ? '<span class="tag c">This week</span>' : '') + '</div>' +
+        '<p class="small"><span class="label">From the kits</span> ' + esc((m.parts || []).join(' · ')) + '</p>' +
+        '<p class="small"><span class="label">Also needed</span> ' + esc((m.extras || []).join(' · ') || '—') + '</p>';
+      var tb = el('div', 'eq-items');
+      items.forEach(function (it, i) {
+        var k = m.id + ':' + i, row = el('label', 'eq-item');
+        var cb = el('input'); cb.type = 'checkbox'; cb.checked = picked(m, it, i);
+        cb.addEventListener('change', function () { st.pick[k] = cb.checked; eqSave(st); });
+        var q = el('input'); q.type = 'number'; q.min = 0; q.value = qtyOf(m, it, i); q.className = 'eq-q'; q.setAttribute('aria-label', 'Quantity of ' + it.item);
+        q.addEventListener('change', function () { st.qty[k] = Math.max(0, Number(q.value) || 0); eqSave(st); });
+        row.appendChild(cb); row.appendChild(q);
+        row.appendChild(el('span', 'eq-name', esc(it.item) + ' <span class="muted small">(' + (it.per === 'group' ? it.qty + ' per group' : it.qty + ' per ' + (it.per === 'section' ? 'section' : 'class')) + ')</span>'));
+        var a = el('a', 'small', 'amazon.ca ↗'); a.href = it.link; a.target = '_blank'; a.rel = 'noopener'; row.appendChild(a);
+        tb.appendChild(row);
+      });
+      if (!items.length) tb.appendChild(el('p', 'small muted', 'Nothing to order — everything is in the kits.'));
+      card.appendChild(tb); list.appendChild(card);
+    });
+    // custom items
+    var cu = el('div', 'eq-card panel'); cu.innerHTML = '<div class="eq-h"><div><div class="label">Anything else</div><h3>Your own items</h3></div></div>';
+    var cl = el('div', 'eq-items'); cu.appendChild(cl);
+    st.custom.forEach(function (c, i) {
+      var row = el('div', 'eq-item');
+      var cb = el('input'); cb.type = 'checkbox'; cb.checked = c.pick !== false; cb.addEventListener('change', function () { c.pick = cb.checked; eqSave(st); });
+      var q = el('input'); q.type = 'number'; q.min = 0; q.value = c.qty || 1; q.className = 'eq-q'; q.addEventListener('change', function () { c.qty = Math.max(0, Number(q.value) || 0); eqSave(st); });
+      row.appendChild(cb); row.appendChild(q); row.appendChild(el('span', 'eq-name', esc(c.item)));
+      if (c.link) { var a = el('a', 'small', 'link ↗'); a.href = c.link; a.target = '_blank'; a.rel = 'noopener'; row.appendChild(a); }
+      var x = el('button', 'btn btn-ghost btn-small', 'Remove'); x.type = 'button'; x.addEventListener('click', function () { st.custom.splice(i, 1); eqSave(st); render(); }); row.appendChild(x);
+      cl.appendChild(row);
+    });
+    var add = el('div', 'row2'), ni = el('input'), nl = el('input'), nb = el('button', 'btn btn-ghost btn-small', 'Add item');
+    ni.type = 'text'; ni.placeholder = 'Item (e.g. extra AA batteries)'; nl.type = 'text'; nl.placeholder = 'Link (optional) — an amazon.ca search is made if blank'; nb.type = 'button';
+    nb.addEventListener('click', function () { if (!ni.value.trim()) return; st.custom.push({ item: ni.value.trim(), link: nl.value.trim() || 'https://www.amazon.ca/s?k=' + encodeURIComponent(ni.value.trim()), qty: 1, pick: true }); eqSave(st); render(); });
+    add.appendChild(ni); add.appendChild(nl); add.appendChild(nb); cu.appendChild(add); list.appendChild(cu);
+    // the email
+    function lines() {
+      var out = [];
+      order.forEach(function (m) {
+        var items = (RL.ORDERS || {})[m.id] || [], chosen = [];
+        items.forEach(function (it, i) { var k = m.id + ':' + i, on = st.pick[k] != null ? st.pick[k] : picked(m, it, i), q = qtyOf(m, it, i); if (on && q > 0) chosen.push('• ' + q + ' × ' + it.item + '\n  ' + it.link); });
+        if (chosen.length) { var sp = L && L.span[m.id]; out.push('Mission ' + m.num + ': ' + m.title + (sp ? ' (starts ' + C.nice(sp.start, { weekday: 'short', month: 'short', day: 'numeric' }) + ')' : '') + '\n' + chosen.join('\n')); }
+      });
+      var cc = st.custom.filter(function (c) { return c.pick !== false && (c.qty || 1) > 0; }).map(function (c) { return '• ' + (c.qty || 1) + ' × ' + c.item + (c.link ? '\n  ' + c.link : ''); });
+      if (cc.length) out.push('Other\n' + cc.join('\n'));
+      return out;
+    }
+    var bar = el('div', 'eq-bar');
+    var mail = el('a', 'btn btn-primary', 'Email Carla for orders'), cp = el('button', 'btn btn-ghost', 'Copy the list'), cnt = el('span', 'small muted');
+    cp.type = 'button';
+    function body() { var ls2 = lines(); return 'Hi Carla,\n\nCould you please order the following for my robotics class (Room 2997)? The links are Amazon.ca searches — any similar item is fine.\n\n' + ls2.join('\n\n') + '\n\nThank you!\nRyan Cathcart'; }
+    function refresh() { var n = lines().reduce(function (a, b) { return a + (b.match(/^• /gm) || []).length; }, 0); cnt.textContent = n ? n + ' item' + (n === 1 ? '' : 's') + ' ticked' : 'Nothing ticked yet'; mail.href = 'mailto:' + ORDER_TO + '?subject=' + encodeURIComponent('Robotics order request (Room 2997)') + '&body=' + encodeURIComponent(body()); mail.classList.toggle('disabled', !n); }
+    mail.addEventListener('click', function (e) { if (!lines().length) { e.preventDefault(); toast('Tick at least one item first.', true); } });
+    cp.addEventListener('click', function () { RL.Code.copy(body(), cp); });
+    list.addEventListener('change', refresh); set.addEventListener('change', refresh);
+    bar.appendChild(mail); bar.appendChild(cp); bar.appendChild(cnt); bar.appendChild(el('span', 'small muted eq-to', 'To: ' + ORDER_TO));
+    view.insertBefore(bar, list); refresh();
   }
 
   /* ---------- Roster ---------- */

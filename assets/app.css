@@ -312,3 +312,17 @@
   .unit-n { font-size: 36px; min-width: 44px; }
   .mission-grid { grid-template-columns: 1fr; }
 }
+.sim-inputs:empty { display: none; }
+.sim-inputs { border-bottom: 1px solid var(--grid); }
+.sim-inputs .slider-row { border-top: 0; }
+.sim-inputs > .btn { margin: 0 12px 10px; }
+.joy-pad { position: relative; width: 120px; height: 120px; border: 1px solid var(--grid); border-radius: var(--r-sm); background: repeating-linear-gradient(0deg, transparent 0 29px, var(--grid) 29px 30px), repeating-linear-gradient(90deg, transparent 0 29px, var(--grid) 29px 30px), var(--bg); touch-action: none; cursor: grab; }
+.joy-dot { position: absolute; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%; background: var(--cyan); box-shadow: var(--glow); pointer-events: none; }
+.remote { padding: 10px 14px; }
+.remote .label { display: block; margin-bottom: 6px; }
+.remote-keys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; max-width: 260px; padding: 10px; background: #111418; border-radius: 10px; }
+.remote-keys button { font: 600 11px/14px var(--mono); padding: 7px 2px; background: #2b3038; color: #e6f1fa; border: 1px solid #3b4350; border-radius: 6px; cursor: pointer; }
+.remote-keys button:first-child { background: #b42318; border-color: #d92d20; }
+.remote-keys button:active { background: var(--cyan); color: var(--on-cyan); }
+.serial-in { display: flex; gap: 6px; padding: 8px 12px; border-top: 1px solid var(--grid); background: #050a12; }
+.serial-in input { flex: 1; min-height: 32px; font: 500 13px/18px var(--mono); padding: 4px 8px; }

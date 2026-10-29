@@ -1,0 +1,19 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../assets/rl.css"><link rel="stylesheet" href="../assets/app.css"></head><body><div id="x" style="max-width:1300px;margin:10px auto"></div>
+<script>window.RL={esc:function(s){return String(s)}};</script>
+<script src="../js/kit/board.js"></script><script src="../js/kit/parts.js"></script>
+<script>
+var parts={
+ rgb:{type:'rgb',at:'h3'}, pot:{type:'pot',at:'c9'}, ldr:{type:'ldr',from:'h10',to:'h13'}, th:{type:'therm',from:'i15',to:'i17'},
+ tilt:{type:'tilt',from:'b17',to:'b19'}, bz:{type:'buzzer',a:'h20',k:'h22',variant:'active',label:'ACTIVE'}, bz2:{type:'buzzer',a:'c24',k:'c26',variant:'passive'},
+ chip:{type:'chip',at:'e21',label:'74HC595',pinNames:['Q1','Q2','Q3','Q4','Q5','Q6','Q7','GND','Q7S','MR','SHCP','STCP','OE','DS','Q0','VCC']},
+ r:{type:'res',from:'a28',to:'L-28',ohms:220},
+ servo:{type:'servo',at:[760,30]}, dht:{type:'dht',at:[860,40]}, sonar:{type:'sonar',at:[760,210]}, joy:{type:'joystick',at:[870,200]},
+ ir:{type:'ir',at:[870,330]}, relay:{type:'relay',at:[880,420]}, seg:{type:'seg4',at:[740,390]},
+ w1:{type:'wire',from:'D9',to:'servo.S',color:'orange'}, w2:{type:'wire',from:'D2',to:'dht.S',color:'yellow'}
+};
+var B=RL.Board.render({parts:parts,vb:[0,0,1020,600]}); document.getElementById('x').appendChild(B.svg);
+B.parts.rgb._setRGB(1,0.2,0.6); B.parts.servo._setAngle(30); B.parts.bz._sound(1); B.parts.seg._setDigit(0,0x3f); B.parts.seg._setDigit(1,0x06); B.parts.seg._setDigit(2,0x5b);B.parts.seg._setDigit(3,0x4f);
+B.parts.relay._click(1); B.parts.sonar._ping(); B.parts.tilt._tilt(1);
+var p2={lcd:{type:'lcd',at:'j3'}, st:{type:'stepper',at:[200,200]}, m:{type:'dcmotor',at:[180,420]}, l293:{type:'chip',at:'e20',label:'L293D'}, psu:{type:'psu'}};
+var B2=RL.Board.render({parts:p2,vb:[0,0,1020,600], uno:false}); document.getElementById('x').appendChild(B2.svg); B2.parts.lcd._setText(['Hello, Ada!','Temp: 21.5 C']); B2.parts.m._spin(0.5); B2.parts.st._coils([1,1,0,0]);
+</script></body></html>

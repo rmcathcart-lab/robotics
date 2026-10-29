@@ -253,7 +253,7 @@
       { id: 'usb', name: 'USB cable', note: 'Square end goes in the UNO', icon: function (svg, S) { S('path', { d: 'M15 50 C 45 50, 55 20, 90 20', stroke: '#3b82f6', 'stroke-width': 5, fill: 'none' }, svg); S('rect', { x: 88, y: 12, width: 18, height: 16, rx: 2, fill: '#aab6c3' }, svg); S('rect', { x: 6, y: 44, width: 14, height: 12, rx: 1, fill: '#aab6c3' }, svg); } },
       { id: 'bb', name: 'Breadboard', note: 'The white board with holes', icon: function (svg, S) { S('rect', { x: 10, y: 14, width: 100, height: 44, rx: 3, fill: '#d3dbe4' }, svg); for (var i = 0; i < 12; i++) for (var j = 0; j < 4; j++) S('rect', { x: 16 + i * 8, y: 22 + j * 8 + (j > 1 ? 6 : 0), width: 3, height: 3, fill: '#3b4756' }, svg); } },
       { id: 'leds', name: 'LEDs', note: 'Red, yellow, green, white', icon: function (svg, S) { ['#ff4d4d', '#ffd23f', '#3ee07a', '#f4f7fb'].forEach(function (c, i) { S('path', { d: 'M' + (22 + i * 24) + ' 40 v-16 a8 8 0 0 1 16 0 v16 z', fill: c, opacity: 0.9 }, svg); S('line', { x1: 26 + i * 24, y1: 40, x2: 26 + i * 24, y2: 62, stroke: '#9aa5b1', 'stroke-width': 2 }, svg); S('line', { x1: 34 + i * 24, y1: 40, x2: 34 + i * 24, y2: 56, stroke: '#9aa5b1', 'stroke-width': 2 }, svg); }); } },
-      { id: 'res', name: 'Resistors', note: '4 × 220 Ω, 1 × 10 kΩ', icon: function (svg, S) { [[20, 220], [42, 10000]].forEach(function (r) { S('line', { x1: 10, y1: r[0], x2: 110, y2: r[0], stroke: '#b8c2cc', 'stroke-width': 2 }, svg); S('rect', { x: 40, y: r[0] - 6, width: 40, height: 12, rx: 6, fill: '#e3c99a' }, svg); RL.resistorBands(r[1]).forEach(function (c, i) { S('rect', { x: 46 + i * 7 + (i === 3 ? 6 : 0), y: r[0] - 6, width: 3.5, height: 12, fill: c }, svg); }); }); } },
+      { id: 'res', name: 'Resistors', note: 'Blue, 5 bands: 4 × 220 Ω, 1 × 10 kΩ', icon: function (svg, S) { [[20, 220], [42, 10000]].forEach(function (r) { S('line', { x1: 10, y1: r[0], x2: 110, y2: r[0], stroke: '#b8c2cc', 'stroke-width': 2 }, svg); RL.drawResistorBody(S('g', { transform: 'translate(60 ' + r[0] + ')' }, svg), r[1], 46, 12); }); } },
       { id: 'btn', name: 'Push button', note: 'Square with 4 legs', icon: function (svg, S) { S('rect', { x: 40, y: 14, width: 40, height: 40, rx: 3, fill: '#1c2129' }, svg); S('circle', { cx: 60, cy: 34, r: 11, fill: '#2b3038', stroke: '#6b7280', 'stroke-width': 2 }, svg); [[44, 10], [72, 10], [44, 54], [72, 54]].forEach(function (p) { S('rect', { x: p[0], y: p[1], width: 4, height: 8, fill: '#9aa5b1' }, svg); }); } },
       { id: 'mm', name: 'Jumper wires', note: 'Pins on both ends', icon: function (svg, S) { ['#e5484d', '#30363f', '#facc15', '#22c55e'].forEach(function (c, i) { S('path', { d: 'M' + (14 + i * 6) + ' 58 C 30 ' + (10 + i * 6) + ', 80 ' + (10 + i * 6) + ', ' + (96 + i * 4) + ' 58', stroke: c, 'stroke-width': 3.5, fill: 'none' }, svg); }); } },
       { id: 'fm', name: 'Female-to-male wires', note: 'A socket on one end (for the housing)', icon: function (svg, S) { S('path', { d: 'M14 40 C 40 10, 80 70, 100 40', stroke: '#fb923c', 'stroke-width': 3.5, fill: 'none' }, svg); S('rect', { x: 4, y: 34, width: 14, height: 12, fill: '#111' }, svg); S('line', { x1: 100, y1: 40, x2: 112, y2: 40, stroke: '#c0c8d0', 'stroke-width': 2 }, svg); } }
@@ -286,8 +286,7 @@
         T(cg, 185, 62, 'SWITCH', { 'text-anchor': 'middle', 'font-size': 10, fill: MUT, 'letter-spacing': '1.5' });
         // resistor on the right wire
         S('rect', { x: 330, y: 120, width: 20, height: 70, fill: '#070d17' }, cg);
-        st.res = S('rect', { x: 326, y: 124, width: 28, height: 62, rx: 12, fill: '#e3c99a', stroke: '#b59a6a' }, cg);
-        RL.resistorBands(220).forEach(function (c, i) { S('rect', { x: 326, y: 134 + i * 10 + (i === 3 ? 8 : 0), width: 28, height: 5, fill: c }, cg); });
+        st.res = RL.drawResistorBody(S('g', { transform: 'translate(340 155) rotate(90)' }, cg), 220, 64, 26).firstChild;
         T(cg, 366, 160, 'RESISTOR', { 'font-size': 10, fill: MUT, 'letter-spacing': '1.5' });
         // LED on the bottom wire
         S('rect', { x: 190, y: 286, width: 50, height: 28, fill: '#070d17' }, cg);
@@ -302,7 +301,13 @@
         st.pipePath = S('path', { d: 'M540 240 L760 240 L760 300 L505 300 L505 260', fill: 'none', stroke: 'none' }, cg);
         st.narrow = S('rect', { x: 620, y: 232, width: 60, height: 16, fill: '#070d17', opacity: 0 }, cg);
         st.narrowIn = S('rect', { x: 620, y: 236, width: 60, height: 8, fill: '#2a4058', opacity: 0 }, cg);
-        st.valve = S('rect', { x: 566, y: 226, width: 8, height: 28, fill: '#9fb3c8' }, cg);
+        // the valve (the switch in the water model): handle along the pipe = open, across it = closed
+        st.valveG = S('g', {}, cg);
+        S('path', { d: 'M556 228 L556 252 L584 228 L584 252 Z', fill: '#9fb3c8', stroke: '#e6f1fa', 'stroke-width': 1.5, 'stroke-linejoin': 'round' }, st.valveG);
+        S('line', { x1: 570, y1: 240, x2: 570, y2: 214, stroke: '#e6f1fa', 'stroke-width': 2 }, st.valveG);
+        st.handle = S('rect', { x: 552, y: 208, width: 36, height: 8, rx: 3, fill: '#ff8a3d' }, st.valveG);
+        st.gate = S('rect', { x: 566, y: 231, width: 8, height: 18, fill: '#2a4058', opacity: 0 }, st.valveG);
+        st.vlabel = T(cg, 570, 200, 'VALVE: OPEN', { 'text-anchor': 'middle', 'font-size': 10, fill: CY, 'letter-spacing': '1' });
         st.wheel = S('g', { transform: 'translate(700 300)' }, cg);
         S('circle', { r: 20, fill: '#121c2b', stroke: '#9fb3c8', 'stroke-width': 2 }, st.wheel);
         for (var k = 0; k < 6; k++) S('line', { x1: 0, y1: 0, x2: 18 * Math.cos(k * Math.PI / 3), y2: 18 * Math.sin(k * Math.PI / 3), stroke: '#9fb3c8', 'stroke-width': 2 }, st.wheel);
@@ -317,7 +322,8 @@
         st.set = function (o) {
           var on = o.closed !== false;
           st.lever.setAttribute('x2', on ? 215 : 205); st.lever.setAttribute('y2', on ? 80 : 50);
-          st.valve.setAttribute('height', on ? 28 : 8); st.valve.setAttribute('y', on ? 226 : 210);
+          st.handle.setAttribute('transform', on ? '' : 'rotate(90 570 212)'); st.gate.setAttribute('opacity', on ? 0 : 1); st.gate.setAttribute('fill', on ? '#2a4058' : '#e6f1fa');
+          st.vlabel.textContent = on ? 'VALVE: OPEN' : 'VALVE: CLOSED'; st.vlabel.setAttribute('fill', on ? CY : SIG);
           var sp = on ? (o.speed || 60) : 0; st.f1.setSpeed(sp); st.f2.setSpeed(sp); st.setWheel(on ? sp * 3 : 0);
           var lit = on && !o.short ? Math.min(1, (o.bright || 0.8)) : 0;
           st.led.setAttribute('fill', lit ? '#ff4d4d' : '#7a1d1d'); st.ledGlow.setAttribute('opacity', lit);
@@ -332,7 +338,7 @@
       },
       frames: [
         { cap: '<b>A circuit is a loop.</b> Electric charge flows out of the + side of the power supply, through every part, and back into the − side. The LED lights up because charge is flowing through it. Water in a loop of pipe works the same way.', draw: function (svg, S, st) { st.set({ speed: 70 }); } },
-        { cap: '<b>Break the loop and everything stops.</b> Opening the switch makes a gap. No complete loop means no flow, so the LED goes dark — even though the battery still has its 5 volts. A button is just a switch you hold closed.', draw: function (svg, S, st) { st.set({ closed: false }); } },
+        { cap: '<b>Break the loop and everything stops.</b> Opening the switch makes a gap. No complete loop means no flow, so the LED goes dark — even though the battery still has its 5 volts. In the water model the switch is a valve: turn it closed and the water stops, even though the tank is still full. A button is just a switch you hold closed.', draw: function (svg, S, st) { st.set({ closed: false }); } },
         { cap: '<b>Voltage (V) is the push.</b> It’s measured in volts. Your UNO’s 5V pin pushes with 5 volts. In the water model, voltage is how high the water tank is: a taller tank pushes water harder through the pipes.', draw: function (svg, S, st) { st.set({ speed: 70, hlV: true }); } },
         { cap: '<b>Current (I) is the flow</b> — how much charge passes a point every second. It’s measured in amps (A). An LED needs only about <b>0.02 A</b>, which we write as <b>20 milliamps (mA)</b>.', draw: function (svg, S, st) { st.set({ speed: 70, meter: 'current: 13.6 mA' }); } },
         { cap: '<b>Resistance (R) slows the flow.</b> It’s measured in ohms (Ω). A resistor is like a narrow section of pipe: the more resistance, the less current — and the dimmer the LED.', draw: function (svg, S, st) { st.set({ speed: 28, narrow: true, hlRes: true, bright: 0.35, meter: 'current: 3 mA' }); } },
@@ -369,7 +375,7 @@
     UI.html(b, '<p class="lead">An LED (light-emitting diode) turns current into light — but only in one direction, and only if the current is kept small. That’s the resistor’s job.</p>');
     // LED anatomy
     UI.explainer(b, { label: 'Explainer', title: 'Reading an LED', w: 800, h: 300, frames: [
-      { cap: '<b>The long leg is +.</b> It’s called the <b>anode</b>, and it connects toward 5V. The short leg is the <b>cathode</b> (−) and connects toward GND. There’s also a flat edge on the rim beside the cathode.', draw: function (svg, S) { clear(svg); glowDefs(svg); drawLED(svg, S, false); } },
+      { cap: '<b>The long leg is +.</b> It’s called the <b>anode</b>, and it connects toward 5V. The short leg is the <b>cathode</b> (−) and connects toward GND. Our kit’s LEDs have a round rim, so the leg length is the clue. If the legs have been trimmed, look inside the LED: the cathode is the leg attached to the bigger, flag-shaped piece of metal.', draw: function (svg, S) { clear(svg); glowDefs(svg); drawLED(svg, S, false); } },
       { cap: '<b>Current only flows one way:</b> in the anode, out the cathode. Put an LED in backwards and it simply won’t light (it won’t be damaged). If an LED doesn’t light, flipping it is the first thing to try.', draw: function (svg, S) { clear(svg); glowDefs(svg); drawLED(svg, S, true); } }
     ] });
     function drawLED(svg, S, flowOn) {
@@ -377,13 +383,11 @@
       if (flowOn) S('circle', { cx: 300, cy: 96, r: 80, fill: 'url(#bg-red)', opacity: 0.9 }, svg);
       S('path', { d: 'M270 150 v-56 a30 30 0 0 1 60 0 v56 z', fill: flowOn ? '#ff4d4d' : '#b33030', opacity: 0.9, stroke: '#ff8080', 'stroke-width': 2 }, svg);
       S('rect', { x: 262, y: 146, width: 76, height: 10, rx: 2, fill: '#b33030' }, svg);
-      S('rect', { x: 334, y: 146, width: 4, height: 10, fill: '#070d17' }, svg);
       S('line', { x1: 284, y1: 156, x2: 284, y2: 280, stroke: '#b8c2cc', 'stroke-width': 4 }, svg);
       S('path', { d: 'M316 156 v40 l-6 10 v40', stroke: '#b8c2cc', 'stroke-width': 4, fill: 'none' }, svg);
       T(svg, 160, 270, 'ANODE (+)', { fill: '#e5484d', 'font-size': 14, 'letter-spacing': '1' }); T(svg, 160, 290, 'long leg', { fill: MUT, 'font-size': 12 });
       S('line', { x1: 250, y1: 266, x2: 280, y2: 266, stroke: '#e5484d' }, svg);
       T(svg, 352, 250, 'CATHODE (−)', { fill: '#6c8ee0', 'font-size': 14, 'letter-spacing': '1' }); T(svg, 352, 270, 'short leg', { fill: MUT, 'font-size': 12 });
-      T(svg, 350, 156, '← flat edge', { fill: MUT, 'font-size': 12 });
       if (flowOn) {
         var p = S('path', { d: 'M284 290 L284 160 L316 160 L316 250', fill: 'none', stroke: 'none' }, svg);
         var f = flow(svg, p, 7, CY, 4); f.setSpeed(70); svg._flow = f;
@@ -408,8 +412,7 @@
     T(svg, 120, 142, '5V', { 'text-anchor': 'middle', 'font-size': 16, 'font-weight': 600 }); T(svg, 120, 192, 'UNO', { 'text-anchor': 'middle', 'font-size': 9, fill: MUT });
     S('rect', { x: 300, y: 56, width: 140, height: 28, fill: '#070d17' }, svg);
     S('line', { x1: 290, y1: 70, x2: 450, y2: 70, stroke: '#b8c2cc', 'stroke-width': 3 }, svg);
-    S('rect', { x: 320, y: 56, width: 100, height: 28, rx: 13, fill: '#e3c99a', stroke: '#b59a6a' }, svg);
-    var bands = [0, 1, 2, 3].map(function (i) { return S('rect', { x: 334 + i * 16 + (i === 3 ? 18 : 0), y: 56, width: 8, height: 28, fill: '#000' }, svg); });
+    var resG = S('g', { transform: 'translate(370 70)' }, svg);
     var rl = T(svg, 370, 44, '220 Ω', { 'text-anchor': 'middle', 'font-size': 14, fill: CY });
     S('rect', { x: 540, y: 180, width: 60, height: 40, fill: '#070d17' }, svg);
     var glow = S('circle', { cx: 570, cy: 200, r: 60, fill: 'url(#bg-red)', opacity: 0 }, svg);
@@ -428,20 +431,20 @@
     function fmtR(v) { return v >= 1000000 ? v / 1000000 + ' MΩ' : v >= 1000 ? v / 1000 + ' kΩ' : v + ' Ω'; }
     function upd() {
       var mA = 3000 / cur, burnt = mA > 60, hot = mA > 20 && !burnt;
-      RL.resistorBands(cur).forEach(function (c, i) { bands[i].setAttribute('fill', c); });
+      while (resG.firstChild) resG.removeChild(resG.firstChild); RL.drawResistorBody(resG, cur, 110, 28);
       rl.textContent = fmtR(cur);
       var bright = burnt ? 0 : Math.min(1, Math.pow(mA / 15, 0.6));
       glow.setAttribute('opacity', bright); dome.setAttribute('fill', burnt ? '#2b2f36' : bright > 0.05 ? '#ff4d4d' : '#7a1d1d'); dome.setAttribute('stroke', burnt ? '#4b5563' : '#ff4d4d');
       smoke.setAttribute('opacity', burnt ? 1 : 0);
       f.setSpeed(burnt ? 0 : Math.min(400, 20 + mA * 6));
       var status = burnt ? '<b style="color:var(--signal)">BURNT OUT</b>' : hot ? '<b style="color:var(--signal)">TOO MUCH</b>' : mA >= 5 ? '<b style="color:var(--go)">BRIGHT · SAFE</b>' : mA >= 1 ? '<b>DIM · SAFE</b>' : '<b class="muted">BARELY GLOWS</b>';
-      var bnames = ['black', 'brown', 'red', 'orange', 'yellow', 'green', 'blue', 'violet', 'grey', 'white'], bb = (function () { var e = 0, v = cur; while (v >= 100) { v /= 10; e++; } v = Math.round(v); return [Math.floor(v / 10), v % 10, e]; })();
+      var ri = RL.resistorInfo(cur);
       ro.innerHTML = '<div><span class="label">Current</span><b>' + (mA >= 1 ? mA.toFixed(1) : mA.toFixed(2)) + ' mA</b></div><div><span class="label">LED</span>' + status + '</div>' +
-        '<div><span class="label">Colour bands</span><span class="small">' + bnames[bb[0]] + ' · ' + bnames[bb[1]] + ' · ' + bnames[bb[2]] + ' · gold</span></div>' +
+        '<div><span class="label">Colour bands</span><span class="small">' + ri.names.join(' · ') + '</span></div>' +
         '<div><span class="label">Working</span><span class="small">3 V ÷ ' + cur + ' Ω = ' + (3 / cur).toPrecision(2) + ' A</span></div>';
     }
     upd();
-    UI.html(b, '<p class="small muted">Reading the bands: the first two colours are digits and the third says how many zeros to add. Red (2), red (2), brown (1 zero) = 220 Ω. Gold means it’s within 5%. The colours are: black 0, brown 1, red 2, orange 3, yellow 4, green 5, blue 6, violet 7, grey 8, white 9.</p>');
+    UI.html(b, '<p class="small muted">Reading the bands on your kit’s blue resistors: start from the end <i>away</i> from the slightly wider gap. The first <b>three</b> bands are digits, the fourth says how many zeros to add, and the last (brown, set a little apart) means it’s accurate to 1%. Red (2), red (2), black (0), black (no zeros) = 220 Ω. Brown (1), black (0), black (0), red (2 zeros) = 10 000 Ω = 10 kΩ. The colours are: black 0, brown 1, red 2, orange 3, yellow 4, green 5, blue 6, violet 7, grey 8, white 9.</p>');
   }
 
   /* ---------- 06 build: first light ---------- */
@@ -452,20 +455,37 @@
       { title: 'Power the + rail', add: ['p5v'], html: '<p>Use a <b>red</b> jumper wire. Plug one end into the UNO’s <b>5V</b> pin and the other into the <b>+</b> rail on the left side of the breadboard (any hole near the top).</p><p class="small muted">Red for power and black for ground is a habit engineers use so anyone can read a circuit.</p>' },
       { title: 'Connect the − rail to GND', add: ['pgnd'], html: '<p>Use a <b>black</b> wire from the <b>GND</b> pin beside pin 13 to the <b>−</b> rail next to it.</p>' },
       { title: 'Bridge the rails', add: ['pbr1', 'pbr2'], html: '<p>At the bottom of the breadboard, connect the left + rail to the right + rail (red), and the left − rail to the right − rail (black). Now there’s power and ground on both sides.</p>' },
-      { title: 'Add the resistor', add: ['fr'], html: '<p>Bend the legs of a <b>220 Ω</b> resistor (red-red-brown) and push it into <b>e5</b> and <b>f5</b>, so it crosses the centre gap. Resistors work either way around.</p>' },
+      { title: 'Add the resistor', add: ['fr'], html: '<p>Bend the legs of a <b>220 Ω</b> resistor (bands red-red-black-black-brown) and push it into <b>e5</b> and <b>f5</b>, so it crosses the centre gap. Resistors work either way around.</p>' },
       { title: 'Add the LED', add: ['fl'], html: '<p>Put the red LED’s <b>long leg in j5</b> and its <b>short leg in the − rail</b> on the right. Long leg = anode = toward power.</p>' },
       { title: 'Close the loop', add: ['fj'], lit: { fl: 1 }, html: '<p>Add a short red jumper from the <b>+ rail into a5</b>. Now plug in the USB cable. <b>The LED should light up!</b></p><p>Trace the loop with your finger: 5V → + rail → a5 → resistor → LED → − rail → GND.</p>' },
-      { title: 'Try other resistors', lit: { fl: 0.3 }, html: '<p>Unplug the USB, then swap the 220 Ω resistor for a <b>1 kΩ</b> (brown-black-red), then a <b>10 kΩ</b> (brown-black-orange). Plug in and compare the brightness each time. Put the 220 Ω back when you’re done.</p>' },
+      { title: 'Try other resistors', lit: { fl: 0.3 }, html: '<p>Unplug the USB, then swap the 220 Ω resistor for a <b>1 kΩ</b> (brown-black-black-brown-brown), then a <b>10 kΩ</b> (brown-black-black-red-brown). Plug in and compare the brightness each time. Put the 220 Ω back when you’re done.</p>' },
       { title: 'Add a push button', add: ['fb', 'fj2', 'fj3'], remove: ['fj'], lit: { fl: 0 }, html: '<p>Remove the red jumper from a5. Press the button into the breadboard so it straddles the centre gap, with its legs in <b>e7, f7, e9 and f9</b>. Add a red jumper from the <b>+ rail to a9</b>, and a yellow jumper from <b>c7 to c5</b>.</p><p>Plug in. The LED is off — until you <b>press the button</b>. Pressing it connects row 9 (5V) to row 7, which carries power to the resistor and LED.</p>' }
     ] });
     UI.note(b, ctx, { id: 'n-res', label: 'What did you notice when you swapped in the 1 kΩ and 10 kΩ resistors? Use the word “current” in your answer.', placeholder: 'With the 1 kΩ resistor the LED…' });
     UI.callout(b, 'plain', 'Not lighting?', '<ul><li>Is the LED the right way around? Long leg in j5.</li><li>Are the resistor legs in two different rows across the gap (e5 and f5)?</li><li>Push every leg and wire all the way in — loose parts are the #1 problem.</li><li>Is the UNO’s green ON light on?</li></ul>');
   } });
 
+  function ideSetup(b, ctx) {
+    var OS = {
+      win: { name: 'Windows', html: '<ol><li>Go to <a href="https://www.arduino.cc/en/software" target="_blank" rel="noopener">arduino.cc/en/software</a> and download <b>Arduino IDE 2</b> for <b>Windows</b> (the “Win 10 and newer, 64 bits” installer). If a page asks for a donation, choose <b>Just download</b>.</li><li>Open the file you downloaded (it’s in your Downloads folder) and click <b>I Agree → Next → Install</b>.</li><li>If Windows asks to install <b>USB drivers</b> from Arduino, click <b>Install</b> — that’s how your laptop talks to the board.</li><li>Open <b>Arduino IDE</b> from the Start menu. The first time, it may download a few extra pieces (like “Arduino AVR Boards”). Click <b>Yes / Install</b> if it asks.</li></ol><p class="small muted">If the installer asks for an administrator password, use the Cloud Editor tab instead for now and tell your teacher.</p>' },
+      mac: { name: 'Mac', html: '<ol><li>Go to <a href="https://www.arduino.cc/en/software" target="_blank" rel="noopener">arduino.cc/en/software</a> and download <b>Arduino IDE 2</b> for <b>macOS</b> (Apple Silicon for newer Macs, Intel for older ones). If a page asks for a donation, choose <b>Just download</b>.</li><li>Open the .dmg file and drag <b>Arduino IDE</b> into your <b>Applications</b> folder.</li><li>Open it from Applications. If macOS says it’s from the internet, click <b>Open</b>.</li><li>The first time, it may download extra pieces (like “Arduino AVR Boards”). Click <b>Yes / Install</b> if it asks.</li></ol>' },
+      cloud: { name: 'Chromebook / Cloud Editor', html: '<p>Chromebooks can’t install the Arduino IDE, but the <b>Arduino Cloud Editor</b> runs in Chrome and does the same job.</p><ol><li>Go to <a href="https://app.arduino.cc/" target="_blank" rel="noopener">app.arduino.cc</a> and sign in (you can use your school Google account).</li><li>Open <b>Sketches → Create Sketch</b>.</li><li>Plug in your UNO. Follow the editor’s prompt to connect the board (it may ask you to install a small helper app the first time).</li><li>Choose <b>Arduino Uno</b> in the board menu at the top.</li></ol>' }
+    };
+    var box = el('div', 'xp'), head = el('div', 'xp-h', '<span class="label">Setup</span><h3>Get the Arduino IDE</h3>'), tabs = el('div', 'res-pills'), panel = el('div', 'xp-cap');
+    tabs.style.padding = '12px 16px 0';
+    box.appendChild(head); box.appendChild(tabs); box.appendChild(panel);
+    var cur = ctx.answer('os') || (/Mac/.test(navigator.platform) ? 'mac' : /CrOS/.test(navigator.userAgent) ? 'cloud' : 'win');
+    function show(k) { cur = k; panel.innerHTML = OS[k].html; tabs.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x.dataset.k === k); }); ctx.answer('os', k); }
+    Object.keys(OS).forEach(function (k) { var t = el('button', '', esc(OS[k].name)); t.type = 'button'; t.dataset.k = k; t.addEventListener('click', function () { show(k); }); tabs.appendChild(t); });
+    b.appendChild(box); show(cur);
+    UI.callout(b, '', 'Connect your UNO', '<ol><li>Plug the UNO into your laptop with the USB cable from your kit. The green <b>ON</b> light comes on.</li><li>In the IDE, click the board menu at the top (it says <b>Select Board</b>) and choose <b>Arduino Uno</b> with the port beside it (called something like COM3 or /dev/cu.usbmodem…). You can also use <b>Tools → Board → Arduino AVR Boards → Arduino Uno</b> and <b>Tools → Port</b>.</li><li>Start a new sketch: <b>File → New Sketch</b>.</li></ol><p class="small"><b>No port showing up?</b> Try another USB port, and make sure you’re using the kit’s cable (some phone cables only charge and can’t carry data). Still nothing? Ask your teacher — some boards need one extra driver installed.</p>');
+  }
+
   /* ---------- 07 blink ---------- */
   steps.push({ id: 'blink', title: 'Your first program: Blink', time: '25 min', render: function (b, ctx) {
     UI.html(b, '<p class="lead">Now the UNO gets to think. Code you write on your laptop is called a <b>sketch</b>. You’ll upload it through the USB cable, and the UNO runs it on its own.</p>');
-    UI.callout(b, '', 'Set up the Arduino IDE', '<ol><li>Open the <b>Arduino IDE</b> on your laptop (or the Arduino Cloud Editor in a browser).</li><li>Plug in your UNO with the USB cable.</li><li>At the top, choose <b>Select Board</b> → <b>Arduino Uno</b> and pick the port it shows (it may be called COM3, /dev/cu.usbmodem…, or similar).</li><li>Make a new sketch: <b>File → New Sketch</b>.</li></ol><p class="small">No port showing up? Try another USB port or cable, then ask your teacher.</p>');
+    UI.html(b, '<h2>Install the Arduino IDE (first time only)</h2><p>The <b>Arduino IDE</b> is the free app you write sketches in and upload them with. Pick your computer:</p>');
+    ideSetup(b, ctx);
     UI.html(b, '<h2>Read the code</h2><p>Step through the Blink sketch. Every Arduino sketch has the same two parts: <code>setup()</code> runs once when the board starts, and <code>loop()</code> runs over and over, forever.</p>');
     RL.Code.walk(b, BLINK, [
       { lines: [1, 1], title: 'Comments', html: '<p>Anything after <code>//</code> is a <b>comment</b>: a note for humans. The UNO ignores it. Good engineers leave comments so others (and future you) can understand the code.</p>' },
@@ -494,7 +514,7 @@
       { title: 'Green light → pin 10', add: ['r_grn', 'l_grn', 'w_grn'], html: '<p>Resistor <b>e13–f13</b>, green LED long leg <b>j13</b> → − rail, wire <b>pin 10 → a13</b>.</p>' },
       { title: 'WALK light → pin 8', add: ['r_walk', 'l_walk', 'w_walk'], html: '<p>Leave a gap, then build the white WALK light: resistor <b>e19–f19</b>, white LED long leg <b>j19</b> → − rail, wire <b>pin 8 → a19</b>.</p>' },
       { title: 'The crosswalk button', add: ['btn', 'w_b5v'], html: '<p>Press the button across the gap with legs in <b>e23, f23, e25, f25</b>. Add a red jumper from the <b>+ rail to a23</b>. Pressing the button will connect row 23 (5V) to row 25.</p>' },
-      { title: 'Button → pin 2, with a pull-down', add: ['w_b2', 'r_pd'], html: '<p>Wire <b>a25 to pin 2</b>. Then add a <b>10 kΩ</b> resistor (brown-black-orange) from <b>j25 to the − rail</b>. This is the <b>pull-down resistor</b> — the next explainer shows why it matters.</p>' },
+      { title: 'Button → pin 2, with a pull-down', add: ['w_b2', 'r_pd'], html: '<p>Wire <b>a25 to pin 2</b>. Then add a <b>10 kΩ</b> resistor (brown-black-black-red-brown) from <b>j25 to the − rail</b>. This is the <b>pull-down resistor</b> — the next explainer shows why it matters.</p>' },
       { title: 'Check your build', view: 'all', html: '<p>Compare your board with this picture, row by row. Each LED: wire in column a, resistor across the gap, long leg in column j, short leg in the − rail.</p>' }
     ] });
     UI.html(b, '<h2>Why the pull-down resistor?</h2>');
@@ -515,8 +535,7 @@
         S('rect', { x: 250, y: 162, width: 70, height: 36, rx: 3, fill: '#15497a', stroke: '#2e6aa3' }, svg);
         T(svg, 285, 185, 'PIN 2', { 'text-anchor': 'middle', 'font-size': 12 });
         st.rg = S('g', {}, svg);
-        S('rect', { x: 98, y: 220, width: 24, height: 50, rx: 10, fill: '#e3c99a', stroke: '#b59a6a' }, st.rg);
-        RL.resistorBands(10000).forEach(function (c, i) { S('rect', { x: 98, y: 228 + i * 9 + (i === 3 ? 6 : 0), width: 24, height: 4, fill: c }, st.rg); });
+        RL.drawResistorBody(S('g', { transform: 'translate(110 245) rotate(90)' }, st.rg), 10000, 50, 22);
         S('line', { x1: 110, y1: 270, x2: 110, y2: 290, stroke: '#9fb3c8', 'stroke-width': 3 }, st.rg);
         S('path', { d: 'M92 290 h36 M98 297 h24 M104 304 h12', stroke: '#9fb3c8', 'stroke-width': 3 }, st.rg);
         T(st.rg, 136, 250, '10 kΩ', { 'font-size': 11, fill: MUT });
