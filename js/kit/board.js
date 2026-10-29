@@ -287,6 +287,7 @@
         var gl = svg.querySelector('[data-glow="' + id + '"]'); if (gl) gl.setAttribute('opacity', Math.max(0, Math.min(1, v)));
         return;
       }
+      if (g._setRGB) { var c = Array.isArray(v) ? v : (typeof v === 'object' && v ? [v.r || 0, v.g || 0, v.b || 0] : [v, v, v]); g._setRGB(c[0], c[1], c[2]); return; } // lit: [r, g, b] or {r, g, b} (0–1 each), or a number for white
       if (!g._dome) return;
       v = Math.max(0, Math.min(1, v));
       g._glow.setAttribute('opacity', v);

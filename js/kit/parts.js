@@ -197,7 +197,7 @@
       pcb(c, g, p, 70, 150, '#1d5fa8');
       header(c, g, p, ['VCC', 'TRIG', 'ECHO', 'GND'], 46, ['Vcc', 'Trig', 'Echo', 'Gnd']);
       [32, 118].forEach(function (cy) { c.s('circle', { cx: x + 44, cy: y + cy, r: 21, fill: '#c0c6cc', stroke: '#e1e8ef', 'stroke-width': 2 }, g); c.s('circle', { cx: x + 44, cy: y + cy, r: 14, fill: '#3b4350' }, g); });
-      lbl(c.txt, g, x + 44, y + 78, 'HC-SR04', { 'text-anchor': 'middle', 'font-size': 7 });
+      lbl(c.txt, g, x + 44, y + 148, 'HC-SR04', { 'text-anchor': 'middle', 'font-size': 6.5 });
       g._wave = c.s('g', { opacity: 0 }, g);
       [30, 48, 66].forEach(function (r) { c.s('path', { d: 'M' + (x + 70 + r * 0.3) + ' ' + (y + 75 - r) + ' A' + r + ' ' + r + ' 0 0 1 ' + (x + 70 + r * 0.3) + ' ' + (y + 75 + r), stroke: '#22d3ee', 'stroke-width': 2, fill: 'none' }, g._wave); });
       var t = null; g._ping = function () { g._wave.setAttribute('opacity', 1); clearTimeout(t); t = setTimeout(function () { g._wave.setAttribute('opacity', 0); }, 120); };

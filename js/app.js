@@ -238,7 +238,8 @@
     if (!g || !m) { location.hash = '#/'; return; }
     var fresh = cur.mission !== mid; cur.mission = mid;
     var ms = MS(mid);
-    var idx = stepNo != null ? Math.max(0, Math.min(g.steps.length - 1, stepNo - 1)) : (ms.step || 0);
+    if (!g.steps || !g.steps.length) { view.innerHTML = '<div class="loading">THIS MISSION IS STILL BEING WRITTEN</div>'; return; }
+    var idx = stepNo != null && !isNaN(stepNo) ? Math.max(0, Math.min(g.steps.length - 1, stepNo - 1)) : Math.min(ms.step || 0, g.steps.length - 1);
     cur.step = idx; ms.step = idx; saveState();
     document.body.className = 'mission';
     drawTop('<a href="#/">Missions</a><span class="sep">/</span><span class="cur">Mission ' + esc(m.num) + ' · ' + esc(m.title) + '</span>');

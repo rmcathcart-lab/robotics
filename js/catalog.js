@@ -152,26 +152,27 @@
     m04: [
       { item: 'Jumbo craft sticks (needles)', per: 'class', qty: 1, link: az('jumbo craft sticks 100') },
       { item: 'Brass paper fasteners', per: 'class', qty: 1, link: az('brass paper fasteners') },
-      { item: 'Adafruit-style DHT11 spares (optional)', per: 'class', qty: 1, link: az('DHT11 temperature humidity sensor module') }
+      { item: 'DHT11 sensor modules, spares (optional)', per: 'class', qty: 1, link: az('DHT11 temperature humidity sensor module') }
     ],
     m05: [
       { item: 'Small toy cars (test vehicles)', per: 'class', qty: 1, link: az('pull back toy cars pack') },
       { item: 'Masking tape', per: 'class', qty: 2, link: az('masking tape 6 pack') },
-      { item: 'Measuring tapes', per: 'group', qty: 1, link: az('measuring tape metric 3m pack') }
+      { item: 'Measuring tapes (multi-pack)', per: 'class', qty: 1, link: az('measuring tape metric 3m pack') }
     ],
     m06: [
       { item: 'Small kraft gift boxes (cases)', per: 'group', qty: 1, link: az('small kraft boxes 4x4x2') }
     ],
     m07: [
-      { item: '9V batteries', per: 'group', qty: 1, link: az('9V batteries 12 pack') },
+      { item: '9V batteries, 12-pack (spares: the kit comes with one)', per: 'class', qty: 1, link: az('9V batteries 12 pack') },
       { item: 'Cardboard cake circles (turntables)', per: 'class', qty: 1, link: az('cardboard cake circles 8 inch') },
       { item: 'Double-sided foam tape', per: 'class', qty: 1, link: az('double sided foam mounting tape') }
     ],
     m08: [
-      { item: '9V batteries', per: 'group', qty: 1, link: az('9V batteries 12 pack') },
+      { item: '9V batteries, 12-pack (spares: the kit comes with one)', per: 'class', qty: 1, link: az('9V batteries 12 pack') },
       { item: 'Mini hot glue sticks (100 pack)', per: 'class', qty: 1, link: az('mini hot glue sticks 100 pack') }
     ],
     m09: [
+      { item: 'Female-to-male jumper wires, 40-pack (the display needs about 14)', per: 'group', qty: 1, link: az('dupont jumper wires female to male 40 pin') },
       { item: 'Large arcade-style push buttons (optional)', per: 'group', qty: 2, link: az('arcade push button 30mm') },
       { item: 'Corrugated cardboard sheets', per: 'class', qty: 1, link: az('corrugated cardboard sheets 12x12') }
     ]

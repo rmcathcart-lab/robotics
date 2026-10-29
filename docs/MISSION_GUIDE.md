@@ -68,7 +68,10 @@ roughly the mission's class count × ~80 min. Step ids are stable keys for progr
   `sim.state()`, `sim.serialText()`, `sim.wait(ms)`). Supported libraries: Servo, LiquidCrystal, Stepper, DHT
   (Adafruit "DHT sensor library": `DHT dht(2, DHT11); dht.begin(); dht.readTemperature(); dht.readHumidity();`), IRremote 4.x
   (`#include <IRremote.hpp>`, `IrReceiver.begin(pin, ENABLE_LED_FEEDBACK)`, `IrReceiver.decode()`, `IrReceiver.decodedIRData.command`,
-  `IrReceiver.resume()`; ELEGOO remote command codes are in `RL.REMOTE`). Integer maths works like Arduino (7/2 = 3).
+  `IrReceiver.resume()` — like a real board, no new code arrives until `resume()`; ELEGOO remote command codes are in `RL.REMOTE`).
+  Integer maths works like Arduino (7/2 = 3, `(n / 10) % 10`, `a * b / c` left to right), `byte` variables roll over at 256,
+  `bitSet/bitClear/bitWrite(x, …);` change `x`, `print()` of a float shows 2 decimals (`5.00`), `(char)223` prints ° on the LCD.
+  In build guides, `lit` on an RGB LED takes `[r, g, b]` (0–1 each).
   Code must also compile on a real UNO — only use real Arduino APIs. Tell students how to install any library
   (Arduino IDE: Sketch → Include Library → Manage Libraries…, search, Install).
 

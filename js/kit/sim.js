@@ -14,7 +14,7 @@
  *     lcd:      'partId'                                 LiquidCrystal library
  *     dht:      { pin: 2, temp: 22, hum: 40 }            DHT library (sliders)
  *     sonar:    { trig: 12, echo: 11, part, cm: 40 }     pulseIn on the echo pin (distance slider)
- *     joystick: { x: 0, y: 1, part }                     a drag pad sets A<x>/A<y> (add its SW pin to buttons)
+ *     joystick: { x: 0, y: 1, part, sw }                 a drag pad sets A<x>/A<y>; sw = the SW pin (adds a “Press joystick” button)
  *     ir:       { pin: 11, part }                        IRremote library (an on-screen remote)
  *     stepper:  'partId'                                 Stepper library
  *     motor:    { en: 5, in1: 3, in2: 4, part, relay }   DC motor through an L293D (relay: a pin that must be HIGH)
@@ -34,7 +34,7 @@
     'map', 'constrain', 'random', 'randomSeed', 'abs', 'min', 'max', 'pow', 'sqrt', 'sq', 'log', 'log10', 'exp', 'sin', 'cos', 'tan', 'floor', 'ceil', 'round', 'isnan',
     'Serial', 'HIGH', 'LOW', 'INPUT', 'OUTPUT', 'INPUT_PULLUP', 'LED_BUILTIN', 'A0', 'A1', 'A2', 'A3', 'A4', 'A5', 'DEC', 'HEX', 'BIN', 'MSBFIRST', 'LSBFIRST',
     'int', 'float', 'long', 'byte', 'word', 'bitRead', 'bitWrite', 'bitSet', 'bitClear', 'pulseIn', 'shiftOut', 'F', 'PI', 'true', 'false',
-    'Servo', 'LiquidCrystal', 'Stepper', 'DHT', 'DHT11', 'DHT22', 'IRrecv', 'decode_results', 'IrReceiver', 'ENABLE_LED_FEEDBACK', 'DISABLE_LED_FEEDBACK', '__t', '__y', '__idiv', '__int'];
+    'Servo', 'LiquidCrystal', 'Stepper', 'DHT', 'DHT11', 'DHT22', 'IRrecv', 'decode_results', 'IrReceiver', 'ENABLE_LED_FEEDBACK', 'DISABLE_LED_FEEDBACK', '__t', '__y', '__idiv', '__int', '__F', '__u8'];
   API = API.filter(function (n) { return n !== 'true' && n !== 'false'; });
   var ASYNC_API = ['delay', 'delayMicroseconds', 'pulseIn'];
   var KNOWN = ['pinMode', 'digitalWrite', 'digitalRead', 'analogWrite', 'analogRead', 'delay', 'delayMicroseconds', 'millis', 'micros', 'tone', 'noTone', 'map', 'constrain', 'random', 'Serial', 'println', 'print', 'begin', 'setup', 'loop', 'HIGH', 'LOW', 'INPUT', 'OUTPUT', 'INPUT_PULLUP', 'LED_BUILTIN', 'shiftOut', 'pulseIn', 'MSBFIRST', 'LSBFIRST', 'setCursor'];
@@ -80,8 +80,10 @@
       if (/\bif\s*\([^=!<>]*[^=!<>]=[^=][^)]*\)/.test(ln)) warns.push({ line: k + 1, msg: 'This if uses a single = (which sets a value). To compare, use == .' });
     });
     function nextCode(k) { for (var j = k + 1; j < lines.length; j++) if (lines[j].trim()) return lines[j].trim(); return ''; }
+    var initLine = {}; (function () { var dd = 0, stack = [], ln = 0; for (var q = 0; q < t.length; q++) { var ch = t[q]; if (ch === '\n') { ln++; if (stack.length && stack[stack.length - 1]) initLine[ln] = 1; continue; } if (ch === '{') { var before = t.slice(Math.max(0, q - 40), q).replace(/\s+$/, ''); stack.push(/=$/.test(before) || (stack.length && stack[stack.length - 1] && /[{,]$/.test(before))); } else if (ch === '}') stack.pop(); } })();
     lines.forEach(function (ln, k) {
       var s = ln.trim(); if (!s || s[0] === '#') return;
+      if (initLine[k] && !/;\s*$/.test(s) && !/^}/.test(s)) return; // inside an array's { … } list
       if (/[{};,(\[:\\&|+\-*\/=<>?!]$/.test(s)) return;
       if (/^(if|for|while|switch)\b.*\)$/.test(s) || /^}?\s*else(\s+if\b.*\))?$/.test(s) || /^do$/.test(s)) return;
       if (/^(case\b.*|default)\s*:?$/.test(s)) return;
@@ -107,7 +109,9 @@
     t = t.replace(/^[ \t]*#include[^\n]*/gm, function (x) { return x.replace(/./g, ' '); });
     t = t.replace(/^[ \t]*#define[ \t]+(\w+)[ \t]+([^\n]+)/gm, 'const $1 = $2;');
     t = t.replace(/^[ \t]*#(if|ifdef|ifndef|endif|else|pragma)[^\n]*/gm, function (x) { return x.replace(/./g, ' '); });
-    t = t.replace(/\bB([01]{1,8})\b/g, '0b$1');                                                 // B00101100 binary literals
+    t = t.replace(/\bB([01]{1,8})\b/g, '0b$1');
+    t = t.replace(/\b(?:const\s+)?char\s*\*\s*(?:const\s+)?(?=[A-Za-z_])/g, 'String ');           // char* text → String
+    t = t.replace(/\(\s*char\s*\)\s*(\d+|[A-Za-z_]\w*|\([^()]*\))/g, 'String.fromCharCode($1)'); // (char)223                                                 // B00101100 binary literals
     t = t.replace(new RegExp('\\(\\s*' + TYPES + '\\s*\\)', 'g'), ' ');                        // casts
     t = t.replace(/([(,]\s*)&(?=[A-Za-z_])/g, '$1');                                          // &results → results
     t = t.replace(/\.length\s*\(\s*\)/g, '.length');
@@ -116,9 +120,9 @@
     t = t.replace(new RegExp('\\b(' + CLASSES.join('|') + ')\\s+([A-Za-z_]\\w*)\\s*(?:\\(([^;]*)\\))?\\s*;', 'g'), function (all, cls, name, args) { objs.push(name); return 'let ' + name + ' = new ' + cls + '(' + (args || '') + ');'; });
     // which names hold whole numbers (Arduino does integer maths with these: 7 / 2 = 3)
     var INTT = /^(?:unsigned\s+long|unsigned\s+int|unsigned\s+char|long\s+long|long\s+int|int|long|byte|word|short|uint8_t|uint16_t|uint32_t|int8_t|int16_t|int32_t|size_t|char)$/;
-    var ints = {}, floats = {};
+    var ints = {}, floats = {}, bytes = {};
     function topSplit(str) { var parts = [], d = 0, cur = ''; for (var q = 0; q < str.length; q++) { var ch = str[q]; if ('([{'.indexOf(ch) >= 0) d++; else if (')]}'.indexOf(ch) >= 0) d--; if (ch === ',' && d === 0) { parts.push(cur); cur = ''; } else cur += ch; } parts.push(cur); return parts; }
-    t.replace(new RegExp('\\b(?:const\\s+|static\\s+|volatile\\s+)*(' + TYPES + ')\\s+([^;{}]+);', 'g'), function (all, ty, list) { topSplit(list).forEach(function (d) { var nm = /^\s*([A-Za-z_]\w*)/.exec(d); if (!nm) return; if (INTT.test(ty.trim())) ints[nm[1]] = 1; else if (/float|double/.test(ty)) floats[nm[1]] = 1; }); return all; });
+    t.replace(new RegExp('\\b(?:const\\s+|static\\s+|volatile\\s+)*(' + TYPES + ')\\s+([^;{}]+);', 'g'), function (all, ty, list) { topSplit(list).forEach(function (d) { var nm = /^\s*([A-Za-z_]\w*)/.exec(d); if (!nm) return; if (/^(?:byte|uint8_t|unsigned\s+char)$/.test(ty.trim()) && !/\[/.test(d)) bytes[nm[1]] = 1; if (INTT.test(ty.trim())) ints[nm[1]] = 1; else if (/float|double/.test(ty)) floats[nm[1]] = 1; }); return all; });
     t.replace(new RegExp('[(,]\\s*(' + TYPES + ')\\s+([A-Za-z_]\\w*)\\s*(?=[,)])', 'g'), function (all, ty, nm) { if (INTT.test(ty.trim())) ints[nm] = 1; else if (/float|double/.test(ty)) floats[nm] = 1; return all; });
     Object.keys(floats).forEach(function (k) { delete ints[k]; });
     var fnames = [];
@@ -143,12 +147,46 @@
     t = t.replace(new RegExp('\\b(?:const\\s+|static\\s+|volatile\\s+)*' + TYPES + '(?=\\s+[A-Za-z_])', 'g'), 'let');
     // integer division and assignments to whole-number variables
     var INTCALL = 'millis|micros|analogRead|digitalRead|pulseIn|random|map|constrain|abs';
-    var term = '(?:[A-Za-z_]\\w*(?:\\[[^\\]]+\\])?|\\d+(?![.\\w])|(?:' + INTCALL + ')\\s*\\([^()]*\\))';
-    var divRe = new RegExp('(' + term + ')\\s*\\/\\s*(' + term + ')', 'g');
-    function isInt(x) { x = x.trim(); if (/^\d+$/.test(x)) return true; if (new RegExp('^(?:' + INTCALL + ')\\s*\\(').test(x)) return true; var nm = /^([A-Za-z_]\w*)/.exec(x); return !!(nm && ints[nm[1]]); }
-    for (var pass = 0; pass < 3; pass++) t = t.replace(divRe, function (all, a, b, off, str) { if (/[.\w)]$/.test(str.slice(Math.max(0, off - 1), off)) && str[off - 1] === '.') return all; return isInt(a) && isInt(b) ? '__idiv(' + a + ', ' + b + ')' : all; });
+    var term = '(?:(?:' + INTCALL + ')\\s*\\([^()]*\\)|[A-Za-z_]\\w*(?:\\[[^\\]]+\\])?|\\d+(?:\\.\\d+)?[fFlLuU]*|\\([^()]*\\))';
+    var chainRe = new RegExp(term + '(?:\\s*[*\\/%]\\s*' + term + ')+', 'g'), termRe = new RegExp('^\\s*(' + term + ')\\s*([*\\/%]?)');
+    function isInt(x) {
+      x = x.trim(); if (/^\d+[lLuU]*$/.test(x)) return true; if (/^\d/.test(x)) return false;
+      if (new RegExp('^(?:' + INTCALL + ')\\s*\\(').test(x)) return true;
+      if (/^__idiv\(/.test(x)) return true;
+      if (x[0] === '(') { var inside = x.slice(1, -1).replace(/__idiv\([^()]*\)/g, '0'); if (/\//.test(inside) || /\d\.\d/.test(inside)) return false; var parts = inside.split(/[+\-*%]/).filter(function (q) { return q.trim(); }); return parts.length > 0 && parts.every(function (q) { return isInt(q); }); }
+      var nm = /^([A-Za-z_]\w*)/.exec(x); return !!(nm && ints[nm[1]] && !/\(/.test(x.slice(nm[1].length).replace(/^\[[^\]]*\]/, '')));
+    }
+    function divFix(src) { return src.replace(chainRe, function (all, off, str) {
+      if (str[off - 1] === '.' || /[\w.]$/.test(str.slice(0, off))) return all; // part of a member access / name
+      if (all.indexOf('/') < 0) return all;
+      var rest = all, toks = [], m2, changed = false;
+      while (rest.length && (m2 = termRe.exec(rest))) { toks.push(m2[1]); if (m2[2]) toks.push(m2[2]); rest = rest.slice(m2[0].length); }
+      if (rest.trim()) return all;
+      for (var g = 0; g < toks.length; g += 2) if (toks[g][0] === '(' && toks[g].indexOf('/') >= 0) { var fx = '(' + divFix(toks[g].slice(1, -1)) + ')'; if (fx !== toks[g]) { toks[g] = fx; changed = true; } } // (n / 10) % 10
+      var acc = toks[0], accInt = isInt(toks[0]);
+      for (var q = 1; q < toks.length; q += 2) {
+        var op = toks[q], tk = toks[q + 1], ti = isInt(tk);
+        if (op === '/' && accInt && ti) { acc = '__idiv(' + acc + ', ' + tk + ')'; changed = true; }
+        else { acc = acc + ' ' + op + ' ' + tk; accInt = accInt && ti && op !== '/'; }
+      }
+      return changed ? acc : all;
+    }); }
+    t = divFix(t);
+    t = t.replace(/(^|[;{})]\s*|\n\s*|\belse\s+)(bitSet|bitClear|bitWrite)\s*\(\s*([A-Za-z_]\w*(?:\[[^\]]+\])?)\s*,/g, '$1$3 = $2($3,');
     var names = Object.keys(ints);
-    if (names.length) t = t.replace(new RegExp('(^|[^.\\w])(' + names.join('|') + ')(\\s*=\\s*)(?!=)([^;\\n]+);', 'g'), function (all, pre, name, eq, expr) { if (topSplit(expr).length > 1) return all; if (/^\s*(\d+|[A-Za-z_]\w*|\u0001\d+\u0001|true|false|HIGH|LOW)\s*$/.test(expr) || /^\s*\[/.test(expr) || /new /.test(expr)) return all; return pre + name + eq + '__int(' + expr + ');'; });
+    if (names.length) t = t.replace(new RegExp('(^|[^.\\w])(' + names.join('|') + ')(\\s*=\\s*)(?!=)([^;\\n]+);', 'g'), function (all, pre, name, eq, expr) { if (topSplit(expr).length > 1) return all; if (/^\s*(\d+|[A-Za-z_]\w*|\u0001\d+\u0001|true|false|HIGH|LOW)\s*$/.test(expr) || /^\s*\[/.test(expr) || /new /.test(expr)) return all; return pre + name + eq + (bytes[name] ? '__u8(' : '__int(') + expr + ');'; });
+    // print(float) shows 2 decimals on a real UNO even when the value is whole (5.0 → "5.00"): mark float arguments.
+    (function () {
+      var fl = Object.keys(floats), flRe = fl.length ? new RegExp('(^|[^.\\w])(' + fl.join('|') + ')(?![\\w(])') : null, out = '', k = 0, m, re = /\.(print|println)\s*\(/g;
+      while ((m = re.exec(t))) {
+        var st = m.index + m[0].length, d = 1, q = st; for (; q < t.length && d; q++) { if (t[q] === '(') d++; else if (t[q] === ')') d--; }
+        var inner = t.slice(st, q - 1), args = topSplit(inner), a0 = args[0];
+        if (a0.trim() && (/(^|[^\w.])\d+\.\d*|(^|[^\w])\.\d+/.test(a0) || (flRe && flRe.test(a0))) && !/\u0001/.test(a0)) {
+          out += t.slice(k, st) + '__F(' + a0 + ')' + (args.length > 1 ? ',' + args.slice(1).join(',') : ''); k = q - 1;
+        }
+      }
+      t = out + t.slice(k);
+    })();
     // await the slow calls (delay…), the sketch's own functions and library objects' methods
     var awaitNames = ASYNC_API.concat(fnames);
     t = t.replace(/([A-Za-z_]\w*)(\s*\()/g, function (all, name, paren, off, str) {
@@ -185,7 +223,8 @@
     function pinNo(p) { return typeof p === 'string' ? (PINS[p] != null ? PINS[p] : Number(p)) : Number(p); }
     function warn(key, msg) { if (warned[key]) return; warned[key] = 1; hooks.warn(msg); }
     function now() { return Math.floor(performance.now() - t0); }
-    function dev(name, v) { log.push({ t: now(), dev: name, v: v }); }
+    function trim() { if (log.length > 40000) log.splice(0, 20000); } // keep the pin log bounded on long runs
+    function dev(name, v) { log.push({ t: now(), dev: name, v: v }); trim(); }
     function level(p) { var v = val[p] || 0; return mode[p] === 'OUT' ? v : 0; }
     /* ---- sound ---- */
     function ac() { try { audio = audio || new (root.AudioContext || root.webkitAudioContext)(); return audio; } catch (e) { return null; } }
@@ -249,7 +288,7 @@
     LP.clear = function () { this.buf = [new Array(16).fill(' '), new Array(16).fill(' ')]; this.c = 0; this.r = 0; this._draw(); };
     LP.home = function () { this.c = 0; this.r = 0; };
     LP.setCursor = function (c, r) { this.c = Math.max(0, c | 0); this.r = Math.max(0, Math.min(1, r | 0)); };
-    LP.print = function (x, base) { var s = fmt(x, base); for (var i = 0; i < s.length; i++) { if (this.c < 40 && this.c < 16) this.buf[this.r][this.c] = s[i]; this.c++; } this._draw(); return s.length; };
+    LP.print = function (x, base) { var s = fmt(x, base).replace(/\u00df/g, '°'); for (var i = 0; i < s.length; i++) { if (this.c < 40 && this.c < 16) this.buf[this.r][this.c] = s[i]; this.c++; } this._draw(); return s.length; };
     LP.write = function (x) { return this.print(typeof x === 'number' ? String.fromCharCode(x) : x); };
     LP.noDisplay = function () { this.on = false; this._draw(); }; LP.display = function () { this.on = true; this._draw(); };
     LP.scrollDisplayLeft = function () { this.buf.forEach(function (b) { b.push(b.shift()); }); this._draw(); };
@@ -278,11 +317,12 @@
     var irQueue = state.ir;
     function IRrecv(pin) { this.pin = pinNo(pin); }
     IRrecv.prototype.enableIRIn = function () {};
-    IRrecv.prototype.decode = function (res) { if (!irQueue.length) return false; var c = irQueue.shift(); if (res) res.value = c === 'rep' ? 0xFFFFFFFF : necCode(c); return true; };
-    IRrecv.prototype.resume = function () {};
+    var irPaused = false;
+    IRrecv.prototype.decode = function (res) { if (irPaused || !irQueue.length) return false; var c = irQueue.shift(); if (res) res.value = c === 'rep' ? 0xFFFFFFFF : necCode(c); irPaused = true; return true; };
+    IRrecv.prototype.resume = function () { irPaused = false; };
     var IrReceiver = { decodedIRData: { command: 0, address: 0, flags: 0, decodedRawData: 0 },
-      begin: function () {}, start: function () {}, enableIRIn: function () {}, resume: function () {},
-      decode: function () { if (!irQueue.length) return false; var c = irQueue.shift(); this.decodedIRData = { command: c === 'rep' ? 0 : c, address: 0, flags: c === 'rep' ? 1 : 0, decodedRawData: c === 'rep' ? 0 : necCode(c) }; return true; },
+      begin: function () {}, start: function () {}, enableIRIn: function () {}, resume: function () { irPaused = false; },
+      decode: function () { if (irPaused) { if (irQueue.length && !R._irWarned) { R._irWarned = true; warn('irres', 'The receiver is waiting: call IrReceiver.resume() after each code, or it won’t read the next one.'); } return false; } if (!irQueue.length) return false; irPaused = true; var c = irQueue.shift(); this.decodedIRData = { command: c === 'rep' ? 0 : c, address: 0, flags: c === 'rep' ? 1 : 0, decodedRawData: c === 'rep' ? 0 : necCode(c) }; return true; },
       printIRResultShort: function () { R.api.Serial.println('Protocol=NEC Address=0x0 Command=0x' + this.decodedIRData.command.toString(16).toUpperCase()); } };
     R.irPress = function (cmd) { irQueue.push(cmd); var g = part(opts.ir && opts.ir.part); if (g && g._blink) g._blink(); };
     /* ---- serial input ---- */
@@ -290,6 +330,7 @@
     R.serialSend = function (s) { serIn += s + '\n'; };
     function fmt(x, base) {
       if (typeof x === 'boolean') return x ? '1' : '0';
+      if (x && typeof x === 'object' && '__f' in x) { var dp = base == null ? 2 : Math.max(0, Math.min(10, base)); return Number(x.__f).toFixed(dp); }
       if (typeof x === 'number') { if (base === 16) return (x >>> 0).toString(16).toUpperCase(); if (base === 2) return (x >>> 0).toString(2); if (!Number.isInteger(x) || (base != null && base < 10)) return x.toFixed(base == null || base > 9 ? 2 : base); }
       return String(x);
     }
@@ -304,12 +345,12 @@
         if (mode[p] !== 'OUT' && ((opts.leds || {})[p] || p === 13)) warn('dw' + p, 'Pin ' + p + ' isn’t set as an OUTPUT, so the LED will barely glow. Add pinMode(' + p + ', OUTPUT); to setup().');
         if (mode[p] !== 'OUT' && !(opts.leds || {})[p] && p !== 13 && mode[p] == null) warn('dwm' + p, 'Pin ' + p + ' has no pinMode — add pinMode(' + p + ', OUTPUT); in setup().');
         if (mode[p] == null && !(opts.leds || {})[p] && p !== 13) mode[p] = 'OUT';
-        val[p] = v; log.push({ t: now(), pin: p, v: v }); update(p);
+        val[p] = v; log.push({ t: now(), pin: p, v: v }); trim(); update(p);
       },
       analogWrite: function (p, v) {
         p = pinNo(p); var pwm = [3, 5, 6, 9, 10, 11].indexOf(p) >= 0;
         if (!pwm) warn('pwm' + p, 'Pin ' + p + ' can’t fade: only the pins marked ~ (3, 5, 6, 9, 10, 11) can use analogWrite.');
-        mode[p] = 'OUT'; v = Math.max(0, Math.min(255, Math.round(Number(v) || 0))); val[p] = pwm ? v / 255 : (v >= 128 ? 1 : 0); log.push({ t: now(), pin: p, v: val[p] }); update(p);
+        mode[p] = 'OUT'; v = Math.max(0, Math.min(255, Math.round(Number(v) || 0))); val[p] = pwm ? v / 255 : (v >= 128 ? 1 : 0); log.push({ t: now(), pin: p, v: val[p] }); trim(); update(p);
       },
       digitalRead: function (p) {
         p = pinNo(p); var b = (opts.buttons || {})[p];
@@ -345,7 +386,7 @@
       int: function (x) { return Math.trunc(Number(x)); }, float: function (x) { return Number(x); }, long: function (x) { return Math.trunc(Number(x)); }, byte: function (x) { return Math.trunc(Number(x)) & 255; }, word: function (x) { return Math.trunc(Number(x)) & 65535; },
       bitRead: function (x, n) { return (x >> n) & 1; }, bitWrite: function (x, n, b) { return b ? x | (1 << n) : x & ~(1 << n); }, bitSet: function (x, n) { return x | (1 << n); }, bitClear: function (x, n) { return x & ~(1 << n); },
       F: function (s) { return s; },
-      __idiv: function (a, b) { return b ? Math.trunc(a / b) : 0; }, __int: function (x) { return typeof x === 'number' ? Math.trunc(x) : x; },
+      __idiv: function (a, b) { return b ? Math.trunc(a / b) : 0; }, __int: function (x) { return typeof x === 'number' ? Math.trunc(x) : x; }, __u8: function (x) { return typeof x === 'number' ? ((Math.trunc(x) % 256) + 256) % 256 : x; },
       Serial: {
         begin: function () { R.serialOn = true; },
         print: function (x, base) { if (!R.serialOn) warn('ser', 'Serial.print needs Serial.begin(9600); in setup() first.'); hooks.serial(fmt(x, base)); },
@@ -361,6 +402,7 @@
         flush: function () {}
       },
       __t: function () { return performance.now() - lastYield > 14; },
+      __F: function (v) { return typeof v === 'number' ? { __f: v } : v; },
       __y: function () { return new Promise(function (res, rej) { setTimeout(function () { lastYield = performance.now(); if (stopped) rej(STOP); else res(); }, 0); }); }
     };
     R.millis = now;
@@ -379,10 +421,11 @@
       Object.keys(opts.leds || {}).forEach(function (p) { hooks.led(Number(p), 0); }); hooks.led(13, 0);
       if (opts.lcd) { var gl = part(opts.lcd); if (gl && gl._setText) gl._setText(['', '']); }
       if (opts.seg4) R._segTimer = setInterval(segLoop, 30);
-      return Promise.resolve().then(function () { return fns.setup(); }).then(function loopy() {
-        if (stopped) return;
-        return Promise.resolve(fns.loop()).then(function () { if (R.api.__t()) return R.api.__y().then(loopy); return loopy(); });
-      }).catch(function (e) { if (e === STOP) return; throw e; });
+      // A flat loop (not a promise chain), so a long-running sketch doesn't hold on to memory.
+      return (async function () {
+        await fns.setup();
+        while (!stopped) { await fns.loop(); if (R.api.__t()) await R.api.__y(); }
+      })().catch(function (e) { if (e === STOP) return; throw e; });
     };
     R.STOP = STOP;
   }
