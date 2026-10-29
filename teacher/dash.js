@@ -82,7 +82,7 @@
     drawTop(); view.innerHTML = '';
     if (!CUR && TAB !== 'roster' && TAB !== 'equipment') TAB = 'roster';
     ({ live: liveTab, subs: subsTab, progress: progTab, calendar: calTab, equipment: equipTab, comments: commentsTab, roster: rosterTab })[TAB]();
-    var foot = el('footer', 'dash-foot'); foot.appendChild(el('span', 'label', 'Display')); foot.appendChild(RL.themeSwitch()); view.appendChild(foot);
+    var foot = el('footer', 'dash-foot'); foot.appendChild(RL.themeSwitch()); view.appendChild(foot);
   }
 
   /* ---------- Live ---------- */
@@ -378,7 +378,7 @@
     var st = eqState(), totalStudents = CLASSES.reduce(function (a, c) { return a + (c.count || 0); }, 0);
     var groups = st.groups || Math.max(1, Math.ceil(totalStudents / 2));
     view.appendChild(el('div', 'dhead', '<div><div class="label">Arduino unit</div><h1>Equipment</h1></div>'));
-    view.appendChild(el('p', 'muted', 'What each mission needs besides the ELEGOO kits, in calendar order, with a specific Amazon.ca product for each. Tick what you want, check the number of packs, and email the list to Carla. <b>Change product</b> swaps in any link you prefer; it’s saved for every class and every device.'));
+    view.appendChild(el('p', 'muted', 'What each mission needs besides the ELEGOO kits, in calendar order, with a specific Amazon.ca product for each. Tick what you want, check the number of packs, and email the list to Carla (the linked list and total are copied for you to paste into the email). <b>Change product</b> swaps in any link you prefer; it’s saved for every class and every device.'));
     var set = el('div', 'eq-set panel');
     set.innerHTML = '<label>Groups <input type="number" min="1" max="80" class="eq-groups" value="' + groups + '"></label><span class="small muted">' + totalStudents + ' student' + (totalStudents === 1 ? '' : 's') + ' on your class lists' + (totalStudents ? ' · ' + Math.ceil(totalStudents / 2) + ' pairs' : '') + '. Pack counts are worked out from this.</span>';
     view.appendChild(set);
@@ -404,7 +404,7 @@
         q.addEventListener('change', function () { st.qty[k] = Math.max(0, Number(q.value) || 0); eqSave(st); refresh(); });
         var info = el('div', 'eq-info');
         info.innerHTML = '<div class="eq-name">' + esc(o.item) + (o.optional ? ' <span class="tag">optional</span>' : '') + '</div>' +
-          '<div class="small"><a href="' + esc(pr.url) + '" target="_blank" rel="noopener">' + esc(pr.product) + ' ↗</a>' + (pr.custom ? ' <span class="tag c">your pick</span>' : ' <span class="muted">· ' + esc(o.price) + '</span>') + '</div>' +
+          '<div class="small"><a href="' + esc(pr.url) + '" target="_blank" rel="noopener">' + esc(pr.product) + ' ↗</a>' + (pr.custom ? ' <span class="tag c">your pick</span>' + (EQUIP[o.key] && EQUIP[o.key].price ? ' <span class="muted">· $' + esc(EQUIP[o.key].price) + '</span>' : '') : ' <span class="muted">· ' + esc(o.price) + '</span>') + '</div>' +
           '<div class="small muted">' + (o.packs != null ? o.packs + ' pack' + (o.packs === 1 ? '' : 's') + ' for the class' : o.each + ' ' + esc(o.unit) + ' per group → ' + RL.orderQty(o, groups) + ' pack' + (RL.orderQty(o, groups) === 1 ? '' : 's') + ' of ' + o.pack) + '</div>';
         var ch = el('button', 'btn btn-ghost btn-small', 'Change product'); ch.type = 'button';
         ch.addEventListener('click', function () { editProduct(o, info, ch); });
@@ -417,15 +417,16 @@
     function editProduct(o, info, btn) {
       if (info.querySelector('.eq-edit')) return;
       var pr = prodOf(o), f = el('div', 'eq-edit'), u = el('input'), n = el('input'), sv = el('button', 'btn btn-primary btn-small', 'Save'), cx = el('button', 'btn btn-ghost btn-small', 'Cancel');
-      u.type = n.type = 'text'; u.placeholder = 'Paste the product link (amazon.ca or any store)'; n.placeholder = 'Product name (for the email)'; sv.type = cx.type = 'button';
-      u.value = pr.custom ? pr.url : ''; n.value = pr.custom ? pr.product : '';
-      f.appendChild(u); f.appendChild(n); var r = el('div', 'row2'); r.appendChild(sv); r.appendChild(cx);
+      var pc = el('input'); pc.type = 'text'; pc.inputMode = 'decimal'; pc.placeholder = 'Price per pack, e.g. 12.99';
+      u.type = n.type = 'text'; u.placeholder = 'Paste the product link (amazon.ca or any store)'; n.placeholder = 'Product name (shown here in the list)'; sv.type = cx.type = 'button';
+      u.value = pr.custom ? pr.url : ''; n.value = pr.custom ? pr.product : ''; pc.value = pr.custom && EQUIP[o.key] && EQUIP[o.key].price ? EQUIP[o.key].price : '';
+      f.appendChild(u); f.appendChild(n); f.appendChild(pc); var r = el('div', 'row2'); r.appendChild(sv); r.appendChild(cx);
       if (pr.custom) { var rs = el('button', 'btn btn-ghost btn-small', 'Use the suggested product'); rs.type = 'button'; rs.addEventListener('click', function () { var e2 = Object.assign({}, EQUIP); delete e2[o.key]; saveEquip(e2); }); r.appendChild(rs); }
       f.appendChild(r); info.appendChild(f); btn.disabled = true; u.focus();
       cx.addEventListener('click', function () { f.remove(); btn.disabled = false; });
       sv.addEventListener('click', function () {
         var url = u.value.trim(); if (!/^https?:\/\//.test(url)) { toast('Paste a full link starting with https://', true); return; }
-        var e2 = Object.assign({}, EQUIP); e2[o.key] = { url: url, product: n.value.trim() || o.product.replace(/^[^(]*/, 'Alternative ') }; saveEquip(e2);
+        var e2 = Object.assign({}, EQUIP); e2[o.key] = { url: url, product: n.value.trim() || o.product.replace(/^[^(]*/, 'Alternative '), price: pc.value.trim().replace(/[^0-9.]/g, '') }; saveEquip(e2);
       });
     }
     function saveEquip(e2) { post({ kind: 'setequip', equip: e2 }).then(function (r) { if (r && r.ok) { EQUIP = r.equip; toast('Saved. This product is used everywhere it appears.'); render(); } else toast('Not saved: ' + ((r && r.error) || 'error'), true); }, function () { toast('Not saved — check your connection.', true); }); }
@@ -436,34 +437,61 @@
       var row = el('div', 'eq-item');
       var cb = el('input'); cb.type = 'checkbox'; cb.checked = c.pick !== false; cb.addEventListener('change', function () { c.pick = cb.checked; eqSave(st); refresh(); });
       var q = el('input'); q.type = 'number'; q.min = 0; q.value = c.qty || 1; q.className = 'eq-q'; q.addEventListener('change', function () { c.qty = Math.max(0, Number(q.value) || 0); eqSave(st); refresh(); });
-      var info = el('div', 'eq-info', '<div class="eq-name">' + esc(c.item) + '</div>' + (c.link ? '<div class="small"><a href="' + esc(c.link) + '" target="_blank" rel="noopener">' + esc(c.link.replace(/^https?:\/\/(www\.)?/, '').slice(0, 60)) + ' ↗</a></div>' : ''));
+      var info = el('div', 'eq-info', '<div class="eq-name">' + esc(c.item) + '</div>' + (c.link ? '<div class="small"><a href="' + esc(c.link) + '" target="_blank" rel="noopener">' + esc(c.link.replace(/^https?:\/\/(www\.)?/, '').slice(0, 60)) + ' ↗</a>' + (c.price ? ' <span class="muted">· $' + esc(c.price) + '</span>' : '') + '</div>' : (c.price ? '<div class="small muted">$' + esc(c.price) + '</div>' : '')));
       var x = el('button', 'btn btn-ghost btn-small', 'Remove'); x.type = 'button'; x.addEventListener('click', function () { st.custom.splice(i, 1); eqSave(st); render(); });
       row.appendChild(cb); row.appendChild(q); row.appendChild(info); row.appendChild(x); cl.appendChild(row);
     });
-    var add = el('div', 'row2'), ni = el('input'), nl = el('input'), nb = el('button', 'btn btn-ghost btn-small', 'Add item');
-    ni.type = 'text'; ni.placeholder = 'Item (e.g. AA batteries, 24 pack)'; nl.type = 'text'; nl.placeholder = 'Product link'; nb.type = 'button';
-    nb.addEventListener('click', function () { if (!ni.value.trim()) return; st.custom.push({ item: ni.value.trim(), link: /^https?:\/\//.test(nl.value.trim()) ? nl.value.trim() : '', qty: 1, pick: true }); eqSave(st); render(); });
-    add.appendChild(ni); add.appendChild(nl); add.appendChild(nb); cu.appendChild(add); list.appendChild(cu);
-    // the email
+    var add = el('div', 'row2'), ni = el('input'), nl = el('input'), np2 = el('input'), nb = el('button', 'btn btn-ghost btn-small', 'Add item');
+    ni.type = 'text'; ni.placeholder = 'Item (e.g. AA batteries)'; nl.type = 'text'; nl.placeholder = 'Product link'; np2.type = 'text'; np2.inputMode = 'decimal'; np2.placeholder = 'Price'; np2.className = 'eq-price'; nb.type = 'button';
+    nb.addEventListener('click', function () { if (!ni.value.trim()) return; st.custom.push({ item: ni.value.trim(), link: /^https?:\/\//.test(nl.value.trim()) ? nl.value.trim() : '', price: np2.value.trim().replace(/[^0-9.]/g, ''), qty: 1, pick: true }); eqSave(st); render(); });
+    add.appendChild(ni); add.appendChild(nl); add.appendChild(np2); add.appendChild(nb); cu.appendChild(add); list.appendChild(cu);
+    // the email: one line per product (the same product in several missions is added up), with a total
+    function money(n) { return '$' + n.toFixed(2); }
+    function priceOf(x) { var n = parseFloat(String(x == null ? '' : x).replace(/[^0-9.]/g, '')); return isFinite(n) && n > 0 ? n : null; }
+    function niceName(s) { s = String(s || '').replace(/\s*\([^)]*\)\s*$/, '').trim(); return s.replace(/(^|[\s\-\/])([a-z])/g, function (m, a, b) { return a + b.toUpperCase(); }).replace(/\bAnd\b/g, 'and'); }
     function lines() {
-      var out = [];
+      var byKey = {}, out = [];
       order.forEach(function (m) {
-        var items = (RL.ORDERS || {})[m.id] || [], chosen = [];
-        items.forEach(function (o, i) { var q = qtyOf(m, o, i), pr = prodOf(o); if (picked(m, o, i) && q > 0) chosen.push('• ' + q + ' × ' + pr.product + (pr.custom ? '' : ' (' + o.price + ' each)') + ' — for ' + o.item.toLowerCase().replace(/\s*\(.*\)$/, '') + '\n  ' + pr.url); });
-        if (chosen.length) { var sp = L && L.span[m.id]; out.push('Mission ' + m.num + ': ' + m.title + (sp ? ' (starts ' + C.nice(sp.start, { weekday: 'short', month: 'short', day: 'numeric' }) + ')' : '') + '\n' + chosen.join('\n')); }
+        ((RL.ORDERS || {})[m.id] || []).forEach(function (o, i) {
+          var q = qtyOf(m, o, i); if (!picked(m, o, i) || q <= 0) return;
+          var pr = prodOf(o), k = pr.url, x = byKey[k];
+          if (!x) { x = byKey[k] = { name: pr.custom ? niceName(pr.product) : (o.name || niceName(o.item)), url: pr.url, qty: 0, each: pr.custom ? priceOf(EQUIP[o.key] && EQUIP[o.key].price) : priceOf(o.price) }; out.push(x); }
+          x.qty += q;
+        });
       });
-      var cc = st.custom.filter(function (c) { return c.pick !== false && (c.qty || 1) > 0; }).map(function (c) { return '• ' + (c.qty || 1) + ' × ' + c.item + (c.link ? '\n  ' + c.link : ''); });
-      if (cc.length) out.push('Other\n' + cc.join('\n'));
+      st.custom.forEach(function (c) { var q = c.qty || 1; if (c.pick === false || q <= 0) return; out.push({ name: c.item, url: c.link || '', qty: q, each: priceOf(c.price) }); });
       return out;
     }
+    function total(ls2) { var t = 0, unknown = 0; ls2.forEach(function (x) { if (x.each == null) unknown++; else t += x.each * x.qty; }); return { t: t, unknown: unknown }; }
+    function lineText(x) { return x.qty + ' x ' + x.name + (x.each != null ? ' (' + money(x.each * x.qty) + ')' : ''); }
+    function totalText(ls2) { var T = total(ls2); return 'Total: ' + money(T.t) + (T.unknown ? ' (plus ' + T.unknown + ' item' + (T.unknown === 1 ? '' : 's') + ' without a price)' : '') + ', before tax'; }
+    var GREET = 'Hi Carla,\n\nCould you please order the following for my robotics class?\n\n', SIGN = '\n\nThank you!\nRyan Cathcart';
+    function bodyText(ls2) { return GREET + ls2.map(function (x) { return lineText(x) + (x.url ? '\n  ' + x.url : ''); }).join('\n') + '\n\n' + totalText(ls2) + SIGN; }
+    function listHtml(ls2) {
+      var e = function (t) { return String(t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+      return ls2.map(function (x) { var nm = x.url ? '<a href="' + e(x.url) + '">' + e(x.name) + '</a>' : e(x.name); return '<div>' + x.qty + ' x ' + nm + (x.each != null ? ' (' + money(x.each * x.qty) + ')' : '') + '</div>'; }).join('') + '<div><br></div><div><b>' + e(totalText(ls2)) + '</b></div>';
+    }
+    function listPlain(ls2) { return ls2.map(lineText).join('\n') + '\n\n' + totalText(ls2); }
+    function copyRich(html, plain) {
+      try { if (navigator.clipboard && root.ClipboardItem) return navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([html], { type: 'text/html' }), 'text/plain': new Blob([plain], { type: 'text/plain' }) })]).then(function () { return true; }, function () { return false; }); } catch (e) {}
+      return Promise.resolve(false);
+    }
     var bar = el('div', 'eq-bar');
-    var mail = el('a', 'btn btn-primary', 'Email Carla for orders'), cp = el('button', 'btn btn-ghost', 'Copy the list'), cnt = el('span', 'small muted');
-    cp.type = 'button';
-    function body() { return 'Hi Carla,\n\nCould you please order the following for my robotics class (Room 2997)? Each link goes to the exact product on Amazon.ca, and the number in front is how many to order.\n\n' + lines().join('\n\n') + '\n\nThank you!\nRyan Cathcart'; }
-    function refresh() { var n = lines().reduce(function (a, b) { return a + (b.match(/^• /gm) || []).length; }, 0); cnt.textContent = n ? n + ' item' + (n === 1 ? '' : 's') + ' ticked' : 'Nothing ticked yet'; mail.href = 'mailto:' + ORDER_TO + '?subject=' + encodeURIComponent('Robotics order request (Room 2997)') + '&body=' + encodeURIComponent(body()); mail.classList.toggle('disabled', !n); }
-    mail.addEventListener('click', function (e) { if (!lines().length) { e.preventDefault(); toast('Tick at least one item first.', true); } });
-    cp.addEventListener('click', function () { RL.Code.copy(body(), cp); });
-    bar.appendChild(mail); bar.appendChild(cp); bar.appendChild(cnt); bar.appendChild(el('span', 'small muted eq-to', 'To: ' + ORDER_TO));
+    var mail = el('a', 'btn btn-primary', 'Email Carla for orders'), cp = el('button', 'btn btn-ghost', 'Copy the list'), cnt = el('span', 'small muted'), tot = el('span', 'eq-total');
+    cp.type = 'button'; mail.href = '#';
+    function refresh() { var ls2 = lines(), T = total(ls2); cnt.textContent = ls2.length ? ls2.length + ' item' + (ls2.length === 1 ? '' : 's') + ' ticked' : 'Nothing ticked yet'; tot.textContent = ls2.length ? 'Total ' + money(T.t) + (T.unknown ? ' + ' + T.unknown + ' unpriced' : '') : ''; mail.classList.toggle('disabled', !ls2.length); }
+    /* A mailto link can only carry plain text, so the item names with their links go on the clipboard: the email opens with
+       the greeting, and pasting adds the linked list and the total. Without clipboard access the plain list (with links) goes in. */
+    mail.addEventListener('click', function (e) {
+      e.preventDefault(); var ls2 = lines(); if (!ls2.length) { toast('Tick at least one item first.', true); return; }
+      copyRich(listHtml(ls2), listPlain(ls2)).then(function (ok) {
+        var body = ok ? GREET + '\n' + SIGN : bodyText(ls2);
+        location.href = 'mailto:' + ORDER_TO + '?subject=' + encodeURIComponent('Robotics order request') + '&body=' + encodeURIComponent(body);
+        if (ok) toast('The list is copied. Paste it into the email under the first line (Ctrl+V / ⌘V).');
+      });
+    });
+    cp.addEventListener('click', function () { var ls2 = lines(); if (!ls2.length) { toast('Tick at least one item first.', true); return; } copyRich(GREET.replace(/\n/g, '<br>') + listHtml(ls2) + SIGN.replace(/\n/g, '<br>'), bodyText(ls2)).then(function (ok) { if (ok) { cp.textContent = 'Copied'; setTimeout(function () { cp.textContent = 'Copy the list'; }, 1500); } else RL.Code.copy(bodyText(ls2), cp); }); });
+    bar.appendChild(mail); bar.appendChild(cp); bar.appendChild(tot); bar.appendChild(cnt); bar.appendChild(el('span', 'small muted eq-to', 'To: ' + ORDER_TO));
     view.insertBefore(bar, list); refresh();
   }
 

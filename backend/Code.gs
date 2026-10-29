@@ -404,12 +404,12 @@ function delClass_(klass) {
   props_().deleteProperty('CAL:' + k); return { ok: true };
 }
 
-/* the teacher's own product links for the Equipment tab: { productKey: { url, product } } */
+/* the teacher's own product links for the Equipment tab: { productKey: { url, product, price } } */
 function setEquip_(eq) {
   var out = {}; Object.keys(eq || {}).slice(0, 60).forEach(function (k) {
     var x = eq[k] || {}, url = String(x.url || '').trim();
     if (!/^https?:\/\//.test(url)) return;
-    out[clean_(k, 40)] = { url: url.slice(0, 500), product: clean_(x.product || '', 120) };
+    out[clean_(k, 40)] = { url: url.slice(0, 500), product: clean_(x.product || '', 120), price: String(x.price || '').replace(/[^0-9.]/g, '').slice(0, 10) };
   });
   var txt = JSON.stringify(out); if (txt.length > 8500) return { ok: false, error: 'too many links' };
   save_('EQUIP', out); return { ok: true, equip: out };

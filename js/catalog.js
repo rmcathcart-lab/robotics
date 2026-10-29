@@ -143,26 +143,26 @@
   };
 
   /* Extra materials to order (the Equipment tab). Each item is one specific Amazon.ca product (checked Oct 28, 2026):
-     { item: what it's for, product: the listing's name, asin, pack: units in one order, unit: what a unit is,
+     { item: what it's for, name: what to call it in the order email, product: the listing's name, asin, pack: units in one order, unit: what a unit is,
        each: units each group needs (→ packs = groups × each ÷ pack, rounded up) or packs: a fixed number of packs for
        the class, price: as seen }. The teacher can swap any product for another link in the dashboard. */
   var P = {
-    glue: { product: 'Surebonder DT-100 mini glue sticks, 4 in (100)', asin: 'B003JZII34', pack: 100, unit: 'sticks', price: '$11.62' },
-    craft: { product: 'Jumbo craft sticks, plain (500)', asin: 'B09H99YJVT', pack: 500, unit: 'sticks', price: '$16.04' },
-    cardboard: { product: 'RLAVBL 12×12 in corrugated cardboard sheets (50)', asin: 'B0F4JGSC2J', pack: 50, unit: 'sheets', price: '$29.99' },
-    cups: { product: '12 oz white plastic cups (50)', asin: 'B07KMFDHY8', pack: 50, unit: 'cups', price: '$29.83' },
-    vellum: { product: 'Goefun translucent vellum paper, 8.5×11 (50 sheets)', asin: 'B0GVDSWYHP', pack: 50, unit: 'sheets', price: '$13.99' },
-    fmwires: { product: 'ELEGOO 20 cm 40-pin female-to-male jumper wires (40)', asin: 'B0H6F7ZZFX', pack: 40, unit: 'wires', price: '$6.99' },
-    fasteners: { product: 'ACCO brass paper fasteners, 1 in (100)', asin: 'B004LWSFAK', pack: 100, unit: 'fasteners', price: '$6.99' },
-    dht11: { product: 'HiLetgo DHT11 temperature & humidity modules (5)', asin: 'B01DKC2GQ0', pack: 5, unit: 'modules', price: '$17.49' },
-    cars: { product: 'JOYIN pull-back city cars and trucks (18)', asin: 'B08KTW2DT4', pack: 18, unit: 'vehicles', price: '$19.99' },
-    masking: { product: 'Scotch contractor grade masking tape, 24 mm (6 rolls)', asin: 'B008LAQYXI', pack: 6, unit: 'rolls', price: '$14.42' },
-    tapes: { product: 'LEXIVON 3 m tape measures, metric + imperial (3)', asin: 'B07MH66JQ1', pack: 3, unit: 'tape measures', price: '$24.99' },
-    boxes: { product: 'PHAREGE 4×4×2 in boxes with tuck lids (25)', asin: 'B08X25JQML', pack: 25, unit: 'boxes', price: '$23.09' },
-    nine: { product: 'Amazon Basics 9 V alkaline batteries (8)', asin: 'B00MH4QM1S', pack: 8, unit: 'batteries', price: '$18.64' },
-    cake: { product: 'qiqee 8 in round white cake boards (30)', asin: 'B0DGPV679D', pack: 30, unit: 'boards', price: '$17.88' },
-    foam: { product: 'Scotch-Mount double-sided mounting tape, ¾ in × 350 in', asin: 'B009NP1OBC', pack: 1, unit: 'roll', price: '$17.77' },
-    arcade: { product: 'EG Starts 30 mm arcade push buttons (12)', asin: 'B01MRWL6DW', pack: 12, unit: 'buttons', price: '$15.99' }
+    glue: { name: 'Hot Glue Sticks', product: 'Surebonder DT-100 mini glue sticks, 4 in (100)', asin: 'B003JZII34', pack: 100, unit: 'sticks', price: '$11.62' },
+    craft: { name: 'Jumbo Craft Sticks', product: 'Jumbo craft sticks, plain (500)', asin: 'B09H99YJVT', pack: 500, unit: 'sticks', price: '$16.04' },
+    cardboard: { name: 'Cardboard Sheets', product: 'RLAVBL 12×12 in corrugated cardboard sheets (50)', asin: 'B0F4JGSC2J', pack: 50, unit: 'sheets', price: '$29.99' },
+    cups: { name: 'White Plastic Cups', product: '12 oz white plastic cups (50)', asin: 'B07KMFDHY8', pack: 50, unit: 'cups', price: '$29.83' },
+    vellum: { name: 'Vellum Paper', product: 'Goefun translucent vellum paper, 8.5×11 (50 sheets)', asin: 'B0GVDSWYHP', pack: 50, unit: 'sheets', price: '$13.99' },
+    fmwires: { name: 'Female-to-Male Jumper Wires', product: 'ELEGOO 20 cm 40-pin female-to-male jumper wires (40)', asin: 'B0H6F7ZZFX', pack: 40, unit: 'wires', price: '$6.99' },
+    fasteners: { name: 'Brass Paper Fasteners', product: 'ACCO brass paper fasteners, 1 in (100)', asin: 'B004LWSFAK', pack: 100, unit: 'fasteners', price: '$6.99' },
+    dht11: { name: 'DHT11 Sensors', product: 'HiLetgo DHT11 temperature & humidity modules (5)', asin: 'B01DKC2GQ0', pack: 5, unit: 'modules', price: '$17.49' },
+    cars: { name: 'Pull-Back Toy Cars', product: 'JOYIN pull-back city cars and trucks (18)', asin: 'B08KTW2DT4', pack: 18, unit: 'vehicles', price: '$19.99' },
+    masking: { name: 'Masking Tape', product: 'Scotch contractor grade masking tape, 24 mm (6 rolls)', asin: 'B008LAQYXI', pack: 6, unit: 'rolls', price: '$14.42' },
+    tapes: { name: 'Tape Measures', product: 'LEXIVON 3 m tape measures, metric + imperial (3)', asin: 'B07MH66JQ1', pack: 3, unit: 'tape measures', price: '$24.99' },
+    boxes: { name: 'Small Kraft Boxes', product: 'PHAREGE 4×4×2 in boxes with tuck lids (25)', asin: 'B08X25JQML', pack: 25, unit: 'boxes', price: '$23.09' },
+    nine: { name: '9V Batteries', product: 'Amazon Basics 9 V alkaline batteries (8)', asin: 'B00MH4QM1S', pack: 8, unit: 'batteries', price: '$18.64' },
+    cake: { name: 'Cake Boards', product: 'qiqee 8 in round white cake boards (30)', asin: 'B0DGPV679D', pack: 30, unit: 'boards', price: '$17.88' },
+    foam: { name: 'Double-Sided Mounting Tape', product: 'Scotch-Mount double-sided mounting tape, ¾ in × 350 in', asin: 'B009NP1OBC', pack: 1, unit: 'roll', price: '$17.77' },
+    arcade: { name: 'Arcade Push Buttons', product: 'EG Starts 30 mm arcade push buttons (12)', asin: 'B01MRWL6DW', pack: 12, unit: 'buttons', price: '$15.99' }
   };
   function it(item, k, o) { var p = P[k]; return Object.assign({ item: item, key: k, link: 'https://www.amazon.ca/dp/' + p.asin }, p, o); }
   RL.ORDERS = {

@@ -200,3 +200,5 @@
 .rcards .ps-up { display: grid; gap: 6px; margin: 0; }
 .rcards .ps-up .small { min-width: 0; }
 .rcards .file-btn { justify-self: start; white-space: normal; text-align: left; }
+.eq-total { font: 600 15px/20px var(--mono); color: var(--ink); }
+.eq-price { width: 90px; flex: 0 0 90px !important; min-width: 0 !important; }

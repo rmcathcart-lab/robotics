@@ -201,8 +201,7 @@
       });
       sec.appendChild(grid); wrap.appendChild(sec);
     });
-    var foot = el('footer', 'home-foot'); foot.appendChild(el('span', 'label', 'Display')); foot.appendChild(RL.themeSwitch());
-    foot.appendChild(el('span', 'small muted', 'Light is easier to read in a bright room. Drawings and code stay dark.'));
+    var foot = el('footer', 'home-foot'); foot.appendChild(RL.themeSwitch());
     wrap.appendChild(foot);
     view.appendChild(wrap);
     if (keepScroll) root.scrollTo(0, y);
