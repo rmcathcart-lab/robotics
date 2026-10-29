@@ -7,17 +7,18 @@
  * Run setup() once from the editor: it creates the "Robotics Lab Records" spreadsheet, the "Robotics Lab Submissions"
  * Drive folder and a teacher key, and logs all three.
  *
- * Sheets:  Roster       one row per student: class, name, PIN (salted hash), first/last seen, devices, failed tries
+ * Sheets:  Roster       one row per student: class, name, PIN (salted hash), first/last seen, devices, failed tries,
+ *                       PowerSchool student number, pronouns and IPP (for report card comments), course level (15/25/35)
  *          Progress     one row per student per mission: steps done + the saved mission state (answers, checkpoints)
  *          Submissions  one row per student per mission: files (Google Drive ids), reflections, grade, feedback
  * Script properties: SHEET_ID, FOLDER_ID, TEACHER_KEY, SECRET, CLASSES, CAL:<class> (or CAL:* when calendars are
- *   synced), CALSYNC, NOSCHOOL. "Who is on right now" lives in the script cache.
+ *   synced), CALSYNC, NOSCHOOL, EQUIP (the teacher's product links). "Who is on right now" lives in the script cache.
  * Uploads: the student's browser sends a file in 4 MiB pieces; each piece is passed on to Google Drive's resumable
  *   upload, so videos far bigger than one request can hold still arrive as a single Drive file.
  * ============================================================ */
 
 var COLS = {
-  Roster: ['class', 'name', 'pin', 'pinSet', 'firstSeen', 'lastSeen', 'devices', 'fails', 'lockUntil'],
+  Roster: ['class', 'name', 'pin', 'pinSet', 'firstSeen', 'lastSeen', 'devices', 'fails', 'lockUntil', 'num', 'pronouns', 'ipp', 'level'],
   Progress: ['key', 'class', 'name', 'mission', 'stepsDone', 'step', 'updated', 'state'],
   Submissions: ['id', 'class', 'name', 'mission', 'version', 'submitted', 'files', 'reflections', 'checks', 'thumbs', 'status', 'levels', 'comment', 'gradedAt', 'history']
 };
@@ -37,6 +38,7 @@ function sheet_(name) {
   if (SHEETS_[name]) return SHEETS_[name];
   var ss = ss_(), sh = ss.getSheetByName(name), cols = COLS[name];
   if (!sh) { sh = ss.insertSheet(name); sh.appendRow(cols); sh.setFrozenRows(1); sh.getRange(1, 1, 1, cols.length).setFontWeight('bold'); }
+  else if (sh.getLastColumn() < cols.length) sh.getRange(1, 1, 1, cols.length).setValues([cols]).setFontWeight('bold'); // a newer version added columns
   return (SHEETS_[name] = sh);
 }
 function rows_(name) { var sh = sheet_(name), n = sh.getLastRow() - 1; return n > 0 ? sh.getRange(2, 1, n, COLS[name].length).getValues() : []; }
@@ -156,7 +158,8 @@ function me_(klass, name, token) {
   var c = classOf_(who.klass), k = norm_(who.klass) + '|' + norm_(who.name) + '|', prog = {}, subs = {};
   rows_('Progress').forEach(function (r) { if (String(r[0]).indexOf(k) === 0) prog[r[3]] = parse_(r[7] || '{}', {}); });
   rows_('Submissions').forEach(function (r) { if (norm_(r[1]) === norm_(who.klass) && norm_(r[2]) === norm_(who.name)) subs[r[3]] = studentSub_(r); });
-  return { ok: true, label: c ? c.label : who.klass, progress: prog, subs: subs, cal: cal_(who.klass), noSchool: noSchool_() };
+  var st = findStudent_(who.klass, who.name);
+  return { ok: true, label: c ? c.label : who.klass, level: st ? String(st.v[12] || '') : '', progress: prog, subs: subs, cal: cal_(who.klass), noSchool: noSchool_() };
 }
 function studentSub_(r) {
   var graded = r[10] === 'graded' || r[10] === 'revise';
@@ -177,9 +180,11 @@ function doPost(e) {
     if (k === 'submit') return json_(submit_(body));
     if (!teacherKey_() || body.key !== teacherKey_()) return json_({ ok: false, error: 'bad key' });
     if (k === 'grade') return json_(grade_(body));
-    if (k === 'setroster') return json_(setRoster_(body['class'], body.label, body.names, body.mode));
+    if (k === 'setroster') return json_(setRoster_(body['class'], body.label, body.names, body.mode, body.students, body.ps, body.level));
+    if (k === 'setstudent') return json_(setStudent_(body['class'], body.list || [body]));
     if (k === 'setcal') return json_(setCal_(body['class'], body.cal, !!body.all));
     if (k === 'setnoschool') return json_(setNoSchool_(body.dates));
+    if (k === 'setequip') return json_(setEquip_(body.equip));
     return json_({ ok: false, error: 'unknown kind' });
   } catch (err) { return json_({ ok: false, error: String(err) }); }
 }
@@ -294,18 +299,19 @@ function submit_(b) {
 /* ---------------- teacher ---------------- */
 function classList_() {
   var counts = {}; rows_('Roster').forEach(function (r) { var k = norm_(r[0]); counts[k] = (counts[k] || 0) + 1; });
-  return { ok: true, classes: classes_().map(function (c) { return { code: c.code, label: c.label || c.code, count: counts[c.code] || 0 }; }), calSync: props_().getProperty('CALSYNC') === '1', noSchool: noSchool_() };
+  return { ok: true, classes: classes_().map(function (c) { return { code: c.code, label: c.label || c.code, count: counts[c.code] || 0, ps: c.ps || null }; }), calSync: props_().getProperty('CALSYNC') === '1', noSchool: noSchool_(), equip: list_('EQUIP') || {} };
 }
 function dash_(klass) {
   var c = classOf_(klass); if (!c) return { ok: false, error: 'unknown class' };
   var k = norm_(klass);
-  var roster = rosterRows_(klass).map(function (x) { return { name: String(x.v[1]), pin: !!x.v[2], lastSeen: ms_(x.v[5]), devices: parse_(x.v[6] || '[]', []).length }; });
+  var roster = rosterRows_(klass).map(function (x) { return { name: String(x.v[1]), pin: !!x.v[2], lastSeen: ms_(x.v[5]), devices: parse_(x.v[6] || '[]', []).length,
+    num: String(x.v[9] || ''), pronouns: String(x.v[10] || ''), ipp: !!x.v[11], level: String(x.v[12] || '') }; });
   roster.sort(function (a, b) { return a.name.localeCompare(b.name); });
   var prog = {};
   rows_('Progress').forEach(function (r) { if (norm_(r[1]) !== k) return; var st = parse_(r[7] || '{}', {}); (prog[r[2]] = prog[r[2]] || {})[r[3]] = { done: Object.keys(st.done || {}), step: Number(r[5]) || 1, updated: ms_(r[6]) }; });
   var subs = [];
   subRows_().forEach(function (x) { var r = x.v; if (norm_(r[1]) !== k) return; subs.push({ id: String(r[0]), name: String(r[2]), mission: String(r[3]), version: Number(r[4]) || 1, submitted: ms_(r[5]), status: String(r[10] || 'submitted'), levels: parse_(r[11], {}), fileCount: parse_(r[6], []).length, gradedAt: ms_(r[13]) }); });
-  return { ok: true, code: c.code, label: c.label || c.code, roster: roster, progress: prog, subs: subs, live: live_(klass), cal: cal_(klass), noSchool: noSchool_(), calSync: props_().getProperty('CALSYNC') === '1', now: Date.now() };
+  return { ok: true, code: c.code, label: c.label || c.code, ps: c.ps || null, roster: roster, progress: prog, subs: subs, live: live_(klass), cal: cal_(klass), noSchool: noSchool_(), calSync: props_().getProperty('CALSYNC') === '1', now: Date.now() };
 }
 function subDetail_(id) {
   var x = null; subRows_().forEach(function (s) { if (String(s.v[0]) === String(id)) x = s; }); if (!x) return { ok: false, error: 'not found' };
@@ -334,22 +340,59 @@ function grade_(b) {
     return { ok: true, status: status };
   } finally { lock.releaseLock(); }
 }
-function setRoster_(klass, label, names, mode) {
+/* names: text, one per line; students: [{ n, num, as }] from a PowerSchool scores template (as = the name already on the
+   class list that this row matched, so a slightly different spelling keeps the student's PIN and work); ps: the template's
+   header ({ teacher, course, points, type }), kept with the class for report cards. mode 'replace' removes anyone not listed.
+   level ('15' | '25' | '35', optional): the course level of everyone listed (a template from one PowerSchool section). */
+function setRoster_(klass, label, names, mode, students, ps, level) {
   var code = norm_(klass).replace(/[^a-z0-9\-_ ]/g, '').slice(0, 24); if (!code) return { ok: false, error: 'A class needs a code (letters and numbers).' };
   var lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
     var cs = classes_(), c = null; cs.forEach(function (x) { if (x.code === code) c = x; });
     if (!c) { c = { code: code, label: clean_(label || code, 40) }; cs.push(c); } else if (label) c.label = clean_(label, 40);
+    var psi = typeof ps === 'string' ? parse_(ps, null) : ps;
+    if (psi && typeof psi === 'object') c.ps = { teacher: clean_(psi.teacher, 60), course: clean_(psi.course, 60), points: clean_(psi.points, 10), type: clean_(psi.type, 20) };
     save_('CLASSES', cs);
-    var list = (Array.isArray(names) ? names : String(names || '').split(/\n/)).map(function (n) { return clean_(n, 60); }).filter(Boolean);
-    var have = {}; rosterRows_(code).forEach(function (x) { have[norm_(x.v[1])] = x; });
+    var studs = typeof students === 'string' ? parse_(students, []) : (students || []);
+    var list = (Array.isArray(studs) && studs.length ? studs : (Array.isArray(names) ? names : String(names || '').split(/\n/)).map(function (n) { return { n: n }; }))
+      .map(function (x) { return { n: clean_(x.n, 60), num: String(x.num || '').replace(/[^0-9A-Za-z]/g, '').slice(0, 20), as: clean_(x.as || '', 60) }; }).filter(function (x) { return x.n; });
+    var sh = sheet_('Roster'), have = {}; rosterRows_(code).forEach(function (x) { have[norm_(x.v[1])] = x; });
+    var removed = 0, numbered = 0, leveled = 0, keep = {}, add = [], lvl = /^(15|25|35)$/.test(String(level || '')) ? String(level) : '';
+    list.forEach(function (x) { keep[norm_(x.as || x.n)] = 1; });
+    list.forEach(function (x) {
+      var hit = have[norm_(x.as || x.n)] || have[norm_(x.n)];
+      if (hit) {
+        if (hit.row && x.num && String(hit.v[9] || '') !== x.num) { sh.getRange(hit.row, 10).setValue(x.num); numbered++; }
+        if (hit.row && lvl && String(hit.v[12] || '') !== lvl) { sh.getRange(hit.row, 13).setValue(lvl); leveled++; }
+        return;
+      }
+      add.push([code, x.n, '', '', '', '', '[]', 0, '', x.num || '', '', '', lvl]); have[norm_(x.n)] = { v: [] };
+    });
     if (mode === 'replace') {
-      var keep = {}; list.forEach(function (n) { keep[norm_(n)] = 1; });
-      rosterRows_(code).filter(function (x) { return !keep[norm_(x.v[1])]; }).map(function (x) { return x.row; }).sort(function (a, b) { return b - a; }).forEach(function (r) { sheet_('Roster').deleteRow(r); });
+      var gone = rosterRows_(code).filter(function (x) { return !keep[norm_(x.v[1])]; }).map(function (x) { return x.row; }).sort(function (a, b) { return b - a; });
+      gone.forEach(function (r) { sh.deleteRow(r); }); removed = gone.length;
     }
-    var add = []; list.forEach(function (n) { if (!have[norm_(n)]) { add.push([code, n, '', '', '', '', '[]', 0, '']); have[norm_(n)] = 1; } });
-    if (add.length) { var sh = sheet_('Roster'); sh.getRange(sh.getLastRow() + 1, 1, add.length, add[0].length).setValues(add); }
-    return { ok: true, code: code, added: add.length };
+    if (add.length) sh.getRange(sh.getLastRow() + 1, 1, add.length, add[0].length).setValues(add);
+    return { ok: true, code: code, added: add.length, numbered: numbered, leveled: leveled, removed: removed };
+  } finally { lock.releaseLock(); }
+}
+/* one or more students' class-list details: [{ name, num?, pronouns?, ipp?, level? }] (a field left out stays as it is) */
+function setStudent_(klass, list) {
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    var sh = sheet_('Roster'), out = [];
+    (Array.isArray(list) ? list : []).slice(0, 80).forEach(function (x) {
+      var st = findStudent_(klass, x.name); if (!st) return;
+      var v = st.v.slice(9, 13); while (v.length < 4) v.push('');
+      if (x.num !== undefined) v[0] = String(x.num || '').replace(/[^0-9A-Za-z]/g, '').slice(0, 20);
+      if (x.pronouns !== undefined) v[1] = /^(he|she|they)$/.test(x.pronouns) ? x.pronouns : '';
+      if (x.ipp !== undefined) v[2] = x.ipp === true || x.ipp === '1' || x.ipp === 1 ? 1 : '';
+      if (x.level !== undefined) v[3] = /^(15|25|35)$/.test(String(x.level)) ? String(x.level) : '';
+      sh.getRange(st.row, 10, 1, 4).setValues([[v[0] || '', v[1], v[2], v[3]]]);
+      out.push({ name: String(st.v[1]), num: String(v[0] || ''), pronouns: String(v[1] || ''), ipp: !!v[2], level: String(v[3] || '') });
+    });
+    if (!out.length) return { ok: false, error: 'unknown student' };
+    return { ok: true, students: out, num: out[0].num, pronouns: out[0].pronouns, ipp: out[0].ipp, level: out[0].level };
   } finally { lock.releaseLock(); }
 }
 function resetPin_(klass, name) { var st = findStudent_(klass, name); if (!st) return { ok: false, error: 'unknown student' }; sheet_('Roster').getRange(st.row, 3, 1, 2).setValues([['', '']]); sheet_('Roster').getRange(st.row, 8, 1, 2).setValues([[0, '']]); try { cache_().remove('tok:' + norm_(klass) + '|' + norm_(name)); } catch (e) {} return { ok: true }; }
@@ -359,6 +402,17 @@ function delClass_(klass) {
   var k = norm_(klass); save_('CLASSES', classes_().filter(function (c) { return c.code !== k; }));
   rosterRows_(k).map(function (x) { return x.row; }).sort(function (a, b) { return b - a; }).forEach(function (r) { sheet_('Roster').deleteRow(r); });
   props_().deleteProperty('CAL:' + k); return { ok: true };
+}
+
+/* the teacher's own product links for the Equipment tab: { productKey: { url, product } } */
+function setEquip_(eq) {
+  var out = {}; Object.keys(eq || {}).slice(0, 60).forEach(function (k) {
+    var x = eq[k] || {}, url = String(x.url || '').trim();
+    if (!/^https?:\/\//.test(url)) return;
+    out[clean_(k, 40)] = { url: url.slice(0, 500), product: clean_(x.product || '', 120) };
+  });
+  var txt = JSON.stringify(out); if (txt.length > 8500) return { ok: false, error: 'too many links' };
+  save_('EQUIP', out); return { ok: true, equip: out };
 }
 
 /* ---------------- calendar ---------------- */

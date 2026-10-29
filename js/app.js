@@ -39,7 +39,7 @@
   /* ---------- top bar ---------- */
   function drawTop(crumbs) {
     topbar.innerHTML = '';
-    var b = el('a', 'brand', '<b>Robotics Lab</b><span>' + esc(cfg.room || '') + '</span>'); b.href = '#/'; topbar.appendChild(b);
+    var b = el('a', 'brand-row', RL.ROBOT + '<span class="brand"><b>Robotics Lab</b><span>' + esc(cfg.room || '') + '</span></span>'); b.href = '#/'; b.setAttribute('aria-label', 'Robotics Lab home'); topbar.appendChild(b);
     var cr = el('div', 'crumbs'); cr.innerHTML = crumbs || ''; topbar.appendChild(cr);
     var who = el('div', 'who');
     if (session) {
@@ -201,6 +201,9 @@
       });
       sec.appendChild(grid); wrap.appendChild(sec);
     });
+    var foot = el('footer', 'home-foot'); foot.appendChild(el('span', 'label', 'Display')); foot.appendChild(RL.themeSwitch());
+    foot.appendChild(el('span', 'small muted', 'Light is easier to read in a bright room. Drawings and code stay dark.'));
+    wrap.appendChild(foot);
     view.appendChild(wrap);
     if (keepScroll) root.scrollTo(0, y);
   }

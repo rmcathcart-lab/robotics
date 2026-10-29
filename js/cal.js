@@ -90,10 +90,14 @@
   C.skip = function (cal, k) { var c = C.copy(cal); c.items = c.items.filter(function (x) { return x.k !== k; }); c.skipped.push(k); return c; };
   C.restore = function (cal, k) { var c = C.copy(cal); c.skipped = c.skipped.filter(function (x) { return x !== k; }); c.items.push({ k: k, len: (RL.MISSIONS[k] || {}).days || 2 }); return c; };
 
-  /* ---- the month view: continuous scrolling weeks (Sun–Sat, weekends narrow) ---- */
+  /* ---- the month view: one continuous run of weeks that scrolls like a phone calendar (Sun–Sat, weekends narrow).
+   * The sticky header shows the month you're reading, with ‹ Today › to jump a month at a time; each 1st starts a line
+   * across its week, and while you scroll each month's name shows big on its 1st. ---- */
   function el(tag, cls, html) { var e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   C.esc = esc;
+  C.MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  var CHEV_L = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>', CHEV_R = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>';
   /* opts: { off, today, chip(k, slot) → element, onDay(date, cell), height } */
   C.view = function (cal, opts) {
     opts = opts || {};
@@ -101,11 +105,14 @@
     var L = cal ? C.layout(cal, off) : { byDate: {}, last: today, span: {} };
     var first = cal ? (cal.start < today ? cal.start : today) : today;
     var last = L.last > today ? L.last : today;
-    var s = C.parse(first); s.setDate(s.getDate() - s.getDay() - 21); // back to a Sunday, plus three weeks
-    var e = C.parse(last); e.setDate(e.getDate() + (6 - e.getDay()) + 42);
+    var s = C.parse(first); s.setDate(1); s.setDate(s.getDate() - s.getDay()); // the week of the 1st of the first month
+    var e = C.parse(last); e = new Date(e.getFullYear(), e.getMonth() + 3, 0, 12); e.setDate(e.getDate() + (6 - e.getDay())); // two months past the last mission
     var root = el('div', 'calv');
-    var head = el('div', 'calv-h'); var month = el('div', 'calv-month'); head.appendChild(month);
-    var tb = el('button', 'btn btn-ghost btn-small', 'Today'); tb.type = 'button'; head.appendChild(tb);
+    var head = el('div', 'calv-h'), month = el('div', 'calv-month'); head.appendChild(month);
+    var nav = el('div', 'calv-nav'), pv = el('button', 'calv-mon', CHEV_L), tb = el('button', 'calv-today', 'Today'), nx = el('button', 'calv-mon', CHEV_R);
+    pv.type = nx.type = tb.type = 'button'; pv.title = 'Previous month'; nx.title = 'Next month'; tb.title = 'Back to today';
+    pv.setAttribute('aria-label', 'Previous month'); nx.setAttribute('aria-label', 'Next month');
+    nav.appendChild(pv); nav.appendChild(tb); nav.appendChild(nx); head.appendChild(nav);
     root.appendChild(head);
     var dow = el('div', 'calv-dow'); ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach(function (d) { dow.appendChild(el('div', '', d)); }); root.appendChild(dow);
     var sc = el('div', 'calv-scroll'); if (opts.height) sc.style.height = opts.height; root.appendChild(sc);
@@ -114,37 +121,58 @@
     for (var d = new Date(s); d <= e;) {
       var wk = el('div', 'calv-week'); wk.dataset.start = C.key(d); weeks.push(wk);
       for (var i = 0; i < 7; i++) {
-        var k = C.key(d), we = d.getDay() === 0 || d.getDay() === 6;
-        var cell = el('div', 'calv-day' + (we ? ' we' : '') + (k === today ? ' today' : '') + (!we && (offS[k] || !mt[d.getDay()]) ? ' off' : ''));
-        cell.dataset.date = k;
-        var num = d.getDate() === 1 ? '<span class="mo">' + d.toLocaleDateString([], { month: 'short' }) + '</span><b>1</b>' : '<b>' + d.getDate() + '</b>';
-        cell.appendChild(el('div', 'calv-num', num));
+        var k = C.key(d), we = d.getDay() === 0 || d.getDay() === 6, dn = d.getDate();
+        var cell = el('div', 'calv-day' + (we ? ' we' : '') + (k === today ? ' today' : '') + (k < today ? ' past' : '') + (!we && (offS[k] || !mt[d.getDay()]) ? ' off' : '') + (dn === 1 ? ' first' : '') + (dn <= 7 ? ' wk1' : ''));
+        cell.dataset.date = k; cell.dataset.ym = k.slice(0, 7);
+        var num = dn === 1 ? '<span class="mo">' + C.MONTHS[d.getMonth()].slice(0, 3) + '</span><b>1</b>' : '<b>' + dn + '</b>';
+        cell.appendChild(el('div', 'calv-num', num + (k === today && !we ? '<span class="tday">Today</span>' : '')));
+        if (dn === 1) cell.appendChild(el('div', 'calv-mbig', C.MONTHS[d.getMonth()]));
         if (!we && offS[k]) cell.appendChild(el('div', 'calv-note', 'No school'));
         (evs[k] || []).forEach(function (x) { cell.appendChild(el('div', 'calv-chip ev' + (x.kind === 'exam' ? ' exam' : ''), '<b>' + (x.takes ? 'No class' : 'Note') + '</b><span>' + esc(x.title) + '</span>')); });
-        (L.byDate[k] || []).forEach(function (slot) {
-          var ch = opts.chip ? opts.chip(slot.k, slot) : C.chip(slot.k, slot);
-          if (ch) cell.appendChild(ch);
-        });
+        (L.byDate[k] || []).forEach(function (slot) { var ch = opts.chip ? opts.chip(slot.k, slot) : C.chip(slot.k, slot); if (ch) cell.appendChild(ch); });
         if (opts.onDay) { cell.classList.add('pick'); (function (kk, cc) { cc.addEventListener('click', function (ev) { if (ev.target.closest('a')) return; opts.onDay(kk, cc); }); })(k, cell); }
         cells[k] = cell; wk.appendChild(cell);
         d.setDate(d.getDate() + 1);
       }
       sc.appendChild(wk);
     }
+    // the header follows the month you're reading: the week a third of the way down, by its middle day; other months dim
+    var shown = '';
     function setMonth() {
-      var top = sc.scrollTop + 20, cur = weeks[0];
-      for (var i = 0; i < weeks.length; i++) { if (weeks[i].offsetTop - sc.offsetTop <= top) cur = weeks[i]; else break; }
+      var probe = sc.scrollTop + 40, cur = weeks[0];
+      for (var i = 0; i < weeks.length; i++) { if (weeks[i].offsetTop - sc.offsetTop <= probe) cur = weeks[i]; else break; }
       var mid = C.parse(cur.dataset.start); mid.setDate(mid.getDate() + 3);
-      month.textContent = mid.toLocaleDateString([], { month: 'long', year: 'numeric' });
+      var ym = C.key(mid).slice(0, 7);
+      if (ym !== shown) {
+        shown = ym; root.dataset.month = ym;
+        month.innerHTML = C.MONTHS[mid.getMonth()] + ' <small>' + mid.getFullYear() + '</small>';
+        Object.keys(cells).forEach(function (kk) { cells[kk].classList.toggle('other', cells[kk].dataset.ym !== ym); });
+      }
     }
-    sc.addEventListener('scroll', setMonth, { passive: true });
-    root.scrollToDate = function (date) {
+    var raf = 0, still = 0, quiet = false;
+    sc.addEventListener('scroll', function () {
+      if (!raf) raf = requestAnimationFrame(function () { raf = 0; setMonth(); });
+      if (quiet) return; // a jump to a date isn't scrolling
+      root.classList.add('calv-scrolling'); clearTimeout(still); still = setTimeout(function () { root.classList.remove('calv-scrolling'); }, 550);
+    }, { passive: true });
+    root.scrollToDate = function (date, smooth) {
       var c = cells[date] || cells[today]; if (!c) return;
-      var wkEl = c.parentNode; sc.scrollTop = Math.max(0, wkEl.offsetTop - sc.offsetTop - 8); setMonth();
+      var top = Math.max(0, c.parentNode.offsetTop - sc.offsetTop - 6);
+      if (!smooth) { quiet = true; sc.scrollTop = top; setTimeout(function () { quiet = false; }, 80); setMonth(); }
+      else sc.scrollTo({ top: top, behavior: 'smooth' });
     };
+    root.setScroll = function (y) { quiet = true; sc.scrollTop = y; setTimeout(function () { quiet = false; }, 80); setMonth(); };
+    var aim = null; // quick repeated taps keep counting from the month being scrolled to
+    function jump(dm) {
+      var ym = aim && Date.now() - aim.at < 900 ? aim.ym : shown || today.slice(0, 7);
+      var t = new Date(+ym.slice(0, 4), +ym.slice(5, 7) - 1 + dm, 1, 12), k = C.key(t);
+      if (!cells[k]) return;
+      aim = { ym: k.slice(0, 7), at: Date.now() }; root.scrollToDate(k, true);
+    }
+    pv.addEventListener('click', function () { jump(-1); }); nx.addEventListener('click', function () { jump(1); });
     root.flashDate = function (date) { var c = cells[date]; if (c) { c.classList.remove('flash'); void c.offsetWidth; c.classList.add('flash'); } };
     root.cells = cells;
-    tb.addEventListener('click', function () { root.scrollToDate(today); root.flashDate(today); });
+    tb.addEventListener('click', function () { root.scrollToDate(today, true); root.flashDate(today); });
     setTimeout(setMonth, 0);
     return root;
   };

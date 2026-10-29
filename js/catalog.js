@@ -13,6 +13,16 @@
     { id: 'ADV', name: 'Advancing' },
     { id: 'MAS', name: 'Mastery' }
   ];
+  /* the course levels in one class (each student is set to one in the dashboard's Roster tab). Every level does the same
+     missions for now; a mission can later be limited to some levels. */
+  RL.COURSE_LEVELS = [
+    { id: '15', short: 'DTFI 15', name: 'Design Thinking for Innovation 15' },
+    { id: '25', short: 'DTFI 25', name: 'Design Thinking for Innovation 25' },
+    { id: '35', short: 'DTFI 35', name: 'Design Thinking for Innovation 35' }
+  ];
+  RL.courseLevel = function (id) { return RL.COURSE_LEVELS.filter(function (c) { return c.id === String(id || ''); })[0] || null; };
+  /* a PowerSchool class name like "Design Thinking for Innovation 25" or "DTFI 35 - Block B" → '25' / '35' */
+  RL.levelFromCourse = function (s) { var m = /(?:^|[^0-9])(15|25|35)(?![0-9])/.exec(String(s || '')); return m ? m[1] : ''; };
 
   RL.UNITS = [
     { n: 1, title: 'Design & 3D modeling', blurb: 'Design thinking, Fusion 360 and your first 3D print.', soon: true, missions: [] },
@@ -132,51 +142,42 @@
     }
   };
 
-  /* Extra materials the teacher may need to order (Equipment tab → "Email Carla for orders").
-   * per: 'group' (multiplied by the number of groups) or 'class' (one per class). link: an amazon.ca search. */
-  function az(q) { return 'https://www.amazon.ca/s?k=' + encodeURIComponent(q); }
-  RL.ORDERS = {
-    m01: [
-      { item: 'Mini hot glue sticks (100 pack)', per: 'class', qty: 1, link: az('mini hot glue sticks 100 pack') },
-      { item: 'Jumbo craft sticks (popsicle sticks)', per: 'class', qty: 1, link: az('jumbo craft sticks 100') },
-      { item: 'Corrugated cardboard sheets', per: 'class', qty: 1, link: az('corrugated cardboard sheets 12x12') }
-    ],
-    m02: [
-      { item: 'Frosted plastic cups (lampshades)', per: 'class', qty: 1, link: az('frosted plastic cups 50 pack') },
-      { item: 'Vellum / tracing paper', per: 'class', qty: 1, link: az('vellum paper 8.5 x 11') }
-    ],
-    m03: [
-      { item: 'Female-to-male jumper wires (spares)', per: 'class', qty: 1, link: az('female to male dupont jumper wires 120') },
-      { item: 'Mini hot glue sticks (100 pack)', per: 'class', qty: 1, link: az('mini hot glue sticks 100 pack') }
-    ],
-    m04: [
-      { item: 'Jumbo craft sticks (needles)', per: 'class', qty: 1, link: az('jumbo craft sticks 100') },
-      { item: 'Brass paper fasteners', per: 'class', qty: 1, link: az('brass paper fasteners') },
-      { item: 'DHT11 sensor modules, spares (optional)', per: 'class', qty: 1, link: az('DHT11 temperature humidity sensor module') }
-    ],
-    m05: [
-      { item: 'Small toy cars (test vehicles)', per: 'class', qty: 1, link: az('pull back toy cars pack') },
-      { item: 'Masking tape', per: 'class', qty: 2, link: az('masking tape 6 pack') },
-      { item: 'Measuring tapes (multi-pack)', per: 'class', qty: 1, link: az('measuring tape metric 3m pack') }
-    ],
-    m06: [
-      { item: 'Small kraft gift boxes (cases)', per: 'group', qty: 1, link: az('small kraft boxes 4x4x2') }
-    ],
-    m07: [
-      { item: '9V batteries, 12-pack (spares: the kit comes with one)', per: 'class', qty: 1, link: az('9V batteries 12 pack') },
-      { item: 'Cardboard cake circles (turntables)', per: 'class', qty: 1, link: az('cardboard cake circles 8 inch') },
-      { item: 'Double-sided foam tape', per: 'class', qty: 1, link: az('double sided foam mounting tape') }
-    ],
-    m08: [
-      { item: '9V batteries, 12-pack (spares: the kit comes with one)', per: 'class', qty: 1, link: az('9V batteries 12 pack') },
-      { item: 'Mini hot glue sticks (100 pack)', per: 'class', qty: 1, link: az('mini hot glue sticks 100 pack') }
-    ],
-    m09: [
-      { item: 'Female-to-male jumper wires, 40-pack (the display needs about 14)', per: 'group', qty: 1, link: az('dupont jumper wires female to male 40 pin') },
-      { item: 'Large arcade-style push buttons (optional)', per: 'group', qty: 2, link: az('arcade push button 30mm') },
-      { item: 'Corrugated cardboard sheets', per: 'class', qty: 1, link: az('corrugated cardboard sheets 12x12') }
-    ]
+  /* Extra materials to order (the Equipment tab). Each item is one specific Amazon.ca product (checked Oct 28, 2026):
+     { item: what it's for, product: the listing's name, asin, pack: units in one order, unit: what a unit is,
+       each: units each group needs (→ packs = groups × each ÷ pack, rounded up) or packs: a fixed number of packs for
+       the class, price: as seen }. The teacher can swap any product for another link in the dashboard. */
+  var P = {
+    glue: { product: 'Surebonder DT-100 mini glue sticks, 4 in (100)', asin: 'B003JZII34', pack: 100, unit: 'sticks', price: '$11.62' },
+    craft: { product: 'Jumbo craft sticks, plain (500)', asin: 'B09H99YJVT', pack: 500, unit: 'sticks', price: '$16.04' },
+    cardboard: { product: 'RLAVBL 12×12 in corrugated cardboard sheets (50)', asin: 'B0F4JGSC2J', pack: 50, unit: 'sheets', price: '$29.99' },
+    cups: { product: '12 oz white plastic cups (50)', asin: 'B07KMFDHY8', pack: 50, unit: 'cups', price: '$29.83' },
+    vellum: { product: 'Goefun translucent vellum paper, 8.5×11 (50 sheets)', asin: 'B0GVDSWYHP', pack: 50, unit: 'sheets', price: '$13.99' },
+    fmwires: { product: 'ELEGOO 20 cm 40-pin female-to-male jumper wires (40)', asin: 'B0H6F7ZZFX', pack: 40, unit: 'wires', price: '$6.99' },
+    fasteners: { product: 'ACCO brass paper fasteners, 1 in (100)', asin: 'B004LWSFAK', pack: 100, unit: 'fasteners', price: '$6.99' },
+    dht11: { product: 'HiLetgo DHT11 temperature & humidity modules (5)', asin: 'B01DKC2GQ0', pack: 5, unit: 'modules', price: '$17.49' },
+    cars: { product: 'JOYIN pull-back city cars and trucks (18)', asin: 'B08KTW2DT4', pack: 18, unit: 'vehicles', price: '$19.99' },
+    masking: { product: 'Scotch contractor grade masking tape, 24 mm (6 rolls)', asin: 'B008LAQYXI', pack: 6, unit: 'rolls', price: '$14.42' },
+    tapes: { product: 'LEXIVON 3 m tape measures, metric + imperial (3)', asin: 'B07MH66JQ1', pack: 3, unit: 'tape measures', price: '$24.99' },
+    boxes: { product: 'PHAREGE 4×4×2 in boxes with tuck lids (25)', asin: 'B08X25JQML', pack: 25, unit: 'boxes', price: '$23.09' },
+    nine: { product: 'Amazon Basics 9 V alkaline batteries (8)', asin: 'B00MH4QM1S', pack: 8, unit: 'batteries', price: '$18.64' },
+    cake: { product: 'qiqee 8 in round white cake boards (30)', asin: 'B0DGPV679D', pack: 30, unit: 'boards', price: '$17.88' },
+    foam: { product: 'Scotch-Mount double-sided mounting tape, ¾ in × 350 in', asin: 'B009NP1OBC', pack: 1, unit: 'roll', price: '$17.77' },
+    arcade: { product: 'EG Starts 30 mm arcade push buttons (12)', asin: 'B01MRWL6DW', pack: 12, unit: 'buttons', price: '$15.99' }
   };
+  function it(item, k, o) { var p = P[k]; return Object.assign({ item: item, key: k, link: 'https://www.amazon.ca/dp/' + p.asin }, p, o); }
+  RL.ORDERS = {
+    m01: [it('Hot glue sticks', 'glue', { packs: 1 }), it('Craft sticks (popsicle sticks)', 'craft', { packs: 1 }), it('Cardboard sheets (signal housings)', 'cardboard', { each: 2 })],
+    m02: [it('Lampshades', 'cups', { each: 2 }), it('Vellum (light diffuser)', 'vellum', { each: 2 })],
+    m03: [it('Female-to-male jumper wires (joystick)', 'fmwires', { each: 5 }), it('Hot glue sticks', 'glue', { packs: 1 })],
+    m04: [it('Brass paper fasteners (needle pivots)', 'fasteners', { each: 1 }), it('DHT11 sensors, spares (optional)', 'dht11', { packs: 1, optional: true })],
+    m05: [it('Toy cars (test vehicles)', 'cars', { each: 1 }), it('Masking tape', 'masking', { packs: 1 }), it('Tape measures (shared)', 'tapes', { packs: 2 })],
+    m06: [it('Small boxes (magic box cases)', 'boxes', { each: 1 })],
+    m07: [it('9 V batteries, spares (the kit comes with one)', 'nine', { packs: 1 }), it('Turntable tops', 'cake', { each: 1 }), it('Double-sided mounting tape', 'foam', { packs: 1 })],
+    m08: [it('9 V batteries, spares', 'nine', { packs: 1, optional: true }), it('Hot glue sticks', 'glue', { packs: 1 })],
+    m09: [it('Female-to-male jumper wires (the display needs about 14)', 'fmwires', { each: 10 }), it('30 mm arcade buttons (optional)', 'arcade', { each: 2, optional: true }), it('Cardboard sheets (game boards)', 'cardboard', { each: 1 })]
+  };
+  /* how many packs to order for g groups */
+  RL.orderQty = function (o, g) { return o.packs != null ? o.packs : Math.max(1, Math.ceil((g || 1) * (o.each || 1) / (o.pack || 1))); };
 
   RL.missionList = function () { var out = []; RL.UNITS.forEach(function (u) { u.missions.forEach(function (id) { if (RL.MISSIONS[id]) out.push(RL.MISSIONS[id]); }); }); return out; };
   RL.unitOf = function (id) { var m = RL.MISSIONS[id]; return m ? RL.UNITS.filter(function (u) { return u.n === m.unit; })[0] : null; };

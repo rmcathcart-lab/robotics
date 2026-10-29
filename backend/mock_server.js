@@ -13,6 +13,7 @@ function Sheet(name) { this.name = name; this.data = []; }
 Sheet.prototype = {
   appendRow(r) { this.data.push(r.slice()); },
   getLastRow() { return this.data.length; },
+  getLastColumn() { return this.data.reduce((m, r) => Math.max(m, r.length), 0); },
   setFrozenRows() {}, deleteRow(r) { this.data.splice(r - 1, 1); },
   getRange(r, c, nr = 1, nc = 1) {
     const sh = this;
