@@ -88,7 +88,7 @@
     state.svg = svg;
     if (o.init) o.init(svg, S, state);
     function go(k) {
-      timers.splice(0).forEach(clearTimeout);
+      if (i >= 0) timers.splice(0).forEach(clearTimeout); // (the first frame keeps animations init started)
       i = Math.max(0, Math.min(o.frames.length - 1, k));
       var f = o.frames[i];
       cap.innerHTML = '<p>' + f.cap + '</p>';

@@ -510,7 +510,8 @@
     return {
       show: function (b) { digs.forEach(function (d, i) { d.set(b[i] || 0); }); },
       press: function (p, on) { var pd = pads[p - 1]; pd.cap.setAttribute('r', on ? 46 : 52); pd.cap.setAttribute('fill', on ? CY : pd.c); },
-      buzz: function (on) { waves.setAttribute('opacity', on ? 1 : 0); }
+      buzz: function (on) { waves.setAttribute('opacity', on ? 1 : 0); },
+      caps: pads.map(function (pd) { return pd.cap; })
     };
   }
   var DASH4 = [0x40, 0x40, 0x40, 0x40];
@@ -532,11 +533,13 @@
       '<div class="meta-row"><span class="label">From your kit</span>' + m.parts.map(function (d) { return '<span class="tag">' + esc(d) + '</span>'; }).join('') + '</div>' +
       '<div class="meta-row"><span class="label">Also grab</span>' + m.extras.map(function (d) { return '<span class="tag">' + esc(d) + '</span>'; }).join('') + '<span class="tag">Female-to-male wires (about 14)</span></div>';
     wrap.appendChild(meta); b.appendChild(wrap);
-    UI.explainer(b, { label: 'Preview', title: 'What you’re building', w: 800, h: 360,
+    UI.explainer(b, { label: 'Preview · playable', title: 'What you’re building', w: 800, h: 360, interactive: true,
       init: function (svg, S2, st) {
         glowDefs(svg); bg(svg, 800, 360); grid(svg, 800, 360);
         var a = boardArt(svg, 80, 30, 1);
         var lab = T(svg, 400, 340, '', { 'text-anchor': 'middle', 'font-size': 13, 'letter-spacing': '2', fill: CY });
+        var hint = T(svg, 400, 18, 'TAP A BIG BUTTON (OR PRESS A / L) TO PLAY', { 'text-anchor': 'middle', 'font-size': 11, 'letter-spacing': '2', fill: MUT });
+        // ---- the demo that loops until someone presses a button ----
         var seq = [
           [function () { a.show(DASH4); a.press(1, 0); a.press(2, 0); a.buzz(0); }, 'PRESS A BUTTON TO START', 1600],
           [function () { a.press(1, 1); }, 'GET READY…', 250], [function () { a.press(1, 0); }, 'GET READY… (RANDOM WAIT)', 2300],
@@ -546,10 +549,55 @@
           [function () { a.show(DASH4); a.press(1, 1); }, 'NEXT ROUND…', 250], [function () { a.press(1, 0); }, 'GET READY…', 1100],
           [function () { a.press(1, 1); a.buzz(1); a.show([0x71, 0x6D, 0x40, DIG[1]]); }, 'TOO EARLY: FALSE START BY PLAYER 1', 600],
           [function () { a.press(1, 0); a.buzz(0); }, 'TOO EARLY: FALSE START BY PLAYER 1', 2400]
-        ], i = 0;
-        (function stepA() { var s2 = seq[i % seq.length]; s2[0](); lab.textContent = s2[1]; i++; st.later(stepA, s2[2]); })();
+        ], i = 0, demo = true, demoT = null;
+        function stepA() { if (!demo) return; var s2 = seq[i % seq.length]; s2[0](); lab.textContent = s2[1]; i++; demoT = setTimeout(stepA, s2[2]); }
+        // ---- the real game, the same rules as the sketch students write ----
+        var state = 'idle', t0 = 0, times = [null, null], waitT = null, endT = null, idleT = null, ac = null;
+        function beep(on) {
+          a.buzz(on);
+          try { if (on) { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); var o = ac.createOscillator(), g = ac.createGain(); o.frequency.value = 2300; g.gain.value = 0.05; o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime + 0.18); } } catch (e) {}
+        }
+        function clearAll() { [waitT, endT, idleT, demoT].forEach(clearTimeout); }
+        function backToDemo() { idleT = setTimeout(function () { demo = true; state = 'idle'; i = 0; hint.textContent = 'TAP A BIG BUTTON (OR PRESS A / L) TO PLAY'; stepA(); }, 25000); }
+        function finish() {
+          state = 'done'; clearTimeout(endT); beep(false);
+          var w = times[0] == null ? 2 : times[1] == null ? 1 : times[0] <= times[1] ? 1 : 2, ms = Math.min(999, times[w - 1]);
+          a.show(resultBytes(w, ms));
+          lab.textContent = 'PLAYER ' + w + ' WINS: ' + ms + ' ms' + (times[0] != null && times[1] != null ? '  (P1 ' + times[0] + ' · P2 ' + times[1] + ')' : '');
+          hint.textContent = 'PRESS A BUTTON TO PLAY AGAIN'; backToDemo();
+        }
+        function press(p) {
+          if (demo) { demo = false; clearAll(); a.press(1, 0); a.press(2, 0); beep(false); state = 'idle'; }
+          clearTimeout(idleT);
+          a.press(p, 1); setTimeout(function () { a.press(p, 0); }, 120);
+          if (state === 'idle' || state === 'done' || state === 'fs') {
+            state = 'wait'; times = [null, null]; a.show(DASH4); lab.textContent = 'GET READY… WAIT FOR THE BEEP'; hint.textContent = 'DON’T PRESS UNTIL THE BEEP';
+            waitT = setTimeout(function () { state = 'go'; t0 = performance.now(); beep(true); a.show([0, 0x3D, 0x3F, 0]); lab.textContent = 'GO!'; setTimeout(function () { a.buzz(false); }, 180);
+              endT = setTimeout(finish, 3000); }, 1500 + Math.random() * 3000);
+          } else if (state === 'wait') {
+            clearTimeout(waitT); state = 'fs'; beep(true); setTimeout(function () { a.buzz(false); }, 400);
+            a.show([0x71, 0x6D, 0x40, DIG[p]]); lab.textContent = 'TOO EARLY: FALSE START BY PLAYER ' + p; hint.textContent = 'PRESS A BUTTON TO TRY AGAIN'; backToDemo();
+          } else if (state === 'go' && times[p - 1] == null) {
+            times[p - 1] = Math.round(performance.now() - t0);
+            if (times[0] != null && times[1] != null) finish(); else { clearTimeout(endT); endT = setTimeout(finish, 1200); lab.textContent = 'PLAYER ' + p + ': ' + times[p - 1] + ' ms…'; }
+          }
+        }
+        a.caps.forEach(function (c, k) {
+          c.style.cursor = 'pointer'; c.setAttribute('role', 'button'); c.setAttribute('tabindex', '0'); c.setAttribute('aria-label', 'Player ' + (k + 1) + ' button');
+          c.addEventListener('pointerdown', function (e) { e.preventDefault(); press(k + 1); });
+          c.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); press(k + 1); } });
+        });
+        function key(e) {
+          if (!svg.isConnected) { document.removeEventListener('keydown', key); clearAll(); return; }
+          if (e.repeat || /input|textarea|select/i.test((e.target.tagName || ''))) return;
+          var r = svg.getBoundingClientRect(); if (r.bottom < 0 || r.top > innerHeight) return;
+          if (e.key === 'a' || e.key === 'A') press(1); else if (e.key === 'l' || e.key === 'L') press(2);
+        }
+        document.addEventListener('keydown', key);
+        st.stop = function () { clearAll(); document.removeEventListener('keydown', key); };
+        stepA();
       },
-      frames: [{ cap: 'Press to start, wait for the beep, press as fast as you can. The display shows the winner’s number (with a dot) and their reaction time in milliseconds. Press before the beep and the display calls you out: <b>FS-1</b> means false start by player 1.', draw: function () {} }] });
+      frames: [{ cap: 'Press to start, wait for the beep, press as fast as you can. The display shows the winner’s number (with a dot) and their reaction time in milliseconds. Press before the beep and the display calls you out: <b>FS-1</b> means false start by player 1. <b>Try it:</b> tap the red and blue buttons (or press A and L with a partner).', draw: function () {} }] });
     UI.callout(b, 'plain', 'Plan your time', '<p>This mission has two builds. <b>Part A</b> (class 1): a shift register and an 8-LED light bar. <b>Part B</b> (classes 2 and 3): the same chip drives the 4-digit display, then the buttons, buzzer and game code. Keep your Part A wiring — most of it stays.</p>');
   } });
 
