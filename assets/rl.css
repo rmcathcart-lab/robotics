@@ -172,8 +172,8 @@ a.calv-chip:hover { background: color-mix(in srgb, var(--u, var(--cyan)) 28%, va
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
 
 /* ---------- light display (the switch at the bottom of the home page) ----------
- * Pages, panels, text and controls go light. Drawings, the code editor, build guides and the Virtual UNO stay dark
- * ("dark islands"): they're drawn for a navy background, like a screen or a blueprint inside the page. */
+ * Pages, panels, text and controls go light here; the drawings follow through js/kit/lightart.js, and the code editor,
+ * Serial Monitor and stages through the light code colours in app.css. Anything marked .dark-island stays dark. */
 :root[data-theme="light"] {
   --bg: #f3f6fa; --panel: #ffffff; --panel-2: #eaf0f6; --grid: #cdd9e5; --ink: #0b1a2b; --ink-muted: #4f6578;
   --cyan: #0b7c93; --cyan-soft: #dff3f7; --on-cyan: #ffffff; --cyan-hover: #09687b;
@@ -183,7 +183,7 @@ a.calv-chip:hover { background: color-mix(in srgb, var(--u, var(--cyan)) 28%, va
   --topbar: rgba(243, 246, 250, 0.92); --shade: rgba(79, 101, 120, 0.06);
   color-scheme: light;
 }
-:root[data-theme="light"] :is(.xp-stage, .bg-stage, .sim-ed, .sim-board, .sim-serial, .serial-in, .code, .hs-stage, .dark-island) {
+:root[data-theme="light"] .dark-island {
   --bg: #070d17; --panel: #0e1826; --panel-2: #122033; --grid: #22364f; --ink: #e6f1fa; --ink-muted: #8ea6bb;
   --cyan: #22d3ee; --cyan-soft: #0a2a36; --on-cyan: #04111a; --cyan-hover: #5ee3f5;
   --signal: #ff8a3d; --signal-soft: #3a1a08; --on-signal: #1a0a02; --go: #4ade80; --go-soft: #0b2a17; --focus: #22d3ee;

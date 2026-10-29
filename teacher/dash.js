@@ -9,7 +9,7 @@
   RL.Dash = RL.Dash || {};
   var KEY = '', CLASSES = [], CUR = '', D = null, TAB = 'live', view, topbar, NS = [], SYNC = false, timers = [];
   var COURSES = [
-    { mark: 'RL', name: 'Robotics Lab', colour: '#ff8a3d', ledger: 'https://rmcathcart-lab.github.io/robotics/teacher/' },
+    { mark: 'RL', name: 'Robotics', colour: '#ff8a3d', ledger: 'https://rmcathcart-lab.github.io/robotics/teacher/' },
     { mark: '10C', name: 'Math 10C', colour: '#0f5f5a', ledger: 'https://rmcathcart-lab.github.io/math10c/teacher/' },
     { mark: '15', name: 'Math 15', colour: '#1e3a6e', ledger: 'https://rmcathcart-lab.github.io/math15/teacher/' }
   ];
@@ -27,7 +27,7 @@
   function drawTop() {
     topbar.innerHTML = '';
     var c = el('div', 'course');
-    var b = el('button', 'course-btn', '<span class="course-robot">' + RL.ROBOT + '</span><span class="brand"><b>Robotics Lab</b><span>Teacher ledger</span></span>'); b.type = 'button';
+    var b = el('button', 'course-btn', '<span class="course-robot">' + RL.ROBOT + '</span><span class="brand"><b>Robotics</b><span>Teacher ledger</span></span>'); b.type = 'button';
     b.addEventListener('click', function (e) { e.stopPropagation(); var m = c.querySelector('.course-menu'); if (m) { m.remove(); return; } var menu = el('div', 'course-menu'); COURSES.forEach(function (x) { var a = el('a', '', (x.mark === 'RL' ? '<span class="m robot-m">' + RL.ROBOT + '</span>' : '<span class="m" style="background:' + x.colour + '">' + esc(x.mark) + '</span>') + esc(x.name)); a.href = x.ledger; menu.appendChild(a); }); c.appendChild(menu); });
     document.addEventListener('click', function () { var m = c.querySelector('.course-menu'); if (m) m.remove(); });
     c.appendChild(b); topbar.appendChild(c);

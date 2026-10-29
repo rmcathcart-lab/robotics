@@ -1,6 +1,6 @@
-# Robotics Lab
+# Robotics (DTFI 15/25/35)
 
-Mr. Cathcart's robotics class site: https://rmcathcart-lab.github.io/robotics/
+Mr. Cathcart's robotics class site (Robotics Lab design system): https://rmcathcart-lab.github.io/robotics/
 
 | Part | Where | Folder |
 |---|---|---|
@@ -9,7 +9,9 @@ Mr. Cathcart's robotics class site: https://rmcathcart-lab.github.io/robotics/
 | **Backend** — Google Apps Script web app + the "Robotics Lab Records" spreadsheet + the "Robotics Lab Submissions" Drive folder | — | `backend/Code.gs` |
 
 Uses the Robotics Lab design system (navy, cyan, signal orange; Chakra Petch / IBM Plex Sans / IBM Plex Mono). A Dark | Light switch
-at the bottom of the home page (and the ledger) changes the display on that device; drawings, code and the Virtual UNO stay dark.
+at the bottom of the home page (and the ledger) changes the display on that device. In light mode `js/kit/lightart.js` swaps the
+drawings' palette colours (navy, ink, cyan…) for light ones as they're drawn and animated, and the code editor uses light syntax
+colours; real-object colours (UNO, chips, LEDs, cardboard) stay. `node tests/light_check.js` finds hard-to-read labels.
 
 ## Files
 
@@ -25,6 +27,7 @@ at the bottom of the home page (and the ledger) changes the display on that devi
 | `js/kit/parts.js` | Every other kit part: RGB LED, potentiometer, photoresistor, thermistor, tilt switch, buzzers, chips (74HC595, L293D), LCD1602, power module, servo, DHT11, HC-SR04, joystick, IR receiver, relay, stepper + driver, DC motor, 7-segment displays |
 | `js/kit/sim.js` | The **Virtual UNO**: checks a sketch like the Arduino compiler (missing `;`, capital letters, braces, missing `#include`), translates it to JavaScript (with Arduino integer maths) and runs it on the drawn circuit — including Servo, LiquidCrystal, Stepper, DHT, IRremote, shiftOut/74HC595, pulseIn, tone, motors, relays and 7-segment multiplexing |
 | `js/kit/code.js` | Arduino code colouring, code blocks (copy / download .ino) and line-by-line code walkthroughs |
+| `js/kit/lightart.js` | Light versions of every drawing for the light display (live palette swap) |
 | `js/kit/ui.js` | Checkpoints, notes, explainer animations, hotspot diagrams, test checklists, challenge cards, kit checklist |
 | `js/missions/m01.js` … `m09.js` | The nine Arduino missions (see `docs/MISSION_GUIDE.md` for how to write one) |
 | `teacher/` | The teacher ledger: `dash.js` (tabs), `comments.js` (report card comments), `powerschool.js` (reads PowerSchool scores templates) |

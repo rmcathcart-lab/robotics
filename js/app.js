@@ -39,7 +39,7 @@
   /* ---------- top bar ---------- */
   function drawTop(crumbs) {
     topbar.innerHTML = '';
-    var b = el('a', 'brand-row', RL.ROBOT + '<span class="brand"><b>Robotics Lab</b><span>' + esc(cfg.room || '') + '</span></span>'); b.href = '#/'; b.setAttribute('aria-label', 'Robotics Lab home'); topbar.appendChild(b);
+    var b = el('a', 'brand-row', RL.ROBOT + '<span class="brand"><b>Robotics</b><span>DTFI 15/25/35</span></span>'); b.href = '#/'; b.setAttribute('aria-label', 'Robotics home'); topbar.appendChild(b);
     var cr = el('div', 'crumbs'); cr.innerHTML = crumbs || ''; topbar.appendChild(cr);
     var who = el('div', 'who');
     if (session) {
