@@ -117,7 +117,7 @@
     var tb = el('tbody');
     readyMissions().forEach(function (m) {
       var p = prog[m.id], n = RL.guides[m.id].steps.length, dn = p ? p.done.length : 0, s = subs.filter(function (x) { return x.mission === m.id; })[0];
-      var tr = el('tr', s ? 'click' : '', '<td>M' + m.num + ' · ' + esc(m.title) + '</td><td><span class="pbar"><i style="width:' + Math.round(100 * dn / n) + '%"></i></span>' + dn + '/' + n + (p ? ' · on step ' + p.step : '') + '</td><td>' + (p ? esc(ago(p.updated)) : '—') + '</td><td>' + (s ? statusTag(s) : '<span class="muted">—</span>') + '</td>');
+      var tr = el('tr', s ? 'click' : '', '<td>' + RL.mcode(m.num) + ' · ' + esc(m.title) + '</td><td><span class="pbar"><i style="width:' + Math.round(100 * dn / n) + '%"></i></span>' + dn + '/' + n + (p ? ' · on step ' + p.step : '') + '</td><td>' + (p ? esc(ago(p.updated)) : '—') + '</td><td>' + (s ? statusTag(s) : '<span class="muted">—</span>') + '</td>');
       if (s) tr.addEventListener('click', function () { box.close(); gradeModal(s.id, [s.id]); });
       tb.appendChild(tr);
     });
@@ -128,12 +128,13 @@
   function statusTag(s) { return s.status === 'graded' ? '<span class="tag go">Graded</span>' : s.status === 'revise' ? '<span class="tag sig">Revising</span>' : '<span class="tag c">' + (s.version > 1 ? 'Resubmitted' : 'To grade') + '</span>'; }
 
   /* ---------- modal helper ---------- */
+  var MODALV = []; // 3D views open in a modal (closed with it)
   function modal(title, cls) {
     var ov = el('div', 'modal'); ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true');
     var box = el('div', 'modal-box ' + (cls || '')), h = el('div', 'modal-h', '<h2>' + esc(title) + '</h2>');
     var x = el('button', 'btn btn-ghost iconbtn', '×'); x.type = 'button'; x.setAttribute('aria-label', 'Close'); h.appendChild(x);
     var body = el('div', 'modal-b'); box.appendChild(h); box.appendChild(body); ov.appendChild(box); document.body.appendChild(ov);
-    function close() { ov.remove(); document.removeEventListener('keydown', k); }
+    function close() { ov.remove(); document.removeEventListener('keydown', k); MODALV.splice(0).forEach(function (v) { if (v.dispose) v.dispose(); }); }
     function k(e) { if (e.key === 'Escape') close(); }
     x.addEventListener('click', close); ov.addEventListener('click', function (e) { if (e.target === ov) close(); }); document.addEventListener('keydown', k);
     return { ov: ov, box: box, head: h, body: body, close: close, title: h.querySelector('h2') };
@@ -157,7 +158,7 @@
         D.roster.forEach(function (s) {
           if (D.subs.some(function (x) { return x.name === s.name && x.mission === m.id; })) return;
           var p = (D.progress[s.name] || {})[m.id], n = RL.guides[m.id].steps.length, due = L && L.span[m.id] ? L.span[m.id].end : null, late = due && due < C.today();
-          tb0.appendChild(el('tr', '', '<td>' + esc(s.name) + '</td><td>M' + m.num + ' · ' + esc(m.title) + '</td><td><span class="pbar"><i style="width:' + (p ? Math.round(100 * p.done.length / n) : 0) + '%"></i></span>' + (p ? p.done.length : 0) + '/' + n + '</td><td>' + (due ? (late ? '<span class="tag sig">Past due</span> ' : '') + esc(C.nice(due)) : '—') + '</td>')); rows++;
+          tb0.appendChild(el('tr', '', '<td>' + esc(s.name) + '</td><td>' + RL.mcode(m.num) + ' · ' + esc(m.title) + '</td><td><span class="pbar"><i style="width:' + (p ? Math.round(100 * p.done.length / n) : 0) + '%"></i></span>' + (p ? p.done.length : 0) + '/' + n + '</td><td>' + (due ? (late ? '<span class="tag sig">Past due</span> ' : '') + esc(C.nice(due)) : '—') + '</td>')); rows++;
         });
       });
       t0.appendChild(tb0); view.appendChild(rows ? t0 : el('div', 'empty', 'Everyone has handed in.'));
@@ -171,7 +172,7 @@
     list.forEach(function (s) {
       var m = RL.MISSIONS[s.mission] || { num: '?', title: s.mission };
       var g = s.levels && Object.keys(s.levels).length ? Object.keys(s.levels).map(function (k) { return s.levels[k]; }).join(' · ') : '';
-      var tr = el('tr', 'click', '<td><b>' + esc(s.name) + '</b></td><td>M' + m.num + ' · ' + esc(m.title) + '</td><td>' + esc(new Date(s.submitted).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })) + (s.version > 1 ? ' <span class="muted small">v' + s.version + '</span>' : '') + '</td><td>' + s.fileCount + '</td><td>' + statusTag(s) + '</td><td class="small mono">' + esc(g) + '</td>');
+      var tr = el('tr', 'click', '<td><b>' + esc(s.name) + '</b></td><td>' + RL.mcode(m.num) + ' · ' + esc(m.title) + '</td><td>' + esc(new Date(s.submitted).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })) + (s.version > 1 ? ' <span class="muted small">v' + s.version + '</span>' : '') + '</td><td>' + s.fileCount + '</td><td>' + statusTag(s) + '</td><td class="small mono">' + esc(g) + '</td>');
       tr.addEventListener('click', function () { gradeModal(s.id, ids); });
       tb.appendChild(tr);
     });
@@ -202,6 +203,14 @@
         get('file', { id: f.id }).then(function (d) {
           c.innerHTML = '';
           if (d && d.data) { var img = el('img'); img.src = d.data; img.alt = f.name; c.appendChild(img); }
+          else if (d && d.b64 && RL.Fusion) {
+            try {
+              var bin = atob(d.b64), u8 = new Uint8Array(bin.length); for (var bi = 0; bi < bin.length; bi++) u8[bi] = bin.charCodeAt(bi);
+              var sv = RL.Fusion.stlView(c, u8.buffer, { height: 320 }); MODALV.push(sv);
+              c.appendChild(el('table', 'fx-facts', RL.Fusion.stlFacts(sv.stl).map(function (r) { return '<tr class="' + r[2] + '"><th>' + r[0] + '</th><td><b>' + esc(r[1]) + '</b></td></tr>'; }).join('')));
+            } catch (e) { c.textContent = 'Couldn’t read this STL file: ' + e.message; }
+          }
+          else if (d && d.model) c.innerHTML = '<p class="small">A Fusion design file. Download it from Drive, then in Fusion use <b>File ▸ Open ▸ Open from my computer…</b> to see the whole design and its timeline.</p>';
           else if (d && d.text != null) RL.Code.block(c, d.text, { name: s.name.replace(/\W+/g, '_') + '_' + s.mission });
           else c.innerHTML = '<a href="' + esc((d && d.url) || '#') + '" target="_blank" rel="noopener">Open the file</a>';
         }, function () { c.textContent = 'Couldn’t load this file.'; });
@@ -253,7 +262,7 @@
     view.appendChild(el('div', 'dhead', '<div><div class="label">' + esc(D.label) + '</div><h1>Progress</h1></div>'));
     var ms = readyMissions(), L = D.cal ? C.layout(D.cal, NS) : null;
     if (!ms.length) { view.appendChild(el('div', 'empty', 'No missions are online yet.')); return; }
-    var t = el('table', 'tbl'), th = '<thead><tr><th>Student</th>' + ms.map(function (m) { var sp = L && L.span[m.id]; return '<th>M' + m.num + ' · ' + esc(m.title) + (sp ? '<br><span style="text-transform:none;letter-spacing:0">due ' + esc(C.nice(sp.end)) + '</span>' : '') + '</th>'; }).join('') + '<th>Last seen</th></tr></thead>';
+    var t = el('table', 'tbl'), th = '<thead><tr><th>Student</th>' + ms.map(function (m) { var sp = L && L.span[m.id]; return '<th>' + RL.mcode(m.num) + ' · ' + esc(m.title) + (sp ? '<br><span style="text-transform:none;letter-spacing:0">due ' + esc(C.nice(sp.end)) + '</span>' : '') + '</th>'; }).join('') + '<th>Last seen</th></tr></thead>';
     t.innerHTML = th; var tb = el('tbody');
     D.roster.forEach(function (s) {
       var cells = ms.map(function (m) {
@@ -327,7 +336,7 @@
       var L = C.layout(CALW, NS);
       CALW.items.forEach(function (x, i) {
         var info = C.info(x.k), sp = L.span[x.k], row = el('div', 'mrow'); row.style.setProperty('--u', RL.unitColour(info.unit));
-        row.innerHTML = '<div><div class="t">M' + esc(info.num) + ' · ' + esc(info.title) + (info.mission.ready ? '' : ' <span class="muted small">(in development)</span>') + '</div><div class="d">' + (sp ? esc(C.nice(sp.start, { month: 'short', day: 'numeric' })) + ' → due ' + esc(C.nice(sp.end)) : '') + '</div></div>';
+        row.innerHTML = '<div><div class="t">' + RL.mcode(info.num) + ' · ' + esc(info.title) + (info.mission.ready ? '' : ' <span class="muted small">(in development)</span>') + '</div><div class="d">' + (sp ? esc(C.nice(sp.start, { month: 'short', day: 'numeric' })) + ' → due ' + esc(C.nice(sp.end)) : '') + '</div></div>';
         var ctl = el('div', 'ctl');
         function btn(t, title, fn, dis) { var b = el('button', '', t); b.type = 'button'; b.title = title; b.setAttribute('aria-label', title); if (dis) b.disabled = true; b.addEventListener('click', fn); ctl.appendChild(b); }
         btn('−', 'One class shorter', function () { CALW = C.setLen(CALW, x.k, x.len - 1); saveCal(); }, x.len <= 1);
@@ -340,7 +349,7 @@
       });
       if (CALW.skipped.length) {
         ml.appendChild(el('div', 'label', 'Not on the calendar'));
-        CALW.skipped.forEach(function (k) { var i = C.info(k), row = el('div', 'mrow', '<div class="t muted">M' + esc(i.num) + ' · ' + esc(i.title) + '</div>'), b = el('button', 'btn btn-ghost btn-small', 'Add back'); b.type = 'button'; b.addEventListener('click', function () { CALW = C.restore(CALW, k); saveCal(); }); row.appendChild(b); ml.appendChild(row); });
+        CALW.skipped.forEach(function (k) { var i = C.info(k), row = el('div', 'mrow', '<div class="t muted">' + RL.mcode(i.num) + ' · ' + esc(i.title) + '</div>'), b = el('button', 'btn btn-ghost btn-small', 'Add back'); b.type = 'button'; b.addEventListener('click', function () { CALW = C.restore(CALW, k); saveCal(); }); row.appendChild(b); ml.appendChild(row); });
       }
       var tot = CALW.items.reduce(function (a, x) { return a + x.len; }, 0);
       ml.appendChild(el('p', 'small muted', tot + ' class days · last due ' + esc(C.nice(L.last))));

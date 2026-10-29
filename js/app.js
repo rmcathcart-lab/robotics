@@ -195,7 +195,7 @@
         var g = RL.guides[id], prog = '';
         if (ready) { var n = g.steps.length, dn = S.missions[id] ? Object.keys(S.missions[id].done).length : 0; prog = '<div class="mc-bar" role="img" aria-label="' + dn + ' of ' + n + ' steps done"><i style="width:' + Math.round(100 * Math.min(1, dn / n)) + '%"></i></div>'; }
         card.innerHTML = '<div class="mc-top"><span class="label">Mission ' + esc(m.num) + '</span>' + dates + '</div><h3>' + esc(m.title) + '</h3><p class="small">' + esc(m.tagline) + '</p>' +
-          '<div class="mc-parts">' + (m.parts || []).slice(0, 4).map(function (p) { return '<span class="tag">' + esc(p) + '</span>'; }).join('') + '</div>' + prog +
+          '<div class="mc-parts">' + (m.cardTags || m.parts || []).slice(0, 4).map(function (p) { return '<span class="tag">' + esc(p) + '</span>'; }).join('') + '</div>' + prog +
           '<div class="mc-foot"><span class="tag ' + st.cls + '">' + esc(st.text) + '</span>' + (ready ? '<span class="mc-go">' + (st.text === 'Not started' ? 'Start' : 'Open') + ' →</span>' : '') + '</div>';
         grid.appendChild(card);
       });
@@ -360,7 +360,7 @@
   }
   function fileSlot(spec, mid) {
     var key = spec.id, box = el('div', 'ev-slot panel');
-    var accept = spec.kind === 'photo' ? 'image/*' : spec.kind === 'video' ? 'video/*' : spec.kind === 'code' ? '.ino,.txt,.cpp,.h,text/plain' : '*/*';
+    var accept = spec.kind === 'photo' ? 'image/*' : spec.kind === 'video' ? 'video/*' : spec.kind === 'code' ? '.ino,.txt,.cpp,.h,text/plain' : spec.kind === 'model' ? (spec.ext || ['f3d', 'stl', 'step', 'stp', 'obj', '3mf']).map(function (x) { return '.' + x; }).join(',') : '*/*';
     box.innerHTML = '<div class="ev-sh"><div><span class="label">' + esc(spec.kind) + (spec.required ? ' · required' : ' · optional') + '</span><h3>' + esc(spec.label) + '</h3><p class="small muted">' + esc(spec.help || '') + '</p></div></div>';
     var list = el('div', 'ev-files'); box.appendChild(list);
     var row = el('div', 'ev-row');
@@ -379,7 +379,7 @@
       list.innerHTML = '';
       (UP[key] || []).forEach(function (f, i) {
         var it = el('div', 'ev-file');
-        it.innerHTML = (f.thumb ? '<img alt="" src="' + f.thumb + '">' : '<span class="ev-ic">' + (f.kind === 'code' ? '{ }' : f.kind === 'video' ? '▶' : '■') + '</span>') + '<span class="small">' + esc(f.name) + '<br><span class="muted">' + sizeStr(f.blob.size) + '</span></span>';
+        it.innerHTML = (f.thumb ? '<img alt="" src="' + f.thumb + '">' : '<span class="ev-ic">' + (f.kind === 'code' ? '{ }' : f.kind === 'video' ? '▶' : f.kind === 'model' ? '⬡' : '■') + '</span>') + '<span class="small">' + esc(f.name) + '<br><span class="muted">' + sizeStr(f.blob.size) + '</span></span>';
         var x = el('button', 'btn btn-ghost btn-small', 'Remove'); x.type = 'button'; x.addEventListener('click', function () { UP[key].splice(i, 1); draw(); });
         it.appendChild(x); list.appendChild(it);
       });
@@ -391,6 +391,7 @@
         if (arr.length >= max) { toast('Up to ' + max + ' ' + spec.kind + (max === 1 ? '' : 's') + ' here.', true); return; }
         if (spec.kind === 'video' && file.size > 250 * 1024 * 1024) { toast('That video is too big (over 250 MB). Record a shorter clip.', true); return; }
         if (file.size > 300 * 1024 * 1024) { toast('That file is too big.', true); return; }
+        if (spec.kind === 'model' && spec.ext && spec.ext.indexOf((/\.(\w+)$/.exec(file.name) || [])[1] ? /\.(\w+)$/.exec(file.name)[1].toLowerCase() : '') < 0) { toast('This one needs a .' + spec.ext.join(' or .') + ' file. ' + (spec.extHelp || ''), true); return; }
         var rec = { blob: file, name: file.name, kind: spec.kind };
         arr.push(rec);
         if (spec.kind === 'photo') shrinkImage(file, 1600, 0.85).then(function (b) { rec.blob = b; rec.name = file.name.replace(/\.\w+$/, '') + '.jpg'; return shrinkImage(file, 160, 0.6); }).then(function (t) { return blobToData(t); }).then(function (d) { rec.thumb = d; draw(); }).catch(function () { draw(); });

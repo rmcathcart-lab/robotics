@@ -29,6 +29,8 @@ colours; real-object colours (UNO, chips, LEDs, cardboard) stay. `node tests/lig
 | `js/kit/code.js` | Arduino code colouring, code blocks (copy / download .ino) and line-by-line code walkthroughs |
 | `js/kit/lightart.js` | Light versions of every drawing for the light display (live palette swap) |
 | `js/kit/ui.js` | Checkpoints, notes, explainer animations, hotspot diagrams, test checklists, challenge cards, kit checklist |
+| `js/kit/fusion.js` | Fusion 360 missions: animated walk-throughs of real Fusion screenshots (`assets/fusion/`), a Fusion-style 3D viewer (three.js r128 in `assets/vendor/`, loaded only when needed) with ViewCube and Home, the navigation trainer, sketch / extrude / fillet / text labs, and the STL checker (also used for STL previews in the grading view) |
+| `js/missions/f01.js` | Unit 1, Mission F1: Name tag keychain (F2–F8 are planned in `js/catalog.js` and show as “In development”) |
 | `js/missions/m01.js` … `m09.js` | The nine Arduino missions (see `docs/MISSION_GUIDE.md` for how to write one) |
 | `teacher/` | The teacher ledger: `dash.js` (tabs), `comments.js` (report card comments), `powerschool.js` (reads PowerSchool scores templates) |
 | `backend/Code.gs` | Apps Script backend. `backend/mock_server.js` runs it locally with stand-ins for the Google services |
@@ -40,7 +42,7 @@ Read `docs/MISSION_GUIDE.md` first.
 
 
 1. Set `ready: true` (and `criteria`) for it in `js/catalog.js`.
-2. Write `js/missions/mNN.js` with `RL.guides.mNN = { steps: [...], evidence: {...} }` (copy the shape of `m01.js`).
+2. Write `js/missions/mNN.js` (or `fNN.js` for a Fusion mission) with `RL.guides.mNN = { steps: [...], evidence: {...} }` (copy the shape of `m01.js`).
 3. Add a `<script>` tag for it in `index.html` and `teacher/index.html`.
 
 ## Backend
@@ -66,3 +68,11 @@ Roster: upload a PowerSchool scores template (any assignment's Export) to add st
 template whose class name says 15, 25 or 35 also sets those students' course level (Design Thinking for Innovation
 15/25/35). Pronouns and IPP are set per student. Comments: a course overview (editable wordings), a strength and an area for
 growth from the mission grades, the IPP sentence and a sign-off, downloadable as a .csv.
+
+## Fusion missions (Unit 1)
+
+Mission ids are a letter and two digits (`m01`, `f01`); the short code shown in tables and the calendar comes from `RL.mcode`
+(M01 for Arduino, F1 for Fusion). Fusion missions hand in files of kind `model` (`ext: ['f3d']` or `['stl']` limits a slot to one
+type). Walk-throughs in `RL.Fusion.shots` take a screenshot name, a view `[centre x, centre y, width]` in screenshot pixels and a list
+of marks (`click`, `move`, `drag`, `type`, `key`, `ring`, `box`, `label`, `arrow`, `circle`); to add screens, save a 1372 × 891 JPG of
+the Fusion window in `assets/fusion/`.

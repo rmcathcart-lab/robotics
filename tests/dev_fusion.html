@@ -1,0 +1,8 @@
+<!doctype html><html data-theme="dark"><head><meta charset="utf-8"><link rel="stylesheet" href="../assets/rl.css"><link rel="stylesheet" href="../assets/app.css">
+<script src="../js/ns.js"></script><script src="../js/kit/ui.js"></script><script src="../js/kit/board.js"></script><script src="../js/kit/fusion.js"></script></head>
+<body style="padding:20px;max-width:900px"><div id="a"></div>
+<script>
+var store = {}, ctx = { check: function (k, v) { if (v !== undefined) store[k] = v; return store[k]; }, answer: function (k, v) { if (v !== undefined) store[k] = v; return store[k] || ''; } };
+window.V = RL.Fusion.viewer(document.getElementById('a'), { height: 400 });
+V.ready.then(function () { var T = V.T; var g = new T.BoxGeometry(30, 30, 30); g.translate(0, 0, 15); V.root.add(RL.Fusion.solid(T, g)); V.fit(V.root, { now: true }); window.READY = 1; });
+</script></body></html>

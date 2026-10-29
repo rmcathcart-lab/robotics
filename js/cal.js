@@ -181,7 +181,7 @@
     var a = el(href ? 'a' : 'div', 'calv-chip' + (slot.day === slot.len ? ' due' : slot.day > 1 ? ' mid' : ''));
     if (href) a.href = href;
     a.style.setProperty('--u', RL.unitColour(i.unit));
-    a.innerHTML = '<b>M' + esc(i.num) + ' · day ' + slot.day + '/' + slot.len + '</b><span>' + esc(i.title) + '</span>';
+    a.innerHTML = '<b>' + RL.mcode(i.num) + ' · day ' + slot.day + '/' + slot.len + '</b><span>' + esc(i.title) + '</span>';
     a.title = 'Mission ' + i.num + ': ' + i.title + ' — day ' + slot.day + ' of ' + slot.len + (slot.day === slot.len ? ' (due)' : '');
     return a;
   };

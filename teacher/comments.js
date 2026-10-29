@@ -24,9 +24,11 @@
     build: { label: 'Circuits', topic: 'building and wiring circuits' },
     code: { label: 'Code', topic: 'writing and debugging Arduino code' },
     design: { label: 'Design & testing', topic: 'designing, building and testing working prototypes' },
-    explain: { label: 'Explaining', topic: 'explaining the science and the code behind the projects' }
+    explain: { label: 'Explaining', topic: 'explaining the science and the code behind the projects' },
+    sketch: { label: 'Sketching', topic: 'sketching and dimensioning designs in Fusion 360' },
+    model: { label: '3D modeling', topic: 'building 3D models in Fusion 360' }
   };
-  C.AREA_ORDER = ['build', 'code', 'design', 'explain'];
+  C.AREA_ORDER = ['sketch', 'model', 'build', 'code', 'design', 'explain'];
 
   function hash(s) { var h = 2166136261; s = String(s); for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
   function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
@@ -48,11 +50,11 @@
 
   /* the course overview that opens each comment ({course} = the student's course); the teacher can rewrite these in the tab */
   C.COURSE = [
-    'In {course} this semester, we used the engineering design process to research, plan, build, test and improve our own projects, from wiring and programming Arduino circuits to building working prototypes from everyday materials.',
-    '{course} this semester focused on design thinking and engineering: we built and programmed Arduino projects with sensors, motors and displays, and turned each circuit into a working prototype.',
-    'This semester in {course}, we followed the engineering design process (ask, research, imagine, plan, create, test and improve) to design, build and program electronic projects with the Arduino.',
-    'Our work in {course} this semester combined electronics, coding and hands-on design, as we wired circuits, wrote Arduino programs and built prototypes that sense and react to the world around them.',
-    'In {course}, we worked through a series of self-paced engineering missions this semester, learning to build circuits, write and debug code, and test and improve our designs.'
+    'In {course} this semester, we used the engineering design process to research, plan, build, test and improve our own projects, from 3D models in Fusion 360 to programmed Arduino circuits and working prototypes built from everyday materials.',
+    '{course} this semester focused on design thinking and engineering: we modelled our own designs in Fusion 360 for 3D printing, then built and programmed Arduino projects with sensors, motors and displays.',
+    'This semester in {course}, we followed the engineering design process (ask, research, imagine, plan, create, test and improve) to model parts in Fusion 360 and to design, build and program electronic projects with the Arduino.',
+    'Our work in {course} this semester combined 3D design, electronics and coding, as we modelled parts in Fusion 360, wired circuits, wrote Arduino programs and built prototypes that sense and react to the world around them.',
+    'In {course}, we worked through a series of self-paced design and engineering missions this semester, learning to model in 3D, build circuits, write and debug code, and test and improve our designs.'
   ];
 
   /* ---- templates ----

@@ -25,7 +25,8 @@
   RL.levelFromCourse = function (s) { var m = /(?:^|[^0-9])(15|25|35)(?![0-9])/.exec(String(s || '')); return m ? m[1] : ''; };
 
   RL.UNITS = [
-    { n: 1, title: 'Design & 3D modeling', blurb: 'Design thinking, Fusion 360 and your first 3D print.', soon: true, missions: [] },
+    { n: 1, title: 'Design & 3D modeling', blurb: 'Learn Fusion 360 one tool at a time by building real, printable things.',
+      missions: ['f01', 'f02', 'f03', 'f04', 'f05', 'f06', 'f07', 'f08'] },
     { n: 2, title: 'Arduino: sense, think, act', blurb: 'Wire real circuits, write code, and make things that react to the world.',
       missions: ['m01', 'm02', 'm03', 'm04', 'm05', 'm06', 'm07', 'm08', 'm09'] }
   ];
@@ -142,6 +143,74 @@
     }
   };
 
+  /* Unit 1: Fusion 360. Each mission teaches a few tools through one build and ends with the student's 3D files. */
+  var FUSION_KIT = ['A computer with Autodesk Fusion', 'Your Autodesk sign-in'], MOUSE = ['A mouse with a scroll wheel'];
+  function fcrit(sketch, model, design, explain) {
+    return [{ id: 'sketch', name: 'Sketch', desc: sketch }, { id: 'model', name: '3D model', desc: model }, { id: 'design', name: 'Design & testing', desc: design }, { id: 'explain', name: 'Explain it', desc: explain }];
+  }
+  var FUSION = {
+    f01: {
+      id: 'f01', unit: 1, num: 'F1', title: 'Name tag keychain', days: 2, ready: true, level: 1,
+      tagline: 'Find your way around Fusion and model a keychain with your name on it, ready to 3D print.',
+      discover: ['The Fusion window', 'Orbit, pan & zoom', 'Sketches & profiles', 'Dimensions', 'Fully defined (black) sketches', 'Extrude', 'Fillet', 'Text', 'Saving & exporting'],
+      parts: FUSION_KIT, extras: MOUSE,
+      criteria: fcrit('Fully defined sketch (all black) with the planned dimensions: a 50 × 20 mm tag and a Ø5 mm hole placed with dimensions.',
+        'A 4 mm extrude with a clean hole through it, 4 filleted corners, and a name raised or engraved 1 mm.',
+        'The name fits and reads clearly; the student tested their model (STL check) and tried an improvement.',
+        'Uses sketch, profile, dimension, extrude and fillet correctly to explain how the keychain was built.')
+    },
+    f02: {
+      id: 'f02', unit: 1, num: 'F2', title: 'Phone stand', days: 3, ready: false, level: 2,
+      tagline: 'Draw a side profile with lines and arcs, lock it with constraints, and extrude a stand that holds your phone at the perfect angle.',
+      discover: ['Lines & arcs', 'Constraints', 'Symmetric extrude', 'Chamfer', 'Measure', 'Design for a real object'],
+      parts: FUSION_KIT, extras: ['A phone (or a block the same size) and a ruler'],
+      criteria: fcrit('Profile drawn with lines and arcs, fully defined using constraints and dimensions.', 'Symmetric extrude, chamfers or fillets on edges, measured to fit a real phone.', 'Holds a phone at a chosen angle; tested against measurements and improved.', 'Explains how constraints and dimensions work together.')
+    },
+    f03: {
+      id: 'f03', unit: 1, num: 'F3', title: 'Spinning top', days: 3, ready: false, level: 2,
+      tagline: 'Sketch half a shape and revolve it into a top that really spins. Use the centre of mass to make it balance.',
+      discover: ['Revolve', 'Construction lines', 'Splines', 'Centre of mass', 'Appearances'],
+      parts: FUSION_KIT, extras: MOUSE,
+      criteria: fcrit('Half-profile with a construction axis, fully defined.', 'Revolved body; low centre of mass checked with Inspect.', 'A top that spins for a long time; tested, timed and improved.', 'Explains revolve and why the centre of mass matters.')
+    },
+    f04: {
+      id: 'f04', unit: 1, num: 'F4', title: 'Desk organizer', days: 3, ready: false, level: 3,
+      tagline: 'Design a desk tidy with compartments for your things using shell, patterns, mirror and sketches on faces.',
+      discover: ['Shell', 'Offset planes', 'Rectangular pattern', 'Mirror', 'Sketch on a face', 'Cut extrudes'],
+      parts: FUSION_KIT, extras: ['A ruler, and the things you want it to hold'],
+      criteria: fcrit('Sketches on faces and planes, dimensioned from measurements of real objects.', 'Shelled body with patterned or mirrored compartments and cut features.', 'Every compartment fits what it’s for; checked with measurements and improved.', 'Explains shell, pattern and mirror, and how they saved time.')
+    },
+    f05: {
+      id: 'f05', unit: 1, num: 'F5', title: 'Fidget spinner', days: 3, ready: false, level: 3,
+      tagline: 'Use parameters and a circular pattern to design a spinner around a real skateboard bearing, with a press fit that holds.',
+      discover: ['User parameters', 'Circular pattern', 'Hole tool', 'Tolerances & press fits', 'Change a design with one number'],
+      parts: FUSION_KIT, extras: ['A 608 skateboard bearing (22 mm), calipers if you have them'],
+      criteria: fcrit('Parametric sketch: the bearing size and arm count are user parameters.', 'Circular pattern of arms, holes sized with a tolerance for a press fit.', 'The bearing fits snugly after printing; the fit was tested and adjusted.', 'Explains parameters and why a hole needs a tolerance.')
+    },
+    f06: {
+      id: 'f06', unit: 1, num: 'F6', title: 'Box with a snap lid', days: 4, ready: false, level: 4,
+      tagline: 'Model a box and lid as separate components, connect them with joints, and design a lid that snaps shut.',
+      discover: ['Components', 'Joints & motion', 'Interference', 'Section analysis', 'Clearance'],
+      parts: FUSION_KIT, extras: MOUSE,
+      criteria: fcrit('Each part sketched in its own component, dimensioned to match the other part.', 'Box and lid as components with joints; no interference; clearance for the fit.', 'Lid opens, closes and snaps; tested with a section view and improved.', 'Explains components, joints and clearance.')
+    },
+    f07: {
+      id: 'f07', unit: 1, num: 'F7', title: 'Bottle & handle', days: 3, ready: false, level: 4,
+      tagline: 'Blend between shapes with loft and pull a profile along a path with sweep to make smooth, organic forms.',
+      discover: ['Loft', 'Sweep', 'Construction planes', 'Paths', 'Smooth forms'],
+      parts: FUSION_KIT, extras: MOUSE,
+      criteria: fcrit('Profiles on offset planes and a path sketch, all defined.', 'A loft between at least 3 profiles and a sweep along a path, joined into one body.', 'Comfortable to hold; shape tested and refined.', 'Explains loft and sweep and when to use each.')
+    },
+    f08: {
+      id: 'f08', unit: 1, num: 'F8', title: 'Design challenge', days: 4, ready: false, level: 5,
+      tagline: 'Use the design process to solve a real problem for a real person, then model it, make a drawing, slice it and print it.',
+      discover: ['The design process', 'Interviewing a user', 'Drawings', 'Slicing', '3D printing'],
+      parts: FUSION_KIT, extras: ['Access to the 3D printer'],
+      criteria: fcrit('Sketches and a drawing with dimensions that someone else could build from.', 'A complete model using tools from the unit, sliced and printed.', 'Designed for a real user; prototype tested with them and improved.', 'Explains the design decisions and the tools used.')
+    }
+  };
+  Object.keys(FUSION).forEach(function (k) { FUSION[k].cardTags = FUSION[k].discover.slice(FUSION[k].id === 'f01' ? 3 : 0); RL.MISSIONS[k] = FUSION[k]; });
+
   /* Extra materials to order (the Equipment tab). Each item is one specific Amazon.ca product (checked Oct 28, 2026):
      { item: what it's for, name: what to call it in the order email, product: the listing's name, asin, pack: units in one order, unit: what a unit is,
        each: units each group needs (→ packs = groups × each ÷ pack, rounded up) or packs: a fixed number of packs for
@@ -179,6 +248,8 @@
   /* how many packs to order for g groups */
   RL.orderQty = function (o, g) { return o.packs != null ? o.packs : Math.max(1, Math.ceil((g || 1) * (o.each || 1) / (o.pack || 1))); };
 
+  /* short code for a mission: M01 (Arduino) or F1 (Fusion) */
+  RL.mcode = function (num) { num = String(num && num.num != null ? num.num : num); return /^\d/.test(num) ? 'M' + num : num; };
   RL.missionList = function () { var out = []; RL.UNITS.forEach(function (u) { u.missions.forEach(function (id) { if (RL.MISSIONS[id]) out.push(RL.MISSIONS[id]); }); }); return out; };
   RL.unitOf = function (id) { var m = RL.MISSIONS[id]; return m ? RL.UNITS.filter(function (u) { return u.n === m.unit; })[0] : null; };
   /* colour for each unit (calendar chips, unit headers) */

@@ -212,7 +212,7 @@ function upsertProgress_(who, prog, keys, now) {
   col.forEach(function (r, i) { idx[r[0]] = i + 2; });
   var add = [];
   keys.forEach(function (m) {
-    var state = prog[m]; if (!state || typeof state !== 'object' || !/^m\d\d$/.test(m)) return;
+    var state = prog[m]; if (!state || typeof state !== 'object' || !/^[a-z]\d\d$/.test(m)) return;
     var txt = JSON.stringify(state);
     if (txt.length > 45000) { var s2 = JSON.parse(txt); Object.keys(s2.answers || {}).forEach(function (a) { if (/^sim-/.test(a)) delete s2.answers[a]; }); txt = JSON.stringify(s2).slice(0, 49000); }
     var key = norm_(who.klass) + '|' + norm_(who.name) + '|' + m, done = Object.keys(state.done || {}).length;
@@ -237,7 +237,7 @@ function uploadStart_(b) {
   var size = Number(b.size) || 0, mime = clean_(b.mime || 'application/octet-stream', 80);
   if (size <= 0) return { ok: false, error: 'That file is empty.' };
   if (size > 300 * 1024 * 1024) return { ok: false, error: 'That file is too big (over 300 MB).' };
-  var mission = /^m\d\d$/.test(b.mission) ? b.mission : 'misc';
+  var mission = /^[a-z]\d\d$/.test(b.mission) ? b.mission : 'misc';
   var stamp = Utilities.formatDate(new Date(), TZ, 'MMM d HH-mm');
   var fname = clean_(mission.toUpperCase() + ' · ' + stamp + ' · ' + String(b.fileName || 'file').replace(/[\\\/]/g, '-'), 140);
   var r = UrlFetchApp.fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&supportsAllDrives=true&fields=id,name,mimeType,size', {
@@ -269,7 +269,7 @@ function uploadChunk_(b) {
 function subRows_() { return rows_('Submissions').map(function (r, i) { return { row: i + 2, v: r }; }); }
 function submit_(b) {
   var who = authed_(b['class'], b.name, b.token); if (!who) return { ok: false, error: 'badtoken' };
-  var mission = String(b.mission || ''); if (!/^m\d\d$/.test(mission)) return { ok: false, error: 'bad mission' };
+  var mission = String(b.mission || ''); if (!/^[a-z]\d\d$/.test(mission)) return { ok: false, error: 'bad mission' };
   var files = (b.files || []).slice(0, 12).filter(function (f) { var o = cget_('file:' + f.fileId); return o && norm_(o.k) === norm_(who.klass) && norm_(o.n) === norm_(who.name); })
     .map(function (f) { return { id: String(f.fileId), name: clean_(f.name, 120), mime: clean_(f.mime, 80), size: Number(f.size) || 0, kind: clean_(f.kind, 10), slot: clean_(f.slot, 20) }; });
   var refl = {}; Object.keys(b.reflections || {}).slice(0, 12).forEach(function (q) { refl[clean_(q, 12)] = cleanText_(b.reflections[q], 4000); });
@@ -326,7 +326,10 @@ function fileData_(id) {
   if (!known) return { ok: false, error: 'not a submitted file' };
   var f = DriveApp.getFileById(id), mime = f.getMimeType(), size = f.getSize();
   var out = { ok: true, id: id, name: f.getName(), mime: mime, size: size, url: f.getUrl(), preview: 'https://drive.google.com/file/d/' + id + '/preview' };
+  var model = /\.(stl|f3d|step|stp|obj|3mf)$/i.test(f.getName());
   if (/^image\//.test(mime) && size < 8 * 1024 * 1024) out.data = 'data:' + mime + ';base64,' + Utilities.base64Encode(f.getBlob().getBytes());
+  else if (/\.stl$/i.test(f.getName()) && size < 20 * 1024 * 1024) out.b64 = Utilities.base64Encode(f.getBlob().getBytes()); // a 3D preview in the grading view
+  else if (model) out.model = true;
   else if ((/^text\//.test(mime) || /\.(ino|txt|cpp|h|c)$/i.test(f.getName()) || mime === 'application/octet-stream') && size < 300000) out.text = f.getBlob().getDataAsString();
   return out;
 }
