@@ -11,7 +11,7 @@
   var P = 16;                       // hole pitch (0.1 inch)
   var UX = 20, UY = 74, UW = 300, UH = 400; // UNO (portrait, USB at the top)
   var BX = 386, BY = 40, ROWS = 30;  // breadboard
-  var COLX = { 'L+': 8, 'L-': 24, a: 66, b: 82, c: 98, d: 114, e: 130, f: 178, g: 194, h: 210, i: 226, j: 242, 'R-': 284, 'R+': 300 };
+  var COLX = { 'L+': 8, 'L-': 24, a: 66, b: 82, c: 98, d: 114, e: 130, f: 178, g: 194, h: 210, i: 226, j: 242, 'R+': 284, 'R-': 300 }; // rails read + − … + − across, like the class breadboards
   var BW = 316, BH = 30 + (ROWS - 1) * P + 30;
   var VB = [0, 0, BX + BW + 14, BY + BH + 14];
 
@@ -55,7 +55,7 @@
   }
   function allHoles() {
     var out = [];
-    for (var r = 1; r <= ROWS; r++) { 'abcdefghij'.split('').forEach(function (c) { out.push(c + r); }); ['L+', 'L-', 'R-', 'R+'].forEach(function (c) { out.push(c + r); }); }
+    for (var r = 1; r <= ROWS; r++) { 'abcdefghij'.split('').forEach(function (c) { out.push(c + r); }); ['L+', 'L-', 'R+', 'R-'].forEach(function (c) { out.push(c + r); }); }
     return out;
   }
 
@@ -122,7 +122,7 @@
     s('rect', { x: BX + 40, y: BY + 4, width: 1, height: BH - 8, fill: '#b5c0cc' }, b);
     s('rect', { x: BX + BW - 40, y: BY + 4, width: 1, height: BH - 8, fill: '#b5c0cc' }, b);
     // rail stripes
-    [['L+', '#d64545', -7], ['L-', '#2f62c9', 7], ['R-', '#2f62c9', -7], ['R+', '#d64545', 7]].forEach(function (r) {
+    [['L+', '#d64545', -7], ['L-', '#2f62c9', 7], ['R+', '#d64545', -7], ['R-', '#2f62c9', 7]].forEach(function (r) {
       var x = BX + COLX[r[0]] + r[2]; s('rect', { x: x - 0.75, y: BY + 14, width: 1.5, height: BH - 28, fill: r[1], opacity: 0.85 }, b);
       txt(b, BX + COLX[r[0]], BY + 14, r[0].slice(1) === '+' ? '+' : '−', { 'font-family': 'IBM Plex Mono, monospace', 'font-size': 11, 'font-weight': 700, fill: r[1], 'text-anchor': 'middle' });
       txt(b, BX + COLX[r[0]], BY + BH - 6, r[0].slice(1) === '+' ? '+' : '−', { 'font-family': 'IBM Plex Mono, monospace', 'font-size': 11, 'font-weight': 700, fill: r[1], 'text-anchor': 'middle' });
@@ -147,7 +147,7 @@
       s('rect', { x: BX + COLX.a - 6, y: y - 4, width: COLX.e - COLX.a + 12, height: 8, rx: 2, fill: '#c9a227', opacity: 0.75 }, x);
       s('rect', { x: BX + COLX.f - 6, y: y - 4, width: COLX.j - COLX.f + 12, height: 8, rx: 2, fill: '#c9a227', opacity: 0.75 }, x);
     }
-    ['L+', 'L-', 'R-', 'R+'].forEach(function (c) { s('rect', { x: BX + COLX[c] - 4, y: BY + 24, width: 8, height: (ROWS - 1) * P + 12, rx: 2, fill: c.slice(1) === '+' ? '#e07a5f' : '#6c8ee0', opacity: 0.8 }, x); });
+    ['L+', 'L-', 'R+', 'R-'].forEach(function (c) { s('rect', { x: BX + COLX[c] - 4, y: BY + 24, width: 8, height: (ROWS - 1) * P + 12, rx: 2, fill: c.slice(1) === '+' ? '#e07a5f' : '#6c8ee0', opacity: 0.8 }, x); });
     return x;
   }
 

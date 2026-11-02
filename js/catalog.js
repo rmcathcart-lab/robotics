@@ -144,7 +144,7 @@
   };
 
   /* Unit 1: Fusion 360. Each mission teaches a few tools through one build and ends with the student's 3D files. */
-  var FUSION_KIT = ['A computer with Autodesk Fusion', 'Your Autodesk sign-in'], MOUSE = ['A mouse with a scroll wheel'];
+  var FUSION_KIT = ['A computer with Autodesk Fusion', 'An Autodesk account (school email)'], MOUSE = ['A mouse with a scroll wheel'];
   function fcrit(sketch, model, design, explain) {
     return [{ id: 'sketch', name: 'Sketch', desc: sketch }, { id: 'model', name: '3D model', desc: model }, { id: 'design', name: 'Design & testing', desc: design }, { id: 'explain', name: 'Explain it', desc: explain }];
   }
@@ -203,9 +203,9 @@
     },
     f08: {
       id: 'f08', unit: 1, num: 'F8', title: 'Design challenge', days: 4, ready: false, level: 5,
-      tagline: 'Use the design process to solve a real problem for a real person, then model it, make a drawing, slice it and print it.',
-      discover: ['The design process', 'Interviewing a user', 'Drawings', 'Slicing', '3D printing'],
-      parts: FUSION_KIT, extras: ['Access to the 3D printer'],
+      tagline: 'Use the design process to solve a real problem for a real person, then model it, make a drawing, slice it in Bambu Studio and print it on the Bambu Lab A1.',
+      discover: ['The design process', 'Interviewing a user', 'Drawings', 'Slicing in Bambu Studio', '3D printing'],
+      parts: FUSION_KIT, extras: ['Time on the Bambu Lab A1'],
       criteria: fcrit('Sketches and a drawing with dimensions that someone else could build from.', 'A complete model using tools from the unit, sliced and printed.', 'Designed for a real user; prototype tested with them and improved.', 'Explains the design decisions and the tools used.')
     }
   };

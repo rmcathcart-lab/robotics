@@ -30,7 +30,7 @@
     wrap.appendChild(meta); b.appendChild(wrap);
     var box = el('div', 'xp'); box.innerHTML = '<div class="xp-h"><span class="label">Preview</span><h3>What you’re building</h3></div>'; b.appendChild(box);
     var v = F.viewer(box, { height: 320, gridSize: 75, helpText: 'Drag to turn it around · Scroll or pinch to zoom' });
-    box.appendChild(el('div', 'xp-cap', '<p>A 50 × 20 mm tag, 4 mm thick, with rounded corners, a hole for the key ring and your name raised 1 mm. It takes about an hour to print.</p>'));
+    box.appendChild(el('div', 'xp-cap', '<p>A 50 × 20 mm tag, 4 mm thick, with rounded corners, a hole for the key ring and your name raised 1 mm. It prints in well under an hour on the class Bambu Lab A1.</p>'));
     Promise.all([v.ready, F.font()]).then(function (r) {
       var T = v.T, k = F.keychain(T, r[1], { text: 'ALEX', size: 9, style: 'raised', r: 4 }); v.root.add(k);
       var hb = new T.Box3(new T.Vector3(-26, -11, 0), new T.Vector3(26, 11, 5)); v.setHome(hb, 1.1); v.fit(hb, { now: true, pad: 1.1 });
@@ -43,11 +43,13 @@
 
   /* ---------- 02 open Fusion ---------- */
   steps.push({ id: 'setup', title: 'Open Fusion', time: '10 min', render: function (b, ctx) {
-    UI.html(b, '<p class="lead">Open Autodesk Fusion and sign in with the Autodesk account your teacher set up for you. When it opens you’ll see an empty design: a grid floating in space.</p>' +
-      '<p>Fusion saves your work to the cloud, inside <b>projects</b> (like folders). Your teacher will tell you which project to use for this class.</p>');
+    UI.html(b, '<p class="lead">Open Autodesk Fusion. It runs on Windows and Mac, and everything in this unit works the same on both (where a shortcut is different, the Mac one is shown too). When it opens you’ll see an empty design: a grid floating in space.</p>' +
+      '<h2>Your Autodesk account</h2><p>Fusion asks you to sign in. The first time, click <b>Create account</b> and make an Autodesk account with your <b>school email address</b>, then check your school email to confirm it. After that, sign in with the same email every time — your designs are saved to that account.</p>' +
+      '<h2>Make a project for this class</h2><p>Fusion saves your work to the cloud, inside <b>projects</b> (like folders). Make one called <b>Robotics Missions</b> and save every mission in it.</p>');
     F.shots(b, { title: 'Start a new design and check the units', ctx: ctx, key: 'w-setup', steps: [
       { img: 'ui-empty', view: 'full', cap: 'This is a new, empty design. If Fusion opened something else, use <b>File ▸ New Design</b> (or the <b>+</b> at the top for a new tab).', marks: [{ t: 'ring', x: 1183, y: 44, r: 16 }, { t: 'label', x: 1183, y: 44, text: 'New tab', dx: -40, dy: 40 }] },
       { img: 'ui-empty', view: [240, 200, 520], cap: 'The top-left box says <b>DESIGN</b>: you’re in the Design workspace, where 3D models are made. Leave it there.', marks: [{ t: 'box', x: 12, y: 70, w: 98, h: 52 }] },
+      { img: 'ui-empty', view: [330, 200, 660], cap: 'Click the grid icon at the top left to open the <b>Data Panel</b>, where your projects live. Click <b>New Project</b>, name it <b>Robotics Missions</b> and press <kbd>Enter</kbd>. Click the grid icon again to close the panel. (You only do this once.)', marks: [{ t: 'ring', x: 47, y: 44, r: 16 }, { t: 'click', x: 47, y: 44 }, { t: 'label', x: 47, y: 44, text: 'Data Panel', dx: 40, dy: 40 }] },
       { img: 'ui-empty', view: [240, 220, 520], cap: 'Under <b>Document Settings</b> in the browser it should say <b>Units: mm, g</b> — millimetres. Every size in this unit is in millimetres. If it says something else, hover over Units, click the pencil that appears and choose <b>Millimeter</b>.', marks: [{ t: 'box', x: 70, y: 208, w: 100, h: 22 }, { t: 'move', x: 135, y: 219 }] }
     ] });
     UI.callout(b, '', 'Good habits', '<p>Give every design a clear name (you’ll make a lot of them this unit), save often with <kbd>Ctrl</kbd> + <kbd>S</kbd> (<kbd>⌘</kbd> + <kbd>S</kbd> on a Mac), and only ever work in your own files.</p>');
@@ -177,14 +179,15 @@
     UI.html(b, '<h2>Save, then export two files</h2><p>A <b>.f3d</b> file is your whole design, timeline and all: your teacher can open it and see exactly how you built it. An <b>.stl</b> file is just the shape, made of tiny triangles: that’s what a 3D printer’s slicer needs.</p>');
     F.shots(b, { title: 'Save and export', ctx: ctx, key: 'w-export', steps: [
       { img: 'filemenu', view: [330, 250, 700], cap: 'Open the <b>File</b> menu and click <b>Save</b>.', marks: [{ t: 'click', x: 78, y: 44 }, { t: 'click', x: 95, y: 167 }] },
-      { img: 'save', view: [686, 340, 800], cap: 'Name it <b>F1 Keychain - your name</b>. For <b>Location</b>, pick the project your teacher told you to use. Click <b>Save</b>. It saves to the cloud, so you can open it on any computer you sign in on.', marks: [{ t: 'type', x: 686, y: 284, w: 634, h: 28, text: 'F1 Keychain - Alex', align: 'left' }, { t: 'type', x: 664, y: 364, w: 592, h: 28, text: 'Your class project', align: 'left' }, { t: 'click', x: 975, y: 507 }] },
+      { img: 'save', view: [686, 340, 800], cap: 'Name it <b>F1 Keychain - your name</b>. For <b>Location</b>, choose your <b>Robotics Missions</b> project. Click <b>Save</b>. It saves to the cloud, so you can open it on any computer you sign in on.', marks: [{ t: 'type', x: 686, y: 284, w: 634, h: 28, text: 'F1 Keychain - Alex', align: 'left' }, { t: 'type', x: 664, y: 364, w: 592, h: 28, text: 'Robotics Missions', align: 'left' }, { t: 'click', x: 975, y: 507 }] },
       { img: 'filemenu', view: [330, 250, 700], cap: 'Now make the files you’ll hand in: <b>File ▸ Export…</b>', marks: [{ t: 'click', x: 78, y: 44 }, { t: 'click', x: 104, y: 225 }] },
       { img: 'export', view: [686, 360, 800], cap: 'Leave <b>Type</b> on <b>Autodesk Fusion Archive Files (*.f3d)</b>. Choose a folder on your computer you’ll find again (the <b>…</b> button) and click <b>Export</b>.', marks: [{ t: 'type', x: 686, y: 285, w: 634, h: 28, text: 'F1 Keychain - Alex', align: 'left' }, { t: 'box', x: 365, y: 328, w: 642, h: 26 }, { t: 'ring', x: 993, y: 396, r: 16 }, { t: 'click', x: 966, y: 530 }] },
       { img: 'exporttypes', view: [686, 420, 800], cap: 'Do <b>File ▸ Export…</b> once more, but open the <b>Type</b> list and choose <b>STL Files (*.stl)</b>. Click <b>Export</b>.', marks: [{ t: 'type', x: 686, y: 285, w: 634, h: 28, text: 'F1 Keychain - Alex', align: 'left' }, { t: 'click', x: 686, y: 340 }, { t: 'click', x: 418, y: 513 }, { t: 'box', x: 372, y: 504, w: 110, h: 20 }] }
     ] });
     UI.html(b, '<h2>Check your STL</h2><p>Open the .stl you just exported. It shows up below in 3D, with its size, so you can catch problems before you hand it in.</p>');
     F.stlCheck(b, ctx, 'stl');
-    UI.callout(b, '', 'Screenshot', '<p>You’ll also hand in a screenshot of the whole Fusion window showing your keychain and the timeline. Windows: <kbd>Win</kbd> + <kbd>Shift</kbd> + <kbd>S</kbd> · Mac: <kbd>⌘</kbd> + <kbd>Shift</kbd> + <kbd>4</kbd> · Chromebook: <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Show windows</kbd>.</p>');
+    UI.callout(b, '', 'How it gets printed', '<p>The class printer is a <b>Bambu Lab A1</b>. Your STL goes into <b>Bambu Studio</b>, the slicer: it cuts the model into hundreds of thin layers and works out the path the nozzle follows for each one. The keychain prints lying flat, with the name facing up, so it needs no supports.</p><p>If Bambu Studio is on your computer, open your STL in it (drag the file onto the plate) and click <b>Slice plate</b> to see how long it would take and how much filament it uses.</p>');
+    UI.callout(b, '', 'Screenshot', '<p>You’ll also hand in a screenshot of the whole Fusion window showing your keychain and the timeline. Windows: <kbd>Win</kbd> + <kbd>Shift</kbd> + <kbd>S</kbd> · Mac: <kbd>⌘</kbd> + <kbd>Shift</kbd> + <kbd>4</kbd>.</p>');
   } });
 
   /* ---------- 11 test & improve ---------- */

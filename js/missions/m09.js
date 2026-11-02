@@ -113,7 +113,7 @@
       : { type: 'wire', from: 'c' + (k + 2), to: 'a' + r, color: ['', 'orange', 'yellow', 'green', 'blue', 'purple', 'grey', 'brown'][k], via: route([[484, hy(k + 2)], [419 + k * 4, hy(k + 2)], [419 + k * 4, hy(r)], [452, hy(r)]], 7), name: 'Wire: Q' + k + ' (c' + (k + 2) + ') → a' + r };
     BAR['r' + k] = { type: 'res', from: 'e' + r, to: 'f' + r, ohms: 220, name: '220 Ω resistor' };
     BAR['l' + k] = { type: 'led', a: 'j' + r, k: 'R-' + r, color: BARCOL[k], name: BARCOL[k][0].toUpperCase() + BARCOL[k].slice(1) + ' LED (Q' + k + ')' };
-    BAR['t' + k] = { type: 'label', at: 'R+' + r, dx: 10, dy: 3, text: 'Q' + k, size: 9, fill: '#8ea6bb' };
+    BAR['t' + k] = { type: 'label', at: 'R-' + r, dx: 10, dy: 3, text: 'Q' + k, size: 9, fill: '#8ea6bb' };
     LED_IDS.push('l' + k);
   }
   // Part B: the display, the buttons and the buzzer beside the board (wider view)
