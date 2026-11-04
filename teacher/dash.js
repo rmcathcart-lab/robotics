@@ -8,7 +8,7 @@
   var el = RL.el, esc = RL.esc;
   RL.Dash = RL.Dash || {};
   var KEY = '', CLASSES = [], CUR = '', D = null, TAB = 'live', view, topbar, NS = [], SYNC = false, timers = [];
-  var COURSES = [
+  var COURSES = [   // fallback only: the switcher normally comes from teaching/js/courses.js (TEACH.menu)
     { mark: 'RL', name: 'Robotics', colour: '#ff8a3d', ledger: 'https://rmcathcart-lab.github.io/robotics/teacher/' },
     { mark: '10C', name: 'Math 10C', colour: '#0f5f5a', ledger: 'https://rmcathcart-lab.github.io/math10c/teacher/' },
     { mark: '15', name: 'Math 15', colour: '#1e3a6e', ledger: 'https://rmcathcart-lab.github.io/math15/teacher/' }
@@ -28,7 +28,8 @@
     topbar.innerHTML = '';
     var c = el('div', 'course');
     var b = el('button', 'course-btn', '<span class="course-robot">' + RL.ROBOT + '</span><span class="brand"><b>Robotics</b><span>Teacher ledger</span></span>'); b.type = 'button';
-    b.addEventListener('click', function (e) { e.stopPropagation(); var m = c.querySelector('.course-menu'); if (m) { m.remove(); return; } var menu = el('div', 'course-menu'); COURSES.forEach(function (x) { var a = el('a', '', (x.mark === 'RL' ? '<span class="m robot-m">' + RL.ROBOT + '</span>' : '<span class="m" style="background:' + x.colour + '">' + esc(x.mark) + '</span>') + esc(x.name)); a.href = x.ledger; menu.appendChild(a); }); c.appendChild(menu); });
+    b.setAttribute('aria-haspopup', 'menu'); b.setAttribute('aria-expanded', 'false'); b.title = 'Switch course';
+    b.addEventListener('click', function (e) { e.stopPropagation(); if (root.TEACH && root.TEACH.menu) { root.TEACH.menu(b, { current: 'robotics', theme: RL.theme && RL.theme() === 'light' ? 'light' : 'dark' }); return; } var m = c.querySelector('.course-menu'); if (m) { m.remove(); return; } var menu = el('div', 'course-menu'); COURSES.forEach(function (x) { var a = el('a', '', (x.mark === 'RL' ? '<span class="m robot-m">' + RL.ROBOT + '</span>' : '<span class="m" style="background:' + x.colour + '">' + esc(x.mark) + '</span>') + esc(x.name)); a.href = x.ledger; menu.appendChild(a); }); c.appendChild(menu); });
     document.addEventListener('click', function () { var m = c.querySelector('.course-menu'); if (m) m.remove(); });
     c.appendChild(b); topbar.appendChild(c);
     if (!KEY) return;
@@ -320,9 +321,10 @@
     var s2 = el('div', 'panel'); s2.innerHTML = '<h3>Missions</h3><p class="small muted" style="margin-bottom:8px">Use − / + to change how many classes a mission gets. Everything after it moves.</p>';
     var ml = el('div', 'mlist'); s2.appendChild(ml); side.appendChild(s2);
     var s3 = el('div', 'panel'); s3.innerHTML = '<h3>Days off & notes</h3>';
-    var mb = el('div', 'modebar'), offB = el('button', 'btn btn-small ' + (calMode === 'off' ? 'btn-primary' : 'btn-ghost'), calMode === 'off' ? 'Done marking days off' : 'Mark days off'); offB.type = 'button';
-    offB.addEventListener('click', function () { calMode = calMode === 'off' ? 'view' : 'off'; render(); });
-    mb.appendChild(offB); mb.appendChild(el('span', 'small muted', 'No-school days are shared by every class.')); s3.appendChild(mb);
+    /* no-school days are set for every course in the Teaching Hub, which sends them here */
+    var hub = (root.TEACH ? root.TEACH.HUB : '../../teaching/'), mb = el('div', 'modebar'), offB = el('a', 'btn btn-small btn-ghost', 'Days off ↗'); offB.href = hub + '#/calendar/daysoff';
+    var allB = el('a', 'btn btn-small btn-ghost', 'All classes ↗'); allB.href = hub + '#/calendar';
+    mb.appendChild(offB); mb.appendChild(allB); mb.appendChild(el('span', 'small muted', 'No-school days (' + NS.length + ') are set for every course in the Teaching Hub.')); s3.appendChild(mb);
     var er = el('div', 'row2'), ed = el('input'), et = el('input'), etk = el('label', 'small'), ec = el('input');
     ed.type = 'date'; ed.value = C.today(); et.type = 'text'; et.placeholder = 'e.g. Field trip, assembly'; ec.type = 'checkbox'; ec.checked = true; etk.appendChild(ec); etk.appendChild(document.createTextNode(' no class'));
     var ea = el('button', 'btn btn-ghost btn-small', 'Add'); ea.type = 'button';
@@ -653,9 +655,15 @@
     view = document.getElementById('view'); topbar = document.getElementById('topbar');
     KEY = ls('tkey') || ''; CUR = ls('class') || ''; TAB = ls('tab') || 'live';
     var q = new URLSearchParams(location.search); if (q.get('key')) { KEY = q.get('key'); history.replaceState(null, '', location.pathname); }
+    /* links from the Teaching Hub and the universal bookmark: ?class=<code> picks the class, ?tab=<tab> the tab */
+    if (q.get('class')) { CUR = q.get('class').trim().toLowerCase(); ls('class', CUR); }
+    if (q.get('tab') && /^[a-z]+$/.test(q.get('tab'))) { TAB = q.get('tab'); ls('tab', TAB); }
+    if (q.get('class') || q.get('tab')) try { history.replaceState(null, '', location.pathname + location.hash); } catch (e) {}
     if (!A.enabled) { keyView(); return; }
     start();
     setInterval(function () { if (KEY && CUR && document.visibilityState === 'visible' && TAB !== 'calendar' && !document.querySelector('.modal')) load(true); }, 60000);
   }
+  /* coming back from the Teaching Hub (it may have changed this class's calendar or the days off): read them again */
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible' && KEY && CUR && TAB === 'calendar' && !document.querySelector('.modal')) refreshClasses().then(function () { load(); }); });
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })(window);

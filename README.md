@@ -76,3 +76,12 @@ Mission ids are a letter and two digits (`m01`, `f01`); the short code shown in 
 type). Walk-throughs in `RL.Fusion.shots` take a screenshot name, a view `[centre x, centre y, width]` in screenshot pixels and a list
 of marks (`click`, `move`, `drag`, `type`, `key`, `ring`, `box`, `label`, `arrow`, `circle`); to add screens, save a 1372 × 891 JPG of
 the Fusion window in `assets/fusion/`.
+
+## Teaching Hub (universal settings)
+
+Bell times, days off, the semester schedule (which class is in which block), the universal calendar and sub plans live
+in the Teaching Hub: https://rmcathcart-lab.github.io/teaching/ (repo `teaching`). It sends days off to
+this ledger's backend, and reads and changes the class calendars
+through `teacher/bridge.html`. The course switcher (the badge in
+the ledger's corner) comes from `teaching/js/courses.js`; the list in `teacher/dash.js` is only a fallback. The ledger opens a
+class with `?class=<code>` and a tab with `?tab=<tab>` (the hub's universal bookmark uses these).
