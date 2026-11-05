@@ -52,6 +52,7 @@
     var i = C.info(k); if (!i) return null;
     var c = RL.unitColour(i.unit), m = i.mission || {};
     var it = { key: k, label: RL.mcode(i.num), title: i.title, kind: 'mission', unit: i.unit, colour: mix(c, '#0b1422', 0.25), tint: mix(c, '#ffffff', 0.8), dark: mix(c, '#000000', 0.6), ready: !!m.ready, days: m.days || 2 };
+    if (it.ready) it.teacherUrl = site('index.html?preview=1#/m/' + k);   // the mission guide, as the ledger's preview opens it
     if (slot) { it.day = slot.day; it.len = slot.len; it.sub = 'Day ' + slot.day + ' of ' + slot.len + (slot.day === slot.len ? ' · due' : ''); }
     return it;
   };
