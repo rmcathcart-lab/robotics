@@ -30,7 +30,8 @@ colours; real-object colours (UNO, chips, LEDs, cardboard) stay. `node tests/lig
 | `js/kit/lightart.js` | Light versions of every drawing for the light display (live palette swap) |
 | `js/kit/ui.js` | Checkpoints, notes, explainer animations, hotspot diagrams, test checklists, challenge cards, kit checklist |
 | `js/kit/fusion.js` | Fusion 360 missions: animated walk-throughs of real Fusion screenshots (`assets/fusion/`), a Fusion-style 3D viewer (three.js r128 in `assets/vendor/`, loaded only when needed) with ViewCube and Home, the navigation trainer, sketch / extrude / fillet / text labs, and the STL checker (also used for STL previews in the grading view) |
-| `js/missions/f01.js` | Unit 1, Mission F1: Name tag keychain (F2–F8 are planned in `js/catalog.js` and show as “In development”) |
+| `js/kit/fusion2.js` | Labs for F2–F7 (phone stand, revolve + centre of mass, shell + pattern, parameters + press fit, lid clearance, loft) and the shared brief / evidence helpers |
+| `js/missions/f01.js` … `f08.js` | Unit 1: F1 Name tag keychain · F2 Phone stand · F3 Spinning top · F4 Desk organizer · F5 Fidget spinner · F6 Box with a snap lid · F7 Bottle & handle · F8 Design challenge |
 | `js/missions/m01.js` … `m09.js` | The nine Arduino missions (see `docs/MISSION_GUIDE.md` for how to write one) |
 | `teacher/` | The teacher ledger: `dash.js` (tabs), `comments.js` (report card comments), `powerschool.js` (reads PowerSchool scores templates) |
 | `backend/Code.gs` | Apps Script backend. `backend/mock_server.js` runs it locally with stand-ins for the Google services |

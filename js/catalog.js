@@ -160,51 +160,51 @@
         'Uses sketch, profile, dimension, extrude and fillet correctly to explain how the keychain was built.')
     },
     f02: {
-      id: 'f02', unit: 1, num: 'F2', title: 'Phone stand', days: 3, ready: false, level: 2,
+      id: 'f02', unit: 1, num: 'F2', title: 'Phone stand', days: 3, ready: true, level: 2,
       tagline: 'Draw a side profile with lines and arcs, lock it with constraints, and extrude a stand that holds your phone at the perfect angle.',
-      discover: ['Lines & arcs', 'Constraints', 'Symmetric extrude', 'Chamfer', 'Measure', 'Design for a real object'],
+      discover: ['Line tool', 'Constraints', 'Angle dimensions', 'Symmetric extrude', 'Chamfer', 'Measure'],
       parts: FUSION_KIT, extras: ['A phone (or a block the same size) and a ruler'],
       criteria: fcrit('Profile drawn with lines and arcs, fully defined using constraints and dimensions.', 'Symmetric extrude, chamfers or fillets on edges, measured to fit a real phone.', 'Holds a phone at a chosen angle; tested against measurements and improved.', 'Explains how constraints and dimensions work together.')
     },
     f03: {
-      id: 'f03', unit: 1, num: 'F3', title: 'Spinning top', days: 3, ready: false, level: 2,
+      id: 'f03', unit: 1, num: 'F3', title: 'Spinning top', days: 3, ready: true, level: 2,
       tagline: 'Sketch half a shape and revolve it into a top that really spins. Use the centre of mass to make it balance.',
-      discover: ['Revolve', 'Construction lines', 'Splines', 'Centre of mass', 'Appearances'],
+      discover: ['Construction lines', 'Splines', 'Revolve', 'Centre of mass', 'Appearance'],
       parts: FUSION_KIT, extras: MOUSE,
       criteria: fcrit('Half-profile with a construction axis, fully defined.', 'Revolved body; low centre of mass checked with Inspect.', 'A top that spins for a long time; tested, timed and improved.', 'Explains revolve and why the centre of mass matters.')
     },
     f04: {
-      id: 'f04', unit: 1, num: 'F4', title: 'Desk organizer', days: 3, ready: false, level: 3,
+      id: 'f04', unit: 1, num: 'F4', title: 'Desk organizer', days: 3, ready: true, level: 3,
       tagline: 'Design a desk tidy with compartments for your things using shell, patterns, mirror and sketches on faces.',
-      discover: ['Shell', 'Offset planes', 'Rectangular pattern', 'Mirror', 'Sketch on a face', 'Cut extrudes'],
+      discover: ['Shell', 'Sketch on a face', 'Rectangular pattern', 'Cut extrude', 'Mirror'],
       parts: FUSION_KIT, extras: ['A ruler, and the things you want it to hold'],
       criteria: fcrit('Sketches on faces and planes, dimensioned from measurements of real objects.', 'Shelled body with patterned or mirrored compartments and cut features.', 'Every compartment fits what it’s for; checked with measurements and improved.', 'Explains shell, pattern and mirror, and how they saved time.')
     },
     f05: {
-      id: 'f05', unit: 1, num: 'F5', title: 'Fidget spinner', days: 3, ready: false, level: 3,
+      id: 'f05', unit: 1, num: 'F5', title: 'Fidget spinner', days: 3, ready: true, level: 3,
       tagline: 'Use parameters and a circular pattern to design a spinner around a real skateboard bearing, with a press fit that holds.',
-      discover: ['User parameters', 'Circular pattern', 'Hole tool', 'Tolerances & press fits', 'Change a design with one number'],
-      parts: FUSION_KIT, extras: ['A 608 skateboard bearing (22 mm), calipers if you have them'],
+      discover: ['User parameters', 'Formulas', 'Circular pattern', 'Hole tool', 'Tolerances & press fits'],
+      parts: FUSION_KIT, extras: ['608 skateboard bearings (22 mm)', 'Calipers or a ruler'],
       criteria: fcrit('Parametric sketch: the bearing size and arm count are user parameters.', 'Circular pattern of arms, holes sized with a tolerance for a press fit.', 'The bearing fits snugly after printing; the fit was tested and adjusted.', 'Explains parameters and why a hole needs a tolerance.')
     },
     f06: {
-      id: 'f06', unit: 1, num: 'F6', title: 'Box with a snap lid', days: 4, ready: false, level: 4,
+      id: 'f06', unit: 1, num: 'F6', title: 'Box with a snap lid', days: 4, ready: true, level: 4,
       tagline: 'Model a box and lid as separate components, connect them with joints, and design a lid that snaps shut.',
-      discover: ['Components', 'Joints & motion', 'Interference', 'Section analysis', 'Clearance'],
+      discover: ['Hybrid designs', 'Components', 'Clearance', 'Joints', 'Interference', 'Section analysis'],
       parts: FUSION_KIT, extras: MOUSE,
       criteria: fcrit('Each part sketched in its own component, dimensioned to match the other part.', 'Box and lid as components with joints; no interference; clearance for the fit.', 'Lid opens, closes and snaps; tested with a section view and improved.', 'Explains components, joints and clearance.')
     },
     f07: {
-      id: 'f07', unit: 1, num: 'F7', title: 'Bottle & handle', days: 3, ready: false, level: 4,
+      id: 'f07', unit: 1, num: 'F7', title: 'Bottle & handle', days: 3, ready: true, level: 4,
       tagline: 'Blend between shapes with loft and pull a profile along a path with sweep to make smooth, organic forms.',
-      discover: ['Loft', 'Sweep', 'Construction planes', 'Paths', 'Smooth forms'],
+      discover: ['Offset planes', 'Polygon', 'Loft', 'Plane along path', 'Sweep'],
       parts: FUSION_KIT, extras: MOUSE,
       criteria: fcrit('Profiles on offset planes and a path sketch, all defined.', 'A loft between at least 3 profiles and a sweep along a path, joined into one body.', 'Comfortable to hold; shape tested and refined.', 'Explains loft and sweep and when to use each.')
     },
     f08: {
-      id: 'f08', unit: 1, num: 'F8', title: 'Design challenge', days: 4, ready: false, level: 5,
+      id: 'f08', unit: 1, num: 'F8', title: 'Design challenge', days: 4, ready: true, level: 5,
       tagline: 'Use the design process to solve a real problem for a real person, then model it, make a drawing, slice it in Bambu Studio and print it on the Bambu Lab A1.',
-      discover: ['The design process', 'Interviewing a user', 'Drawings', 'Slicing in Bambu Studio', '3D printing'],
+      discover: ['The design process', 'Interviewing a user', 'Requirements', 'Drawings', 'Slicing in Bambu Studio', '3D printing'],
       parts: FUSION_KIT, extras: ['Time on the Bambu Lab A1'],
       criteria: fcrit('Sketches and a drawing with dimensions that someone else could build from.', 'A complete model using tools from the unit, sliced and printed.', 'Designed for a real user; prototype tested with them and improved.', 'Explains the design decisions and the tools used.')
     }
@@ -231,10 +231,12 @@
     nine: { name: '9V Batteries', product: 'Amazon Basics 9 V alkaline batteries (8)', asin: 'B00MH4QM1S', pack: 8, unit: 'batteries', price: '$18.64' },
     cake: { name: 'Cake Boards', product: 'qiqee 8 in round white cake boards (30)', asin: 'B0DGPV679D', pack: 30, unit: 'boards', price: '$17.88' },
     foam: { name: 'Double-Sided Mounting Tape', product: 'Scotch-Mount double-sided mounting tape, ¾ in × 350 in', asin: 'B009NP1OBC', pack: 1, unit: 'roll', price: '$17.77' },
+    bearings: { name: '608 Skateboard Bearings', product: '608-2RS ball bearings, 8 × 22 × 7 mm, double sealed (20)', asin: 'B09PKD8QZZ', pack: 20, unit: 'bearings', price: '$10.99' },
     arcade: { name: 'Arcade Push Buttons', product: 'EG Starts 30 mm arcade push buttons (12)', asin: 'B01MRWL6DW', pack: 12, unit: 'buttons', price: '$15.99' }
   };
   function it(item, k, o) { var p = P[k]; return Object.assign({ item: item, key: k, link: 'https://www.amazon.ca/dp/' + p.asin }, p, o); }
   RL.ORDERS = {
+    f05: [it('608 bearings (one in the middle; more as arm weights)', 'bearings', { each: 1 })],
     m01: [it('Hot glue sticks', 'glue', { packs: 1 }), it('Craft sticks (popsicle sticks)', 'craft', { packs: 1 }), it('Cardboard sheets (signal housings)', 'cardboard', { each: 2 })],
     m02: [it('Lampshades', 'cups', { each: 2 }), it('Vellum (light diffuser)', 'vellum', { each: 2 })],
     m03: [it('Female-to-male jumper wires (joystick)', 'fmwires', { each: 5 }), it('Hot glue sticks', 'glue', { packs: 1 })],

@@ -1,0 +1,8 @@
+<!doctype html><html data-theme="dark"><head><meta charset="utf-8"><link rel="stylesheet" href="../assets/rl.css"><link rel="stylesheet" href="../assets/app.css">
+<script src="../js/ns.js"></script><script src="../js/kit/ui.js"></script><script src="../js/kit/board.js"></script><script src="../js/kit/fusion.js"></script><script src="../js/kit/fusion2.js"></script></head>
+<body style="padding:20px;max-width:960px"><div id="a"></div>
+<script>
+var store = {}, ctx = { check: function (k, v) { if (v !== undefined) store[k] = v; return store[k]; }, answer: function (k, v) { if (v !== undefined) store[k] = v; return store[k] || ''; } };
+var a = document.getElementById('a');
+['standLab','revolveLab','organizerLab','spinnerLab','clearanceLab','loftLab'].forEach(function (n) { RL.Fusion[n](a, ctx, n); });
+</script></body></html>

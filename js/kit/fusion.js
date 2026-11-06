@@ -367,6 +367,7 @@
     }
     return api;
   };
+  F.dispose = disposeTree;
   function disposeTree(o) { o.traverse(function (c) { if (c.geometry) c.geometry.dispose(); if (c.material) [].concat(c.material).forEach(function (m) { if (m.map) m.map.dispose(); m.dispose(); }); }); }
   function grid(T, n) {
     var g = new T.Group(), minor = [], major = [];
