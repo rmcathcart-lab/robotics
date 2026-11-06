@@ -7,4 +7,4 @@ node tests/f01_walk.js 3,4,5,6 f04
 node tests/f01_walk.js 3,4,5 f05
 node tests/f01_walk.js 2,3,4,5 f06
 node tests/f01_walk.js 3,4,5 f07
-node tests/f01_walk.js 6 f08
+node tests/f01_walk.js 6,7 f08
