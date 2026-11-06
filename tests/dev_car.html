@@ -1,0 +1,32 @@
+<!doctype html><html data-theme="dark"><head><meta charset="utf-8"><link rel="stylesheet" href="../assets/rl.css"><link rel="stylesheet" href="../assets/app.css">
+<script src="../js/ns.js"></script><script src="../js/kit/ui.js"></script><script src="../js/kit/code.js"></script><script src="../js/kit/board.js"></script><script src="../js/kit/parts.js"></script><script src="../js/kit/sim.js"></script><script src="../js/kit/car.js"></script></head>
+<body style="padding:20px;max-width:1100px"><div id="a"></div>
+<script>
+var store = {}, ctx = { check: function (k, v) { if (v !== undefined) store[k] = v; return store[k]; }, answer: function (k, v) { if (v !== undefined) store[k] = v; return store[k] || ''; } };
+var code = [
+'#include <Servo.h>',
+'#include <FastLED.h>',
+'CRGB leds[1];',
+'Servo head;',
+'void setup() {',
+'  Serial.begin(9600);',
+'  FastLED.addLeds<NEOPIXEL, 4>(leds, 1);',
+'  head.attach(10);',
+'  pinMode(3, OUTPUT); pinMode(5, OUTPUT); pinMode(6, OUTPUT); pinMode(7, OUTPUT); pinMode(8, OUTPUT);',
+'  pinMode(13, OUTPUT); pinMode(12, INPUT);',
+'  digitalWrite(3, HIGH);',
+'}',
+'int dist() { digitalWrite(13, LOW); delayMicroseconds(2); digitalWrite(13, HIGH); delayMicroseconds(10); digitalWrite(13, LOW); return pulseIn(12, HIGH) / 58; }',
+'void loop() {',
+'  leds[0] = CRGB::Green; FastLED.show();',
+'  digitalWrite(7, HIGH); digitalWrite(8, HIGH); analogWrite(5, 150); analogWrite(6, 150);',
+'  delay(1000);',
+'  Serial.println(dist());',
+'  leds[0] = CRGB(255, 0, 0); FastLED.show();',
+'  digitalWrite(7, HIGH); digitalWrite(8, LOW);',
+'  delay(630);',
+'  head.write(30);',
+'  Serial.println(analogRead(A1));',
+'}'].join('\n');
+window.api = RL.Car.sim(document.getElementById('a'), { title: 'Test', code: code, name: 't', ctx: ctx, world: { w: 240, h: 160, start: { x: 50, y: 120, h: 0 }, boxes: [{ x: 170, y: 20, w: 30, h: 20, drag: true, label: 'BOX' }], cans: [{ x: 120, y: 40, r: 6 }], lines: [{ pts: [[20, 140], [220, 140]], w: 1.9 }], zones: [{ id: 'goal', x: 190, y: 120, w: 40, h: 30, label: 'GOAL' }] } });
+</script></body></html>

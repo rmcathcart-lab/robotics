@@ -433,3 +433,60 @@ svg.dimming .fx-hit { cursor: crosshair; }
 .fx-ideas .tag { white-space: normal; max-width: 100%; }
 .fx-tools { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
 .fx-tools .gear-it { min-height: 0; padding: 10px 12px; }
+
+/* ---------- virtual robot car ---------- */
+.sim-board.sim-world { padding: 10px; }
+.car-world svg { display: block; width: 100%; height: auto; border-radius: 6px; touch-action: none; }
+.car-drag { cursor: grab; }
+.car-drag:active { cursor: grabbing; }
+.car-hud { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 8px; font: 500 11px/1.3 var(--mono); color: var(--muted); }
+.car-hud span { display: inline-flex; gap: 6px; align-items: center; }
+.car-hud i { font-style: normal; text-transform: uppercase; letter-spacing: .06em; font-size: 10px; }
+.car-hud b { color: var(--ink); font-weight: 600; min-width: 2.5em; }
+.car-hud .car-led { display: inline-block; width: 14px; height: 14px; min-width: 0; border-radius: 50%; border: 1px solid var(--grid); }
+.car-tools { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; margin-top: 8px; }
+.remote-car .remote-keys { max-width: 200px; }
+.remote-car .remote-keys button:first-child { background: #2b3038; border-color: #3b4350; }
+.remote-car .remote-keys .k-arrow, .remote-car .remote-keys .k-ok { background: #1e3a5f; border-color: #2f5f96; }
+.remote-car .remote-keys span { display: block; }
+.car-demo .car-tools { display: none; }
+.car-demo-stage { position: relative; padding: 10px; background: var(--stage-bg); }
+.car-say { position: absolute; left: 22px; top: 20px; padding: 4px 10px; border-radius: 6px; background: rgba(7, 13, 23, .82); color: var(--cyan); font: 600 12px/1.4 var(--mono); letter-spacing: .04em; opacity: 0; transition: opacity .2s; pointer-events: none; }
+.r3-plan { display: grid; grid-template-columns: minmax(200px, 260px) minmax(0, 1fr); gap: 16px; padding: 14px; background: var(--stage-bg); }
+.r3-plan svg { width: 100%; height: auto; display: block; border-radius: 8px; }
+.r3-plan .r3-dot { cursor: pointer; }
+.r3-plan .r3-dot:hover, .r3-plan .r3-dot:focus { fill: var(--cyan); outline: none; }
+.r3-plan-code { margin: 8px 0 0; padding: 10px 12px; background: #050a12; border: 1px solid var(--grid); border-radius: 8px; font: 12px/1.6 var(--mono); color: #e6f1fa; white-space: pre-wrap; min-height: 120px; }
+.r3-plan-side input[type=text] { width: 140px; padding: 6px 8px; background: var(--panel); border: 1px solid var(--grid); color: var(--ink); border-radius: 6px; font: inherit; }
+@media (max-width: 700px) { .r3-plan { grid-template-columns: minmax(0, 1fr); } }
+.sim-stack .sim-body { grid-template-columns: minmax(0, 1fr); }
+.sim-stack .sim-ed { max-height: 380px; }
+.sim-stack .sim-out { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(260px, 1fr); }
+.sim-stack .sim-board { grid-row: span 6; border-right: 1px solid var(--grid); }
+@media (max-width: 760px) { .sim-stack .sim-out { display: flex; } .sim-stack .sim-board { border-right: 0; } }
+/* R6 truth table */
+.r6-tt { display: flex; flex-wrap: wrap; gap: 10px; padding: 14px 16px; background: var(--stage-bg); }
+.r6-combo { display: flex; gap: 4px; padding: 6px; border: 1px solid var(--grid); border-radius: 8px; background: transparent; cursor: pointer; }
+.r6-combo span { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; font: 600 12px var(--mono); color: var(--ink-muted); background: rgba(159,179,200,.15); }
+.r6-combo span.on { background: var(--signal, #ff8a3d); color: #111; }
+.r6-combo.sel, .r6-combo:hover { border-color: var(--cyan); }
+/* R7 maze */
+.r7-pseudo { font: 14px/1.6 var(--mono); background: var(--stage-bg); border: 1px solid var(--grid); border-radius: 8px; padding: 14px 18px; overflow-x: auto; color: var(--ink); }
+.r7-hit { cursor: pointer; }
+.r7-hit:hover { fill: rgba(34,211,238,0.28); }
+/* R8 challenge cards */
+.r8-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; margin: 16px 0; }
+.r8-card { display: flex; flex-direction: column; gap: 4px; text-align: left; padding: 12px 14px; border: 1px solid var(--grid); border-radius: 10px; background: var(--panel, #0e1a2a); color: var(--ink); cursor: pointer; font: inherit; }
+.r8-card b { font-size: 16px; }
+.r8-card .small { color: var(--ink-muted); }
+.r8-card:hover, .r8-card.sel { border-color: var(--cyan); }
+.r8-card.sel { box-shadow: 0 0 0 1px var(--cyan) inset; }
+.r8-card.chosen::after { content: 'CHOSEN'; font: 600 10px var(--mono); letter-spacing: .1em; color: var(--go, #4ade80); }
+.r8-stars { color: var(--signal, #ff8a3d); letter-spacing: 2px; font-size: 13px; }
+.r8-stars i { font-style: normal; opacity: .25; }
+.r8-detail { border: 1px solid var(--grid); border-radius: 10px; padding: 16px 20px; margin-bottom: 20px; background: var(--stage-bg); }
+.r8-detail h3 { margin: 4px 0 10px; }
+.r8-detail details { margin: 8px 0 14px; }
+.r8-steps li { margin-bottom: 6px; }
+.r8-spoil { margin: 14px 0; padding: 10px 14px; border: 1px dashed var(--grid); border-radius: 8px; }
+.r8-spoil summary { cursor: pointer; font-weight: 600; }

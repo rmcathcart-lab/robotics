@@ -26,6 +26,8 @@ colours; real-object colours (UNO, chips, LEDs, cardboard) stay. `node tests/lig
 | `js/kit/board.js` | SVG UNO + breadboard + wires/LEDs/resistors (blue 5-band)/buttons, and the animated step-by-step **build guide** |
 | `js/kit/parts.js` | Every other kit part: RGB LED, potentiometer, photoresistor, thermistor, tilt switch, buzzers, chips (74HC595, L293D), LCD1602, power module, servo, DHT11, HC-SR04, joystick, IR receiver, relay, stepper + driver, DC motor, 7-segment displays |
 | `js/kit/sim.js` | The **Virtual UNO**: checks a sketch like the Arduino compiler (missing `;`, capital letters, braces, missing `#include`), translates it to JavaScript (with Arduino integer maths) and runs it on the drawn circuit — including Servo, LiquidCrystal, Stepper, DHT, IRremote, shiftOut/74HC595, pulseIn, tone, motors, relays and 7-segment multiplexing |
+| `js/kit/car.js` | The **Virtual Robot Car**: a top-down floor (walls, boxes, cans, black tape, goal zones) where students’ real sketches drive an ELEGOO Smart Robot Car V4.0 — motors with skid-steer physics, ultrasonic sensor on its servo, three line sensors, RGB LED (FastLED), MODE button and IR remote |
+| `js/kit/carkit.js` | Shared pieces for the robot-car missions: briefs, scripted demos, standard code blocks (pins, moves, readDistance…), upload steps and check helpers |
 | `js/kit/code.js` | Arduino code colouring, code blocks (copy / download .ino) and line-by-line code walkthroughs |
 | `js/kit/lightart.js` | Light versions of every drawing for the light display (live palette swap) |
 | `js/kit/ui.js` | Checkpoints, notes, explainer animations, hotspot diagrams, test checklists, challenge cards, kit checklist |
@@ -33,6 +35,7 @@ colours; real-object colours (UNO, chips, LEDs, cardboard) stay. `node tests/lig
 | `js/kit/fusion2.js` | Labs for F2–F7 (phone stand, revolve + centre of mass, shell + pattern, parameters + press fit, lid clearance, loft) and the shared brief / evidence helpers |
 | `js/missions/f01.js` … `f08.js` | Unit 1: F1 Name tag keychain · F2 Phone stand · F3 Spinning top · F4 Desk organizer · F5 Fidget spinner · F6 Box with a snap lid · F7 Bottle & handle · F8 Design challenge |
 | `js/missions/m01.js` … `m09.js` | The nine Arduino missions (see `docs/MISSION_GUIDE.md` for how to write one) |
+| `js/missions/r01.js` … `r08.js` | The eight robot-car missions (Unit 3): build & systems check, driving school, spell your name, seek & stop, remote pilot, line follower, maze runner, robot challenge |
 | `teacher/` | The teacher ledger: `dash.js` (tabs), `comments.js` (report card comments), `powerschool.js` (reads PowerSchool scores templates) |
 | `backend/Code.gs` | Apps Script backend. `backend/mock_server.js` runs it locally with stand-ins for the Google services |
 | `tests/` | `node tests/sim_test.js` (sketch checker/translator), `tests/run_e2e.sh` (whole flow against the mock) then `node tests/features.js` (roster, comments, equipment, calendar, light display), `node tests/steps.js` (screenshots of every step), `node tests/all_steps.js 390` (every step at phone width), `node tests/light_check.js` (unreadable labels in light mode) |

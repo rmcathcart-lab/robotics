@@ -27,14 +27,14 @@
 (function (root) {
   'use strict';
   var RL = root.RL = root.RL || {};
-  var TYPES = '(?:unsigned\\s+long|unsigned\\s+int|unsigned\\s+char|long\\s+long|long\\s+int|int|long|float|double|bool|boolean|byte|char|word|String|short|uint8_t|uint16_t|uint32_t|int8_t|int16_t|int32_t|size_t)';
+  var TYPES = '(?:CRGB|unsigned\\s+long|unsigned\\s+int|unsigned\\s+char|long\\s+long|long\\s+int|int|long|float|double|bool|boolean|byte|char|word|String|short|uint8_t|uint16_t|uint32_t|int8_t|int16_t|int32_t|size_t)';
   var CLASSES = ['Servo', 'LiquidCrystal', 'Stepper', 'DHT', 'IRrecv', 'decode_results'];
-  var LIBS = { Servo: 'Servo.h', LiquidCrystal: 'LiquidCrystal.h', Stepper: 'Stepper.h', DHT: 'DHT.h', IRrecv: 'IRremote', IrReceiver: 'IRremote' };
+  var LIBS = { Servo: 'Servo.h', LiquidCrystal: 'LiquidCrystal.h', Stepper: 'Stepper.h', DHT: 'DHT.h', IRrecv: 'IRremote', IrReceiver: 'IRremote', CRGB: 'FastLED.h', FastLED: 'FastLED.h' };
   var API = ['pinMode', 'digitalWrite', 'digitalRead', 'analogWrite', 'analogRead', 'delay', 'delayMicroseconds', 'millis', 'micros', 'tone', 'noTone',
     'map', 'constrain', 'random', 'randomSeed', 'abs', 'min', 'max', 'pow', 'sqrt', 'sq', 'log', 'log10', 'exp', 'sin', 'cos', 'tan', 'floor', 'ceil', 'round', 'isnan',
     'Serial', 'HIGH', 'LOW', 'INPUT', 'OUTPUT', 'INPUT_PULLUP', 'LED_BUILTIN', 'A0', 'A1', 'A2', 'A3', 'A4', 'A5', 'DEC', 'HEX', 'BIN', 'MSBFIRST', 'LSBFIRST',
     'int', 'float', 'long', 'byte', 'word', 'bitRead', 'bitWrite', 'bitSet', 'bitClear', 'pulseIn', 'shiftOut', 'F', 'PI', 'true', 'false',
-    'Servo', 'LiquidCrystal', 'Stepper', 'DHT', 'DHT11', 'DHT22', 'IRrecv', 'decode_results', 'IrReceiver', 'ENABLE_LED_FEEDBACK', 'DISABLE_LED_FEEDBACK', '__t', '__y', '__idiv', '__int', '__F', '__u8'];
+    'Servo', 'LiquidCrystal', 'Stepper', 'DHT', 'DHT11', 'DHT22', 'IRrecv', 'decode_results', 'IrReceiver', 'ENABLE_LED_FEEDBACK', 'DISABLE_LED_FEEDBACK', 'IRDATA_FLAGS_IS_REPEAT', '__t', '__y', '__idiv', '__int', '__F', '__u8'];
   API = API.filter(function (n) { return n !== 'true' && n !== 'false'; });
   var ASYNC_API = ['delay', 'delayMicroseconds', 'pulseIn'];
   var KNOWN = ['pinMode', 'digitalWrite', 'digitalRead', 'analogWrite', 'analogRead', 'delay', 'delayMicroseconds', 'millis', 'micros', 'tone', 'noTone', 'map', 'constrain', 'random', 'Serial', 'println', 'print', 'begin', 'setup', 'loop', 'HIGH', 'LOW', 'INPUT', 'OUTPUT', 'INPUT_PULLUP', 'LED_BUILTIN', 'shiftOut', 'pulseIn', 'MSBFIRST', 'LSBFIRST', 'setCursor'];
@@ -322,7 +322,7 @@
     IRrecv.prototype.resume = function () { irPaused = false; };
     var IrReceiver = { decodedIRData: { command: 0, address: 0, flags: 0, decodedRawData: 0 },
       begin: function () {}, start: function () {}, enableIRIn: function () {}, resume: function () { irPaused = false; },
-      decode: function () { if (irPaused) { if (irQueue.length && !R._irWarned) { R._irWarned = true; warn('irres', 'The receiver is waiting: call IrReceiver.resume() after each code, or it won’t read the next one.'); } return false; } if (!irQueue.length) return false; irPaused = true; var c = irQueue.shift(); this.decodedIRData = { command: c === 'rep' ? 0 : c, address: 0, flags: c === 'rep' ? 1 : 0, decodedRawData: c === 'rep' ? 0 : necCode(c) }; return true; },
+      decode: function () { if (irPaused) { if (irQueue.length && !R._irWarned) { R._irWarned = true; warn('irres', 'The receiver is waiting: call IrReceiver.resume() after each code, or it won’t read the next one.'); } return false; } if (!irQueue.length) return false; irPaused = true; var c = irQueue.shift(); if (c !== 'rep') R._irLast = c; this.decodedIRData = { command: c === 'rep' ? (R._irLast || 0) : c, address: 0, flags: c === 'rep' ? 1 : 0, decodedRawData: c === 'rep' ? 0 : necCode(c) }; return true; },
       printIRResultShort: function () { R.api.Serial.println('Protocol=NEC Address=0x0 Command=0x' + this.decodedIRData.command.toString(16).toUpperCase()); } };
     R.irPress = function (cmd) { irQueue.push(cmd); var g = part(opts.ir && opts.ir.part); if (g && g._blink) g._blink(); };
     /* ---- serial input ---- */
@@ -336,7 +336,7 @@
     }
     R.api = {
       HIGH: 1, LOW: 0, INPUT: 'INPUT', OUTPUT: 'OUTPUT', INPUT_PULLUP: 'INPUT_PULLUP', LED_BUILTIN: 13, A0: 14, A1: 15, A2: 16, A3: 17, A4: 18, A5: 19, DEC: 10, HEX: 16, BIN: 2, PI: Math.PI,
-      MSBFIRST: 1, LSBFIRST: 0, DHT11: 11, DHT22: 22, ENABLE_LED_FEEDBACK: true, DISABLE_LED_FEEDBACK: false,
+      MSBFIRST: 1, LSBFIRST: 0, DHT11: 11, DHT22: 22, ENABLE_LED_FEEDBACK: true, DISABLE_LED_FEEDBACK: false, IRDATA_FLAGS_IS_REPEAT: 1,
       Servo: Servo, LiquidCrystal: LiquidCrystal, Stepper: Stepper, DHT: DHT, IRrecv: IRrecv, decode_results: decode_results, IrReceiver: IrReceiver,
       pinMode: function (p, m) { p = pinNo(p); if (m === 'OUTPUT') mode[p] = 'OUT'; else if (m === 'INPUT_PULLUP') mode[p] = 'PU'; else if (m === 'INPUT') mode[p] = 'IN'; else warn('mode' + p, 'pinMode needs OUTPUT, INPUT or INPUT_PULLUP (in capitals).'); update(p); },
       digitalWrite: function (p, v) {
@@ -447,8 +447,8 @@
     check: check, translate: translate, REMOTE: REMOTE, necCode: necCode,
     create: function (container, opts) {
       var el = RL.el, esc = RL.esc;
-      var wrap = el('div', 'sim');
-      wrap.innerHTML = '<div class="sim-h"><span class="label c">Virtual UNO</span><h3>' + esc(opts.title || 'Try the code') + '</h3></div>';
+      var wrap = el('div', 'sim' + (opts.stack ? ' sim-stack' : ''));
+      wrap.innerHTML = '<div class="sim-h"><span class="label c">' + esc(opts.label || 'Virtual UNO') + '</span><h3>' + esc(opts.title || 'Try the code') + '</h3></div>';
       var body = el('div', 'sim-body'); wrap.appendChild(body);
       var edBox = el('div', 'sim-ed'), out = el('div', 'sim-out'); body.appendChild(edBox); body.appendChild(out);
       var ed = el('div', 'ed'), inner = el('div', ''); inner.style.cssText = 'position:relative;min-width:100%;display:inline-block;min-height:100%';
@@ -480,8 +480,9 @@
       paint();
       // board
       var boardBox = el('div', 'sim-board'); out.appendChild(boardBox);
-      var B = RL.Board.render({ parts: opts.board.parts, show: opts.board.show, view: opts.board.view, vb: opts.board.vb, hover: false, label: 'Virtual circuit' });
-      boardBox.appendChild(B.svg);
+      var B;
+      if (opts.world) { B = { parts: {}, setLit: function () {}, press: function () {}, svg: null }; boardBox.classList.add('sim-world'); opts.world.mount(boardBox); }
+      else { B = RL.Board.render({ parts: opts.board.parts, show: opts.board.show, view: opts.board.view, vb: opts.board.vb, hover: false, label: 'Virtual circuit' }); boardBox.appendChild(B.svg); }
       var ctl = el('div', 'sim-ctl');
       var run = el('button', 'btn btn-primary btn-small', '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4l12 8-12 8z" fill="currentColor" stroke="none"/></svg>Upload &amp; run'); run.type = 'button';
       var stop = el('button', 'btn btn-ghost btn-small', 'Stop'); stop.type = 'button'; stop.disabled = true;
@@ -512,7 +513,7 @@
         sliders['A' + k] = slider('A' + k + ' · ' + (a.label || 'sensor'), 0, 1023, 1, function () { return a.value; }, function (v) { a.value = v; if (g && g._setValue) g._setValue(v); });
       });
       if (opts.dht) { sliders.temp = slider('DHT11 · temperature', 0, 50, 1, function () { return opts.dht.temp; }, function (v) { opts.dht.temp = v; }, ' °C'); sliders.hum = slider('DHT11 · humidity', 20, 90, 1, function () { return opts.dht.hum; }, function (v) { opts.dht.hum = v; }, ' %'); }
-      if (opts.sonar) sliders.cm = slider('Distance to object', 2, 200, 1, function () { return opts.sonar.cm; }, function (v) { opts.sonar.cm = v; }, ' cm');
+      if (opts.sonar && !opts.sonar.hidden) sliders.cm = slider('Distance to object', 2, 200, 1, function () { return opts.sonar.cm; }, function (v) { opts.sonar.cm = v; }, ' cm');
       if (opts.joystick) {
         var jr = el('div', 'slider-row'); jr.innerHTML = '<label>Joystick · drag the dot</label>';
         var pad = el('div', 'joy-pad'), dot = el('div', 'joy-dot'); pad.appendChild(dot); jr.appendChild(pad);
@@ -527,11 +528,27 @@
         sliders.joy = { set: setJ }; setJ(512, 512);
       }
       if (opts.ir) {
-        var rem = el('div', 'remote'); rem.innerHTML = '<span class="label">Remote · click a key</span>';
+        var rem = el('div', 'remote' + (opts.ir.keys ? ' remote-car' : '')); rem.innerHTML = '<span class="label">Remote · ' + (opts.ir.keys ? 'click or hold a key' : 'click a key') + '</span>';
         var keys = el('div', 'remote-keys');
-        REMOTE.forEach(function (k) { var b = el('button', '', esc(k[0])); b.type = 'button'; b.title = k[0] + ' (command 0x' + k[1].toString(16).toUpperCase() + ')'; b.addEventListener('click', function () { if (rt && rt.running()) rt.irPress(k[1]); else show('warn', 'Run the sketch first, then press keys on the remote.'); }); keys.appendChild(b); });
+        (opts.ir.keys || REMOTE).forEach(function (k) {
+          if (k[1] == null) { keys.appendChild(el('span', '')); return; }
+          var b = el('button', k[2] || '', esc(k[0])); b.type = 'button'; b.title = k[0] + ' (command 0x' + k[1].toString(16).toUpperCase() + ')';
+          if (!opts.ir.keys) { b.addEventListener('click', function () { if (rt && rt.running()) rt.irPress(k[1]); else show('warn', 'Run the sketch first, then press keys on the remote.'); }); }
+          else {
+            var rpt = null, end = function () { clearInterval(rpt); rpt = null; };
+            b.addEventListener('pointerdown', function (e) { e.preventDefault(); if (!(rt && rt.running())) { show('warn', 'Run the sketch first, then press keys on the remote.'); return; } rt.irPress(k[1]); end(); rpt = setInterval(function () { if (rt && rt.running()) rt.irPress('rep'); else end(); }, 110); });
+            b.addEventListener('pointerup', end); b.addEventListener('pointerleave', end); b.addEventListener('pointercancel', end);
+          }
+          keys.appendChild(b);
+        });
         rem.appendChild(keys); inputs.appendChild(rem);
       }
+      (opts.pushButtons || []).forEach(function (pb) {
+        opts.buttons = opts.buttons || {}; if (!opts.buttons[pb.pin]) opts.buttons[pb.pin] = { wiring: pb.wiring || 'pullup', part: null };
+        var hb = el('button', 'btn btn-ghost btn-small', esc(pb.label)); hb.type = 'button';
+        hb.addEventListener('pointerdown', function (e) { e.preventDefault(); pressBtn(pb.pin, true); }); hb.addEventListener('pointerup', function () { pressBtn(pb.pin, false); }); hb.addEventListener('pointerleave', function () { pressBtn(pb.pin, false); });
+        inputs.appendChild(hb);
+      });
       if (opts.serialInput) {
         var sr = el('form', 'serial-in'); sr.innerHTML = '<input type="text" placeholder="Type a message for the Serial Monitor" aria-label="Serial input"><button class="btn btn-ghost btn-small" type="submit">Send</button>';
         sr.addEventListener('submit', function (e) { e.preventDefault(); var i = sr.querySelector('input'); if (rt && rt.running()) { rt.serialSend(i.value); serial.textContent += '> ' + i.value + '\n'; } i.value = ''; });
@@ -551,7 +568,7 @@
         msg.className = 'sim-msg ' + kind; msg.innerHTML = html;
         if (line) { lnhl.style.top = (12 + (line - 1) * 22) + 'px'; lnhl.classList.remove('hide'); }
       }
-      function stopRun() { if (rt) rt.stop(); run.disabled = false; stop.disabled = true; }
+      function stopRun() { if (rt) rt.stop(); run.disabled = false; stop.disabled = true; if (opts.onStop) opts.onStop(); }
       function start() {
         stopRun(); show('clear'); serial.textContent = '';
         var src = ta.value, c = check(src);
@@ -561,12 +578,14 @@
           show('err', '<b>Compile error · line ' + e0.line + '</b><br>' + esc(e0.msg) + (c.errors.length > 1 ? '<br><span class="muted small">(' + (c.errors.length - 1) + ' more problem' + (c.errors.length > 2 ? 's' : '') + ' marked in the editor)</span>' : ''), e0.line);
           return false;
         }
-        var js = translate(src).js, fns;
+        var js = translate(opts.prep ? opts.prep(src) : src).js, fns;
         try {
           var AF = Object.getPrototypeOf(async function () {}).constructor;
-          var fn = new AF(API.join(','), js + '\n;return { setup: typeof setup === "function" ? setup : null, loop: typeof loop === "function" ? loop : null };');
           rt = new Runtime(opts, hooks(), B);
-          var args = API.map(function (n) { return rt.api[n]; });
+          var extra = opts.extraApi ? opts.extraApi(rt) : {}, names = API.concat(Object.keys(extra).filter(function (n) { return API.indexOf(n) < 0; }));
+          var fn = new AF(names.join(','), js + '\n;return { setup: typeof setup === "function" ? setup : null, loop: typeof loop === "function" ? loop : null };');
+          var args = names.map(function (n) { return n in extra ? extra[n] : rt.api[n]; });
+          if (opts.onStart) opts.onStart(rt);
           fn.apply(null, args).then(function (f) {
             fns = f; if (!fns.setup || !fns.loop) throw new Error('setup() and loop() are both needed');
             run.disabled = true; stop.disabled = false;

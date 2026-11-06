@@ -28,7 +28,9 @@
     { n: 1, title: 'Design & 3D modeling', blurb: 'Learn Fusion 360 one tool at a time by building real, printable things.',
       missions: ['f01', 'f02', 'f03', 'f04', 'f05', 'f06', 'f07', 'f08'] },
     { n: 2, title: 'Arduino: sense, think, act', blurb: 'Wire real circuits, write code, and make things that react to the world.',
-      missions: ['m01', 'm02', 'm03', 'm04', 'm05', 'm06', 'm07', 'm08', 'm09'] }
+      missions: ['m01', 'm02', 'm03', 'm04', 'm05', 'm06', 'm07', 'm08', 'm09'] },
+    { n: 3, title: 'Robot car: code that moves', blurb: 'Build a smart robot car, then teach it to drive, sense, decide and find its own way.',
+      missions: ['r01', 'r02', 'r03', 'r04', 'r05', 'r06', 'r07', 'r08'] }
   ];
 
   RL.MISSIONS = {
@@ -143,6 +145,77 @@
     }
   };
 
+  /* Unit 3: the ELEGOO Smart Robot Car V4.0. One car per team; every mission is mostly code, tried on the virtual car first. */
+  var CAR = ['Your team’s robot car', 'Charged battery pack', 'USB cable', 'A laptop with the Arduino IDE'];
+  function ccrit(code, run, test, explain) {
+    return [{ id: 'code', name: 'Code', desc: code }, { id: 'run', name: 'Robot', desc: run }, { id: 'test', name: 'Testing & improving', desc: test }, { id: 'explain', name: 'Explain it', desc: explain }];
+  }
+  var ROBOT = {
+    r01: {
+      id: 'r01', unit: 3, num: 'R1', title: 'Build & systems check', days: 4, ready: true, level: 1,
+      tagline: 'Build the smart robot car, test-drive it, set up the Arduino IDE and upload a program that checks every part.',
+      discover: ['What’s on a robot', 'Sense → think → act', 'The motor driver & ports', 'Uploading a program', 'Libraries', 'The Serial Monitor'],
+      parts: ['ELEGOO Smart Robot Car V4.0 kit', 'Battery pack + charging cable', 'USB cable', 'Screwdriver (in the kit)'],
+      extras: ['A small box to lift the wheels', 'Masking tape & a marker (labels)'],
+      criteria: [
+        { id: 'build', name: 'Build', desc: 'Every part mounted firmly; motors on the right ports; wires tidy and away from the wheels.' },
+        { id: 'run', name: 'Systems check', desc: 'Factory test and the systems-check program pass: motors, servo, sensors, LED and remote all work.' },
+        { id: 'test', name: 'Troubleshooting', desc: 'Problems found during testing were tracked down and fixed, and the log shows how.' },
+        { id: 'explain', name: 'Explain it', desc: 'Names the parts and explains how sensors, the UNO and the motors work together (sense → think → act).' }
+      ]
+    },
+    r02: {
+      id: 'r02', unit: 3, num: 'R2', title: 'Driving school', days: 3, ready: true, level: 2,
+      tagline: 'Make the wheels turn with your own code, wrap each move in a function, measure your robot and drive a perfect square.',
+      discover: ['Pins & the motor driver', 'digitalWrite & analogWrite', 'Speed with PWM', 'Sequences & delay()', 'Writing functions', 'Calibration'],
+      parts: CAR, extras: ['Masking tape', 'Tape measure or metre stick', 'Stopwatch (phone)'],
+      criteria: ccrit('Clear functions for each move, named constants for the pins, comments that explain the code.', 'Drives forward, backward and turns on command; drives a square that ends near where it started.', 'Measured speed and turning, used the numbers, and improved the square with each test.', 'Explains how the motor driver uses direction and PWM speed, and how a function packages a job.')
+    },
+    r03: {
+      id: 'r03', unit: 3, num: 'R3', title: 'Spell your name', days: 3, ready: true, level: 2,
+      tagline: 'Program your robot to drive the letters of your name across the floor, one function per letter.',
+      discover: ['Breaking a problem into parts', 'Functions with parameters', 'Maths in code', 'for loops', 'Planning on grid paper'],
+      parts: CAR, extras: ['Grid paper', 'Masking tape', 'A marker to tape to the robot (optional)'],
+      criteria: ccrit('driveCm() and turnDeg() functions with parameters, one function per letter, and loops where moves repeat.', 'Spells the letters of a name clearly enough that someone can read them.', 'Planned on grid paper, tested each letter, and fixed the ones that came out wrong.', 'Explains how parameters and calibration turn centimetres and degrees into motor times.')
+    },
+    r04: {
+      id: 'r04', unit: 3, num: 'R4', title: 'Seek & stop', days: 3, ready: true, level: 3,
+      tagline: 'Your robot spins on the spot until it spots an object, drives straight to it and stops just before touching it.',
+      discover: ['Variables', 'Reading the ultrasonic sensor', 'Functions that return values', 'if / else', 'while loops', 'Aiming the servo'],
+      parts: CAR, extras: ['A cardboard box or a can (the target)', 'Masking tape', 'Tape measure'],
+      criteria: ccrit('A readDistance() function, variables with good names, and if/else and while loops that control the search.', 'Finds a target placed anywhere around it and stops within a few centimetres of the stopping distance.', 'Tested targets at different places and distances, and handled bad readings.', 'Explains how the sensor measures distance and how the program decides what to do next.')
+    },
+    r05: {
+      id: 'r05', unit: 3, num: 'R5', title: 'Remote pilot', days: 3, ready: true, level: 3,
+      tagline: 'Turn the robot into an RC car you drive with the IR remote — with speed gears, coloured lights and a bumper that won’t let you crash.',
+      discover: ['Infrared codes', 'Reading your own remote', 'switch / case', 'Variables that remember', 'Timing with millis()', 'Safety overrides'],
+      parts: CAR, extras: ['The IR remote (in the kit)', 'Boxes or cones for an obstacle course'],
+      criteria: ccrit('Remote codes handled with switch/case, a speed variable, and a millis() timeout so the car stops when you let go.', 'Drives smoothly on the remote, changes gears, shows its state on the LED and refuses to drive into obstacles.', 'Ran the obstacle course, found problems and improved the controls.', 'Explains how the remote sends codes and how the program remembers its state between loops.')
+    },
+    r06: {
+      id: 'r06', unit: 3, num: 'R6', title: 'Line follower', days: 4, ready: true, level: 4,
+      tagline: 'Lay a track of black tape and program the robot to follow it — first with simple rules, then with smooth steering.',
+      discover: ['Infrared reflection sensors', 'analogRead & thresholds', 'Calibrating with data', 'if / else if chains', 'Logic with && and ||', 'Smooth (proportional) steering'],
+      parts: CAR, extras: ['Black electrical tape (19 mm)', 'A light, smooth floor or poster paper', 'Stopwatch (phone)'],
+      criteria: ccrit('Calibrated threshold, an if/else if chain for the three sensors, a memory of the last turn, and a proportional version.', 'Follows the whole track, including curves, without losing the line.', 'Logged sensor readings, timed laps and improved speed and smoothness.', 'Explains how the sensors see the line and why proportional steering is smoother.')
+    },
+    r07: {
+      id: 'r07', unit: 3, num: 'R7', title: 'Maze runner', days: 4, ready: true, level: 4,
+      tagline: 'Build a cardboard maze and program the robot to find its own way out with a wall-following algorithm.',
+      discover: ['Algorithms', 'Wall following (the right-hand rule)', 'Scanning with the servo', 'Arrays', 'State machines', 'Debugging with Serial'],
+      parts: CAR, extras: ['Cardboard sheets (maze walls)', 'Masking tape', 'Tape measure'],
+      criteria: ccrit('A scan() that fills an array, a clear decision for each case, and a state machine or tidy functions.', 'Gets out of the team maze without help, from more than one starting point.', 'Debugged with Serial messages and changed the maze to test hard cases.', 'Explains the wall-following algorithm and why it always works in a maze like this.')
+    },
+    r08: {
+      id: 'r08', unit: 3, num: 'R8', title: 'Robot challenge', days: 5, ready: true, level: 5,
+      tagline: 'Pick a challenge (or invent one), plan it, code it, and show off a robot that does something awesome on demo day.',
+      discover: ['Planning with flowcharts', 'Pseudocode', 'Combining everything you know', 'Systematic debugging', 'Presenting your work'],
+      parts: CAR, extras: ['Depends on your challenge: tape, cardboard, boxes, markers'],
+      criteria: ccrit('Well-organised code that combines sensors, decisions and functions, with comments a teammate could follow.', 'The robot completes the challenge on demo day.', 'A plan, a test log and at least two improvements made because of testing.', 'Explains how the program works, what went wrong and how the team fixed it.')
+    }
+  };
+  Object.keys(ROBOT).forEach(function (k) { RL.MISSIONS[k] = ROBOT[k]; });
+
   /* Unit 1: Fusion 360. Each mission teaches a few tools through one build and ends with the student's 3D files. */
   var FUSION_KIT = ['A computer with Autodesk Fusion', 'An Autodesk account (school email)'], MOUSE = ['A mouse with a scroll wheel'];
   function fcrit(sketch, model, design, explain) {
@@ -232,6 +305,7 @@
     cake: { name: 'Cake Boards', product: 'qiqee 8 in round white cake boards (30)', asin: 'B0DGPV679D', pack: 30, unit: 'boards', price: '$17.88' },
     foam: { name: 'Double-Sided Mounting Tape', product: 'Scotch-Mount double-sided mounting tape, ¾ in × 350 in', asin: 'B009NP1OBC', pack: 1, unit: 'roll', price: '$17.77' },
     bearings: { name: '608 Skateboard Bearings', product: '608-2RS ball bearings, 8 × 22 × 7 mm, double sealed (20)', asin: 'B09PKD8QZZ', pack: 20, unit: 'bearings', price: '$10.99' },
+    etape: { name: 'Black Electrical Tape', product: 'Lichamp black electrical tape, ¾ in × 66 ft (10 rolls)', asin: 'B07VNTC9LH', pack: 10, unit: 'rolls', price: 'see listing' },
     arcade: { name: 'Arcade Push Buttons', product: 'EG Starts 30 mm arcade push buttons (12)', asin: 'B01MRWL6DW', pack: 12, unit: 'buttons', price: '$15.99' }
   };
   function it(item, k, o) { var p = P[k]; return Object.assign({ item: item, key: k, link: 'https://www.amazon.ca/dp/' + p.asin }, p, o); }
@@ -245,6 +319,11 @@
     m06: [it('Small boxes (magic box cases)', 'boxes', { each: 1 })],
     m07: [it('9 V batteries, spares (the kit comes with one)', 'nine', { packs: 1 }), it('Turntable tops', 'cake', { each: 1 }), it('Double-sided mounting tape', 'foam', { packs: 1 })],
     m08: [it('9 V batteries, spares', 'nine', { packs: 1, optional: true }), it('Hot glue sticks', 'glue', { packs: 1 })],
+    r02: [it('Masking tape (floor marks)', 'masking', { packs: 1 }), it('Tape measures (shared)', 'tapes', { packs: 2 })],
+    r03: [it('Masking tape (letter grids)', 'masking', { packs: 1 })],
+    r04: [it('Small boxes (targets)', 'boxes', { each: 1 })],
+    r06: [it('Black electrical tape (line tracks)', 'etape', { each: 1 })],
+    r07: [it('Cardboard sheets (maze walls)', 'cardboard', { each: 4 }), it('Hot glue sticks (maze corners)', 'glue', { packs: 1 })],
     m09: [it('Female-to-male jumper wires (the display needs about 14)', 'fmwires', { each: 10 }), it('30 mm arcade buttons (optional)', 'arcade', { each: 2, optional: true }), it('Cardboard sheets (game boards)', 'cardboard', { each: 1 })]
   };
   /* how many packs to order for g groups */
