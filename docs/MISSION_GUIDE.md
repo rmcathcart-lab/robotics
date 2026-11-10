@@ -53,7 +53,7 @@ roughly the mission's class count × ~80 min. Step ids are stable keys for progr
 ## APIs
 
 - `RL.UI`: `html(container, html)`, `callout(c, kind ''|'safety'|'plain', label, html)`, `edp(c, [stages])`,
-  `mcq(c, ctx, {id:'q-…', q, options, answer, explain, hints})`, `numq(c, ctx, {id, q, answer, tol, unit, explain, hint})`,
+  `mcq(c, ctx, {id:'q-…', q, options, answer, explain, hints})` (options are shown in a fixed mixed-up order per question so the right answer isn't always in the same spot — `answer`, `hints` and saved picks still use the order you wrote them in; add `fixed: true` to keep your order; check the spread with `node tests/mcq_stats.js`), `numq(c, ctx, {id, q, answer, tol, unit, explain, hint})`,
   `note(c, ctx, {id:'n-…', label, placeholder})`, `explainer(c, {label, title, w, h, init(svg,S,st), frames:[{cap, draw(svg,S,st)}], interactive})`,
   `hotspots(c, {title, svg, spots:[{id,x,y,title,html}], ctx, key})`, `tests(c, ctx, {id, rows})`, `challenges(c, list)`,
   `gear(c, ctx, key, items)`. In explainers: `st.later(fn, ms)` for timers (auto-cleared), set `st.stop` to cancel RAF loops.

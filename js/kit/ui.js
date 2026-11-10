@@ -17,19 +17,46 @@
   };
 
   /* multiple choice: { id, q, options: [html], answer: index, explain: html, hints: { index: html } } */
+  /* the display order of a multiple-choice question's options: a list of original indexes.
+   *  - o.fixed: true keeps the written order
+   *  - options that are all plain numbers (with an optional unit) are put in order, smallest first
+   *  - otherwise a shuffle seeded by the question, so every student sees the same order every time;
+   *    "all / none / both of the above"-style options stay at the end */
+  UI.MCQ_SALT = 1300;   // chosen (tests/mcq_stats.js --salt) so right answers are spread evenly over A, B, C and D
+  UI.mcqOrder = function (o) {
+    var n = o.options.length, idx = [], i;
+    for (i = 0; i < n; i++) idx.push(i);
+    if (o.fixed) return idx;
+    var plain = function (t) { return String(t).replace(/<[^>]+>/g, '').replace(/&[a-z]+;/g, ' ').trim(); };
+    var NUM = /^[−-]?\d+(?:\.\d+)?\s*(?:[a-zA-Zµ°%Ω]{0,4}|ms|cm|Hz|RPM)?$/;
+    if (idx.every(function (k) { return NUM.test(plain(o.options[k])); })) {
+      var val = function (k) { return parseFloat(plain(o.options[k]).replace('−', '-')); };
+      return idx.sort(function (a, b) { return val(a) - val(b); });
+    }
+    var last = /\b(all|none|both|neither) of (the above|these|them)\b|^(both|neither|all of them)\b/i;
+    var tail = idx.filter(function (k) { return last.test(plain(o.options[k])); }), body = idx.filter(function (k) { return tail.indexOf(k) < 0; });
+    var h = 2166136261, key = UI.MCQ_SALT + '|' + (o.id || '') + '|' + plain(o.q);
+    for (i = 0; i < key.length; i++) { h ^= key.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+    var rnd = function () { h = (h + 0x6D2B79F5) >>> 0; var t = Math.imul(h ^ (h >>> 15), 1 | h); t ^= t + Math.imul(t ^ (t >>> 7), 61 | t); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+    for (i = body.length - 1; i > 0; i--) { var j = Math.floor(rnd() * (i + 1)), x = body[i]; body[i] = body[j]; body[j] = x; }
+    return body.concat(tail);
+  };
   UI.mcq = function (container, ctx, o) {
     var box = el('div', 'chk'), saved = ctx.check(o.id);
     box.innerHTML = '<div class="label c">Checkpoint</div><div class="chk-q">' + o.q + '</div>';
     var opts = el('div', 'chk-opts'), fb = el('div', 'chk-fb'), tries = saved ? saved.tries || 0 : 0;
-    o.options.forEach(function (t, i) {
-      var b = el('button', 'chk-opt', '<span class="k">' + 'ABCDEF'[i] + '</span><span>' + t + '</span>'); b.type = 'button';
+    // options are shown in a mixed-up order (the same order every time for a given question), so the right
+    // answer isn't always in the same spot. Everything else (o.answer, o.hints, saved picks) uses the ORIGINAL index.
+    var order = UI.mcqOrder(o), btnOf = {};
+    order.forEach(function (i, pos) {
+      var b = el('button', 'chk-opt', '<span class="k">' + 'ABCDEF'[pos] + '</span><span>' + o.options[i] + '</span>'); b.type = 'button';
       b.addEventListener('click', function () { pick(i, true); });
-      opts.appendChild(b);
+      opts.appendChild(b); btnOf[i] = b;
     });
     function pick(i, fresh) {
       var right = i === o.answer, bs = opts.children;
       for (var k = 0; k < bs.length; k++) { bs[k].classList.remove('right', 'wrong'); }
-      bs[i].classList.add(right ? 'right' : 'wrong');
+      btnOf[i].classList.add(right ? 'right' : 'wrong');
       if (right) { for (k = 0; k < bs.length; k++) bs[k].disabled = true; }
       fb.innerHTML = right ? '<b class="pass">PASS</b> · ' + (o.explain || 'That’s it.') : '<b class="retry">RETRY</b> · ' + ((o.hints && o.hints[i]) || 'Not quite — think it through and try another answer.');
       if (fresh) { tries++; ctx.check(o.id, { pick: i, ok: right, tries: tries, first: saved && saved.first != null ? saved.first : right }); if (!saved) saved = { first: right }; }
