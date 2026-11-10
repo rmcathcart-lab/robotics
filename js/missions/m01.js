@@ -784,7 +784,7 @@
       { tag: 'Code', title: 'Night mode', html: 'Late at night, many lights just flash yellow. Make yours flash yellow until the button is pressed.' },
       { tag: 'Build', title: 'Don’t walk', html: 'Add an orange or red “DON’T WALK” LED to the pedestrian box that’s on whenever WALK is off. Which pin will you use?' },
       { tag: 'Build + code', cls: 'c', title: 'Two sides of the street', html: 'Add a second button so people on either side can request a crossing. Both should start the same sequence.', hint: 'You can read two pins in one if: <code>if (a == HIGH || b == HIGH)</code>. <code>||</code> means “or.”' }
-    ]);
+    ], { solutions: 'm01', base: CROSS });
     UI.note(b, ctx, { id: 'n-improve', label: 'Which challenge did you try? What happened, and what did you change to make it work?', placeholder: 'I tried…' });
   } });
 

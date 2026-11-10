@@ -1224,7 +1224,7 @@
       { tag: 'Code', title: 'Sunrise alarm', html: 'Make a wake-up light: starting from off, fade from deep red through orange to warm white over 60 seconds, then stay on.', hint: 'A for loop from 0 to 255 with <code>delay(235)</code> takes about 60 s. Try <code>setColor(255, i * 6 / 10, i / 4);</code>.' },
       { tag: 'Code', title: 'Candle flicker', html: 'Make the lamp flicker like a candle flame: warm orange with a brightness that jumps around a little, many times a second.', hint: '<code>random(150, 256)</code> gives a random whole number from 150 to 255. Use it as the brightness, with <code>delay(random(30, 120));</code>.' },
       { tag: 'Science', cls: 'c', title: 'Smooth the sensor', html: 'Wave your hand over the sensor: the lamp jumps instantly. Make it react smoothly by averaging the last few readings.', hint: 'Read the sensor 10 times in a for loop, add the readings up, and divide by 10. Or keep a running average: <code>smooth = (smooth * 9 + light) / 10;</code>' }
-    ]);
+    ], { solutions: 'm02', base: LAMPCODE });
     UI.note(b, ctx, { id: 'n-improve', label: 'Which challenge did you try? What happened, and what did you change to make it work?', placeholder: 'I tried…' });
   } });
 

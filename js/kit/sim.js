@@ -28,9 +28,18 @@
   'use strict';
   var RL = root.RL = root.RL || {};
   var TYPES = '(?:CRGB|unsigned\\s+long|unsigned\\s+int|unsigned\\s+char|long\\s+long|long\\s+int|int|long|float|double|bool|boolean|byte|char|word|String|short|uint8_t|uint16_t|uint32_t|int8_t|int16_t|int32_t|size_t)';
+  /* EEPROM: kept for the whole page visit, so it survives Stop and Upload & run like the real one survives a reset.
+   * An address that was never written reads as all-1s bits (4294967295), like a brand-new UNO. */
+  var EEPROM_MEM = {};
+  var EEPROM_SIM = {
+    put: function (a, v) { EEPROM_MEM[a] = v; return v; },
+    get: function (a, v) { return a in EEPROM_MEM ? EEPROM_MEM[a] : (typeof v === 'number' ? 4294967295 : v); },
+    read: function (a) { return a in EEPROM_MEM ? EEPROM_MEM[a] & 255 : 255; },
+    write: function (a, v) { EEPROM_MEM[a] = v & 255; }, update: function (a, v) { EEPROM_MEM[a] = v & 255; }, length: function () { return 1024; }
+  };
   var CLASSES = ['Servo', 'LiquidCrystal', 'Stepper', 'DHT', 'IRrecv', 'decode_results'];
-  var LIBS = { Servo: 'Servo.h', LiquidCrystal: 'LiquidCrystal.h', Stepper: 'Stepper.h', DHT: 'DHT.h', IRrecv: 'IRremote', IrReceiver: 'IRremote', CRGB: 'FastLED.h', FastLED: 'FastLED.h' };
-  var API = ['pinMode', 'digitalWrite', 'digitalRead', 'analogWrite', 'analogRead', 'delay', 'delayMicroseconds', 'millis', 'micros', 'tone', 'noTone',
+  var LIBS = { EEPROM: 'EEPROM.h', Servo: 'Servo.h', LiquidCrystal: 'LiquidCrystal.h', Stepper: 'Stepper.h', DHT: 'DHT.h', IRrecv: 'IRremote', IrReceiver: 'IRremote', CRGB: 'FastLED.h', FastLED: 'FastLED.h' };
+  var API = ['EEPROM', 'pinMode', 'digitalWrite', 'digitalRead', 'analogWrite', 'analogRead', 'delay', 'delayMicroseconds', 'millis', 'micros', 'tone', 'noTone',
     'map', 'constrain', 'random', 'randomSeed', 'abs', 'min', 'max', 'pow', 'sqrt', 'sq', 'log', 'log10', 'exp', 'sin', 'cos', 'tan', 'floor', 'ceil', 'round', 'isnan',
     'Serial', 'HIGH', 'LOW', 'INPUT', 'OUTPUT', 'INPUT_PULLUP', 'LED_BUILTIN', 'A0', 'A1', 'A2', 'A3', 'A4', 'A5', 'DEC', 'HEX', 'BIN', 'MSBFIRST', 'LSBFIRST',
     'int', 'float', 'long', 'byte', 'word', 'bitRead', 'bitWrite', 'bitSet', 'bitClear', 'pulseIn', 'shiftOut', 'F', 'PI', 'true', 'false',
@@ -115,6 +124,8 @@
     t = t.replace(new RegExp('\\(\\s*' + TYPES + '\\s*\\)', 'g'), ' ');                        // casts
     t = t.replace(/([(,]\s*)&(?=[A-Za-z_])/g, '$1');                                          // &results → results
     t = t.replace(/\.length\s*\(\s*\)/g, '.length');
+    // EEPROM.get(addr, x) fills x in C++ (by reference); in JavaScript: x = EEPROM.get(addr, x)
+    t = t.replace(/\bEEPROM\s*\.\s*get\s*\(\s*([^,()]+?)\s*,\s*([A-Za-z_]\w*(?:\[[^\]]+\])?)\s*\)/g, '$2 = EEPROM.get($1, $2)');
     // library objects: Servo arm;  LiquidCrystal lcd(7, 8, 9, 10, 11, 12);
     var objs = ['IrReceiver'];
     t = t.replace(new RegExp('\\b(' + CLASSES.join('|') + ')\\s+([A-Za-z_]\\w*)\\s*(?:\\(([^;]*)\\))?\\s*;', 'g'), function (all, cls, name, args) { objs.push(name); return 'let ' + name + ' = new ' + cls + '(' + (args || '') + ');'; });
@@ -338,6 +349,7 @@
       HIGH: 1, LOW: 0, INPUT: 'INPUT', OUTPUT: 'OUTPUT', INPUT_PULLUP: 'INPUT_PULLUP', LED_BUILTIN: 13, A0: 14, A1: 15, A2: 16, A3: 17, A4: 18, A5: 19, DEC: 10, HEX: 16, BIN: 2, PI: Math.PI,
       MSBFIRST: 1, LSBFIRST: 0, DHT11: 11, DHT22: 22, ENABLE_LED_FEEDBACK: true, DISABLE_LED_FEEDBACK: false, IRDATA_FLAGS_IS_REPEAT: 1,
       Servo: Servo, LiquidCrystal: LiquidCrystal, Stepper: Stepper, DHT: DHT, IRrecv: IRrecv, decode_results: decode_results, IrReceiver: IrReceiver,
+      EEPROM: EEPROM_SIM,
       pinMode: function (p, m) { p = pinNo(p); if (m === 'OUTPUT') mode[p] = 'OUT'; else if (m === 'INPUT_PULLUP') mode[p] = 'PU'; else if (m === 'INPUT') mode[p] = 'IN'; else warn('mode' + p, 'pinMode needs OUTPUT, INPUT or INPUT_PULLUP (in capitals).'); update(p); },
       digitalWrite: function (p, v) {
         p = pinNo(p); v = v ? 1 : 0;

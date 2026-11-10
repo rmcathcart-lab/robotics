@@ -490,3 +490,18 @@ svg.dimming .fx-hit { cursor: crosshair; }
 .r8-steps li { margin-bottom: 6px; }
 .r8-spoil { margin: 14px 0; padding: 10px 14px; border: 1px dashed var(--grid); border-radius: 8px; }
 .r8-spoil summary { cursor: pointer; font-weight: 600; }
+/* M3 map() explainer */
+.m3-map { border: 1px solid var(--grid); border-radius: 10px; padding: 14px 18px; margin: 12px 0; background: var(--stage-bg); }
+.m3-map > code { font-size: 18px; }
+.m3-map ul { margin: 10px 0 0; }
+.m3-map .c1 { color: var(--cyan); } .m3-map .c2 { color: #60a5fa; } .m3-map .c3 { color: var(--signal, #ff8a3d); }
+/* extension solutions */
+.chal-sol { margin-top: 10px; }
+.sol-modal { width: min(1000px, 100%); }
+.sol-b > p, .sol-note { margin: 0 0 12px; }
+.sol-try { padding: 10px 14px; border-left: 3px solid var(--signal, #ff8a3d); background: var(--stage-bg); border-radius: 0 8px 8px 0; }
+.sol-note ul, .sol-note ol { margin: 6px 0 0; }
+.sol-key { display: flex; align-items: center; gap: 8px; }
+.sol-swatch { display: inline-block; width: 14px; height: 14px; border-radius: 3px; background: rgba(74, 222, 128, 0.18); box-shadow: inset 3px 0 #4ade80; }
+.code .ln.add { background: rgba(74, 222, 128, 0.12); box-shadow: inset 3px 0 #4ade80; }
+.sol-b .code { max-height: none; }

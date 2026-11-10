@@ -1228,7 +1228,7 @@
       { tag: 'Code', title: 'Fahrenheit mode', html: 'Add a third mode: temperature in °F on a third scale. Make the button cycle through all three modes.', hint: '<code>dht.readTemperature(true)</code> gives °F. Use an <code>int mode</code> that counts 0, 1, 2 and wraps back to 0.' },
       { tag: 'Build + code', cls: 'c', title: 'Humidity alarm', html: 'Make the gauge warn you when the air is too dry (below 25%) or too damp (above 70%): flash an LED or sound the active buzzer.', hint: 'Check the humidity every loop even in temperature mode, so the alarm works in both modes.' },
       { tag: 'Code', title: 'Two sensors, one answer', html: 'Show the <b>average</b> of the DHT11 and thermistor on the needle. Is it more accurate than either one alone? Test it.' }
-    ]);
+    ], { solutions: 'm04', base: GAUGE_CODE });
     UI.note(b, ctx, { id: 'n-improve', label: 'Which challenge did you try? What happened, and what did you change to make it work?', placeholder: 'I tried…' });
   } });
 

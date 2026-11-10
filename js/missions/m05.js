@@ -1021,7 +1021,7 @@
       { tag: 'Build + code', cls: 'c', title: 'Sonar radar', html: 'Mount the sensor on the servo from Mission 04 and sweep it from 0° to 180°, printing <code>angle,distance</code> each step. Open <b>Tools → Serial Plotter</b> to see what’s around it.', hint: 'Servo signal on pin 9, power on the rails. In the sweep loop: <code>needle.write(a); delay(30); Serial.print(a); Serial.print(","); Serial.println(readDistance());</code>' },
       { tag: 'Code', title: 'Temperature-corrected', html: 'Use the DHT11 from Mission 04 to correct the speed of sound: <code>v = 331.3 + 0.606 × temperature</code> m/s. Does your accuracy log improve?', hint: 'Speed in cm/µs is <code>v / 10000.0</code>. Distance = <code>duration * speed / 2.0</code> — use floats.' },
       { tag: 'Build', title: 'Readout display', html: 'Show the distance on the LCD1602 (you’ll meet it properly in Mission 06), or make a big paper scale beside the garage so the driver can read the distance in centimetres.' }
-    ]);
+    ], { solutions: 'm05', base: FINAL });
     UI.note(b, ctx, { id: 'n-improve', label: 'Which challenge did you try? What happened, and what did you change to make it work?', placeholder: 'I tried…' });
   } });
 

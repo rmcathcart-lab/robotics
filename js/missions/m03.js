@@ -779,7 +779,15 @@
   steps.push({ id: 'joystick', title: 'Build & code: joystick pitch bend', stage: '05 Create', time: '25 min', render: function (b, ctx) {
     UI.html(b, '<p class="lead">The joystick turns your keyboard into an instrument. Push it to bend a note or jump an octave, click it to fire a sound effect. Inside, it’s nothing new: <b>two potentiometers and a button</b>.</p>');
     joyXp(b);
-    UI.numq(b, ctx, { id: 'q-joy1', q: 'You push the stick all the way right, so X reads <b>1023</b>. What does <code>map(1023, 0, 1023, -60, 60)</code> give?', answer: 60, tol: 0.5, unit: 'Hz', explain: 'The top of the input range maps to the top of the output range: <b>60</b>. Holding C (262 Hz) then plays 262 + 60 = 322 Hz.', hint: '1023 is the very top of the “from” range.' });
+    UI.html(b, '<h2>Turning the stick into a pitch bend: map()</h2>' +
+      '<p>Pushing the stick left and right should bend the note a little flatter or sharper, like the pitch-bend wheel on a real keyboard. But the joystick gives a number from <b>0 to 1023</b>, and we only want to bend the note by <b>60 Hz at most</b>. Adding 1023 Hz to a note would be wildly out of tune!</p>' +
+      '<p>You met <code>map()</code> in Mission 02: it <b>changes a number from one scale to another</b>, like converting a test mark out of 20 into a percentage. You give it five numbers:</p>' +
+      '<div class="m3-map"><code>map(<b class="c1">x</b>, <b class="c2">0</b>, <b class="c2">1023</b>, <b class="c3">-60</b>, <b class="c3">60</b>)</code>' +
+      '<ul><li><b class="c1">x</b> — the number you have now (the joystick reading)</li><li><b class="c2">0, 1023</b> — the scale it’s on now: the “<b>from</b>” range. The stick reads 0 all the way left and 1023 all the way right.</li><li><b class="c3">-60, 60</b> — the scale you want: the “<b>to</b>” range. −60 Hz (flatter) to +60 Hz (sharper).</li></ul></div>' +
+      '<p><code>map</code> finds where <b>x</b> sits on the first scale and gives back the number in the <b>same spot</b> on the second scale. The bottom of one scale matches the bottom of the other, the middle matches the middle, and the top matches the top. Drag the slider to see it:</p>');
+    mapLab(b);
+    UI.numq(b, ctx, { id: 'q-joy1', q: 'You push the stick all the way right, so X reads <b>1023</b>. What does <code>map(1023, 0, 1023, -60, 60)</code> give?', answer: 60, tol: 0.5, unit: 'Hz', explain: 'The top of the “from” range (1023) matches the top of the “to” range: <b>60</b>. Holding C (262 Hz) then plays 262 + 60 = 322 Hz.', hint: 'The answer isn’t the joystick reading — it’s the number on the <b>new</b> scale (−60 to 60). 1023 is as far right as the stick goes, so where is that on the new scale? Try the slider above.' });
+    UI.numq(b, ctx, { id: 'q-joy2', q: 'The stick is left alone in the middle, so X reads about <b>512</b>. What does <code>map(512, 0, 1023, -60, 60)</code> give?', answer: 0, tol: 0.6, unit: 'Hz', explain: 'The middle of 0–1023 matches the middle of −60 to 60, which is <b>0</b>. So the note isn’t bent at all when you let go of the stick. (map drops decimals: 0.06 becomes 0.)', hint: 'Halfway along the first scale is halfway along the second. What’s halfway between −60 and 60?' });
     UI.html(b, '<h2>Add the joystick</h2><p>The joystick module has five pins on a header. Use <b>female-to-male</b> wires: the socket end slides onto the joystick’s pin, the other end goes into the breadboard or the UNO.</p>');
     B.guide(b, { title: 'Joystick module', parts: ALL, base: IDS_KEYS.slice(), vb: VBM, steps: [
       { title: 'Start from the keyboard', view: 'all', html: '<p>Buzzers and four keys stay as they are. The joystick sits beside the breadboard, connected with five female-to-male wires.</p>' },
@@ -837,6 +845,42 @@
     UI.html(b, '<h2>Upload it for real</h2><p>Upload, open the Serial Monitor at 9600 baud, and play. Watch the note numbers change as you bend.</p>');
     UI.html(b, '<div class="tests"><div class="trow"><div><b>Notes always play an octave high (or low)</b><br><span class="small muted">VRx and VRy are swapped, or the joystick isn’t powered so Y reads near 0. Check +5V and GND on the joystick.</span></div></div><div class="trow"><div><b>The pitch wobbles by itself</b><br><span class="small muted">That’s normal: the stick never rests at exactly 512. Bonus fix: ignore small bends with <code>if (abs(x - 512) &lt; 30) x = 512;</code></span></div></div><div class="trow"><div><b>Lasers fire on their own</b><br><span class="small muted">SW isn’t on pin 2, or <code>pinMode(JOY_SW, INPUT_PULLUP)</code> is missing, so pin 2 is floating.</span></div></div></div>');
   } });
+  /* map() lab: one slider, two scales with the same spot marked on both */
+  function mapLab(b) {
+    var box = el('div', 'xp'); box.innerHTML = '<div class="xp-h"><span class="label">Try it</span><h3>map(x, 0, 1023, -60, 60)</h3></div>';
+    var stage = el('div', 'xp-stage'), svg = S('svg', { viewBox: '0 0 800 250', role: 'img', 'aria-label': 'Two number lines showing map()' }); stage.appendChild(svg); box.appendChild(stage);
+    var cap = el('div', 'xp-cap'), row = el('div', 'slider-row'); row.innerHTML = '<label>Joystick X</label>';
+    var r = el('input'); r.type = 'range'; r.min = 0; r.max = 1023; r.step = 1; r.value = 800; r.setAttribute('aria-label', 'Joystick X reading');
+    var out = el('b', '', ''); row.appendChild(r); row.appendChild(out); cap.appendChild(row);
+    var quick = el('div', 'slider-row'); quick.innerHTML = '<label>Jump to</label>';
+    [[0, 'all the way left'], [256, 'a quarter'], [512, 'middle'], [768, 'three quarters'], [1023, 'all the way right']].forEach(function (q) {
+      var bt = el('button', 'btn btn-ghost btn-small', q[1]); bt.type = 'button'; bt.addEventListener('click', function () { r.value = q[0]; draw(); }); quick.appendChild(bt);
+    });
+    cap.appendChild(quick); var say = el('p', '', ''); cap.appendChild(say); box.appendChild(cap); b.appendChild(box);
+    var X0 = 90, X1 = 710;
+    function line(y, lo, hi, ticks, col, label) {
+      S('line', { x1: X0, y1: y, x2: X1, y2: y, stroke: col, 'stroke-width': 3 }, svg);
+      ticks.forEach(function (t) { var x = X0 + (t - lo) / (hi - lo) * (X1 - X0); S('line', { x1: x, y1: y - 7, x2: x, y2: y + 7, stroke: col, 'stroke-width': 2 }, svg); T(svg, x, y + 26, String(t), { 'text-anchor': 'middle', fill: MUT, 'font-size': 13 }); });
+      T(svg, X0 - 14, y + 5, label, { 'text-anchor': 'end', fill: col, 'font-size': 12, 'font-weight': 700 });
+    }
+    function draw() {
+      clear(svg); bg(svg, 800, 250);
+      var x = Number(r.value), v = Math.trunc(x * 120 / 1023) - 60 /* Arduino's map(): whole-number maths */, px = X0 + x / 1023 * (X1 - X0);
+      line(60, 0, 1023, [0, 256, 512, 768, 1023], '#60a5fa', 'FROM');
+      line(170, -60, 60, [-60, -30, 0, 30, 60], SIG, 'TO');
+      T(svg, X0, 30, 'what the joystick gives (0 to 1023)', { fill: MUT, 'font-size': 12 });
+      T(svg, X0, 140, 'what we want: how many Hz to bend the note (−60 to 60)', { fill: MUT, 'font-size': 12 });
+      S('line', { x1: px, y1: 60, x2: px, y2: 170, stroke: INK, 'stroke-width': 1.5, 'stroke-dasharray': '5 5' }, svg);
+      S('circle', { cx: px, cy: 60, r: 9, fill: '#60a5fa', stroke: NAVY, 'stroke-width': 3 }, svg);
+      S('circle', { cx: px, cy: 170, r: 9, fill: SIG, stroke: NAVY, 'stroke-width': 3 }, svg);
+      T(svg, px, 110, x + '  →  ' + v, { 'text-anchor': 'middle', fill: INK, 'font-size': 15, 'font-weight': 700, stroke: NAVY, 'stroke-width': 5, 'paint-order': 'stroke' });
+      out.textContent = x + ' → ' + v + ' Hz';
+      var pct = Math.round(x / 1023 * 100);
+      say.innerHTML = 'X = <b>' + x + '</b> is ' + pct + '% of the way along 0–1023, so map gives the number ' + pct + '% of the way along −60 to 60: <b>' + v + '</b>. ' +
+        'Holding C (262 Hz), the buzzer plays 262 ' + (v < 0 ? '− ' + (-v) : '+ ' + v) + ' = <b>' + (262 + v) + ' Hz</b>' + (v === 0 ? ' — no bend at all.' : v < 0 ? ' (flatter).' : ' (sharper).');
+    }
+    r.addEventListener('input', draw); draw();
+  }
   function joyXp(b) {
     var api = UI.explainer(b, { label: 'Explainer', title: 'Inside the joystick', w: 800, h: 340, interactive: true,
       extra: function (box) {
@@ -979,7 +1023,7 @@
       { tag: 'Code', title: 'Game sound kit', html: 'Write three more sound-effect functions — a coin pickup (two quick high notes going up), a power-up (a fast upward sweep) and game over (three falling notes) — and trigger them from the joystick directions with no key held.', hint: 'Coin: <code>tone(BUZZER, 988); delay(80); tone(BUZZER, 1319); delay(300); noTone(BUZZER);</code>' },
       { tag: 'Build + code', title: 'A fifth key', html: 'Add a fifth button for A (440 Hz) so you have the whole pentatonic scale C D E G A. Which pin is free? Remember to make both arrays longer.', hint: 'Pins 9–13 are free. Add the pin to <code>keys[]</code>, 440 to <code>notes[]</code>, and change every <code>4</code> in the for loops to <code>5</code>.' },
       { tag: 'Science', cls: 'c', title: 'Find the loudest note', html: 'Buzzers have a <b>resonant frequency</b> where they’re much louder. Write a sketch that sweeps from 200 Hz to 5000 Hz slowly and prints the frequency to the Serial Monitor. Where does it sound loudest?', hint: 'A for loop with <code>f = f + 20</code>, <code>tone(BUZZER, f)</code>, <code>Serial.println(f)</code> and <code>delay(30)</code>. Most small buzzers peak somewhere between 2000 and 4000 Hz.' }
-    ]);
+    ], { solutions: 'm03', base: SYNTH });
     UI.note(b, ctx, { id: 'n-improve', label: 'Which challenge did you try? What happened, and what did you change to make it work?', placeholder: 'I tried…' });
   } });
 

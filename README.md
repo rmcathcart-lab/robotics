@@ -35,6 +35,7 @@ colours; real-object colours (UNO, chips, LEDs, cardboard) stay. `node tests/lig
 | `js/kit/fusion2.js` | Labs for F2–F7 (phone stand, revolve + centre of mass, shell + pattern, parameters + press fit, lid clearance, loft) and the shared brief / evidence helpers |
 | `js/missions/f01.js` … `f08.js` | Unit 1: F1 Name tag keychain · F2 Phone stand · F3 Spinning top · F4 Desk organizer · F5 Fidget spinner · F6 Box with a snap lid · F7 Bottle & handle · F8 Design challenge |
 | `js/missions/m01.js` … `m09.js` | The nine Arduino missions (see `docs/MISSION_GUIDE.md` for how to write one) |
+| `js/solutions/m01.js` … `m09.js` | Fully commented solution sketches for every extension challenge in the Arduino missions, keyed by challenge title; shown in a pop-up by the “Stuck? See a solution” button, with new lines highlighted against the mission’s finished code |
 | `js/missions/r01.js` … `r08.js` | The eight robot-car missions (Unit 3): build & systems check, driving school, spell your name, seek & stop, remote pilot, line follower, maze runner, robot challenge |
 | `teacher/` | The teacher ledger: `dash.js` (tabs), `comments.js` (report card comments), `powerschool.js` (reads PowerSchool scores templates) |
 | `backend/Code.gs` | Apps Script backend. `backend/mock_server.js` runs it locally with stand-ins for the Google services |

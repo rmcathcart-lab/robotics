@@ -1112,7 +1112,7 @@
       { tag: 'Code', title: 'Custom characters', html: 'Design your own 5 × 8 pixel symbols — an eye, a star, a skull — and show them beside the answer.', hint: 'Make a pattern with one number per row: <code>byte eye[8] = { B00000, B01110, B10001, B10101, B10001, B01110, B00000, B00000 };</code>. In setup(): <code>lcd.createChar(0, eye);</code> (up to 8, numbered 0–7). Show it with <code>lcd.write(byte(0));</code>. The Virtual UNO doesn’t draw custom characters, so test this one on your real LCD.' },
       { tag: 'Code + modes', cls: 'c', title: 'Dice mode', html: 'Add a third mode: a dice roller for board games. A shake rolls two dice and shows both numbers and their total.', hint: 'Add <code>const int DICE = 2;</code>. In switchMode(), go FORTUNE → THERMO → DICE → FORTUNE. Use <code>random(1, 7)</code> for each die (1 to 6), and add a <code>case DICE:</code> where the shake is handled.' },
       { tag: 'Build', title: 'Mood lighting', html: 'Use a spare pin to light an LED inside the box (with its 220 Ω resistor) that glows while the box is thinking. Which pins are still free?', hint: 'Pins 3, 4, 5 and 6 aren’t used. Pin 3, 5 or 6 can even fade the LED with analogWrite().' }
-    ]);
+    ], { solutions: 'm06', base: FINAL });
     UI.note(b, ctx, { id: 'n-improve', label: 'Which challenge did you try? What happened, and what did you change to make it work?', placeholder: 'I tried…' });
   } });
 

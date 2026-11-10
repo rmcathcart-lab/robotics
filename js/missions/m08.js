@@ -1173,7 +1173,7 @@
       { tag: 'Code', title: 'Report the room', html: 'Print a tidy status line once every 2 seconds: temperature, humidity (<code>dht.readHumidity()</code>), the mode and the speed — or show them on the LCD from Mission 06.' },
       { tag: 'Code', cls: 'c', title: 'Kick-start', html: 'At low speeds the motor won’t start from a standstill. When the fan is switched on at a low speed, give it a short burst at full speed first, then drop to the chosen speed.', hint: 'Keep a <code>bool</code> that remembers whether the fan was running last time. If it wasn’t, <code>analogWrite(ENABLE, 255)</code> for about 150 ms first.' },
       { tag: 'Physics', title: 'Measure the breeze', html: 'Hang a strip of tissue paper 30 cm in front of the fan and measure how far it lifts at speeds 100, 150, 200 and 255. Is the relationship a straight line?' }
-    ]);
+    ], { solutions: 'm08', base: SMART });
     UI.note(b, ctx, { id: 'n-improve', label: 'Which challenge did you try? What happened, and what did you change to make it work?', placeholder: 'I tried…' });
   } });
 

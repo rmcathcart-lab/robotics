@@ -148,10 +148,49 @@
     container.appendChild(box); return box;
   };
   /* challenge cards: [{ tag, title, html, hint }] */
-  UI.challenges = function (container, list) {
-    var box = el('div', 'challenges');
-    list.forEach(function (c) { box.appendChild(el('div', 'chal', '<span class="tag ' + (c.cls || '') + '">' + esc(c.tag) + '</span><h3>' + esc(c.title) + '</h3><p>' + c.html + '</p>' + (c.hint ? '<details><summary>Hint</summary>' + c.hint + '</details>' : ''))); });
+  /* extension challenges. opts.solutions = a key of RL.SOLUTIONS (solutions by challenge title), opts.base = the
+   * mission's finished code: a solution's lines that aren't in it are marked as new in the pop-up */
+  UI.challenges = function (container, list, opts) {
+    opts = opts || {};
+    var box = el('div', 'challenges'), sols = (opts.solutions && RL.SOLUTIONS && RL.SOLUTIONS[opts.solutions]) || {};
+    list.forEach(function (c) {
+      var card = el('div', 'chal', '<span class="tag ' + (c.cls || '') + '">' + esc(c.tag) + '</span><h3>' + esc(c.title) + '</h3><p>' + c.html + '</p>' + (c.hint ? '<details><summary>Hint</summary>' + c.hint + '</details>' : ''));
+      var sol = sols[c.title];
+      if (sol) {
+        var bt = el('button', 'btn btn-ghost btn-small chal-sol', 'Stuck? See a solution'); bt.type = 'button';
+        bt.addEventListener('click', function () { UI.solution(c.title, sol, opts.base); });
+        card.appendChild(bt);
+      }
+      box.appendChild(card);
+    });
     container.appendChild(box); return box;
+  };
+  /* pop-up with a fully commented solution sketch */
+  UI.solution = function (title, sol, base) {
+    if (RL.closeModal) RL.closeModal();
+    var old = document.getElementById('modal'); if (old) old.remove();
+    var src = Array.isArray(sol.code) ? sol.code.join('\n') : String(sol.code).replace(/^\n+|\s+$/g, '');
+    var ov = el('div', 'modal'); ov.id = 'modal'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', 'Solution: ' + title);
+    var mb = el('div', 'modal-box sol-modal'), h = el('div', 'modal-h', '<span class="label c">Solution</span><h2>' + esc(title) + '</h2>');
+    var x = el('button', 'btn btn-ghost iconbtn', '×'); x.type = 'button'; x.setAttribute('aria-label', 'Close'); h.appendChild(x); mb.appendChild(h);
+    var body = el('div', 'modal-b sol-b');
+    body.appendChild(el('p', 'sol-try', '<b>Give it a real try first.</b> Then use this to get unstuck: read the comments (the grey <code>//</code> lines) to see what each part does and why, and type in the parts you need rather than copying the whole thing. You’ll learn far more.'));
+    if (sol.note) body.appendChild(el('div', 'sol-note', sol.note));
+    var baseSet = null;
+    if (base) {
+      baseSet = {}; (Array.isArray(base) ? base : String(base).split('\n')).forEach(function (l) { baseSet[l.trim()] = 1; });
+      body.appendChild(el('p', 'small muted sol-key', '<span class="sol-swatch"></span> Highlighted lines are new or changed compared with the mission’s finished code.'));
+    }
+    var code = RL.Code.render(src, { name: sol.name || 'solution' });
+    if (baseSet) Array.prototype.forEach.call(code.querySelectorAll('.ln'), function (ln, i) { var t = src.split('\n')[i].trim(); if (t && !baseSet[t]) ln.classList.add('add'); });
+    body.appendChild(code);
+    if (sol.after) body.appendChild(el('div', 'sol-note', sol.after));
+    mb.appendChild(body); ov.appendChild(mb);
+    function close() { ov.remove(); document.removeEventListener('keydown', onKey); }
+    function onKey(e) { if (e.key === 'Escape') close(); }
+    x.addEventListener('click', close); ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
+    document.addEventListener('keydown', onKey);
+    document.body.appendChild(ov); x.focus();
   };
   /* parts checklist: [{ id, name, note, icon(svg, S) }] — tap to tick off what you've found in your kit */
   UI.gear = function (container, ctx, key, items) {

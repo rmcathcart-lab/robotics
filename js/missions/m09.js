@@ -1307,7 +1307,7 @@
       { tag: 'Build + code', cls: 'c', title: 'Three players', html: 'Add a third button (pin 11 is free). Show the winner’s number 1, 2 or 3.', hint: 'An array of button pins and an array of times makes this much shorter than copying code three times.' },
       { tag: 'Code', title: 'Difficulty levels', html: 'Add an easy/hard mode: hard mode uses shorter random waits and fake-out “double beeps”, and calls a false start for anyone who presses on the fake.' },
       { tag: 'Build', title: 'Get-ready light', html: 'Bring back the LED bar on a second 74HC595, chained from Q7′ (pin 9) of the first, and use it as a countdown bar during READY.', hint: 'With two chips chained, call shiftOut twice before you latch: the first byte ends up in the far chip.' }
-    ]);
+    ], { solutions: 'm09', base: GAMECODE });
     UI.note(b, ctx, { id: 'n-improve', label: 'Which challenge did you try? What happened, and what did you change to make it work?', placeholder: 'I tried…' });
   } });
 
