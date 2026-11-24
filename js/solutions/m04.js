@@ -20,7 +20,8 @@ const int DHT_PIN = 2;
 const int MODE_BUTTON = 4;
 const int SERVO_PIN = 9;
 
-// the scales on your dial (left end = 0, right end = 180)
+// the scales on your dial. Our servos turn counterclockwise as the angle goes up,
+// so the LEFT end of the dial is 180 degrees and the RIGHT end is 0 degrees.
 const int LOW_TEMP = 0;
 const int HIGH_TEMP = 40;
 const int LOW_HUM = 20;
@@ -47,7 +48,7 @@ void setup() {
 
 // NEW: points the needle at the highest temperature so far
 void showHigh() {
-  int angle = map(highest, LOW_TEMP, HIGH_TEMP, 0, 180);
+  int angle = map(highest, LOW_TEMP, HIGH_TEMP, 180, 0);
   angle = constrain(angle, 0, 180);
   needle.write(angle);
   needleAngle = angle;       // remember where the needle went, so it moves back smoothly later
@@ -96,8 +97,8 @@ void loop() {
   if (isnan(reading)) return;   // no reading this time
 
   int target;
-  if (showHumidity) target = map(reading, LOW_HUM, HIGH_HUM, 0, 180);
-  else target = map(reading, LOW_TEMP, HIGH_TEMP, 0, 180);
+  if (showHumidity) target = map(reading, LOW_HUM, HIGH_HUM, 180, 0);
+  else target = map(reading, LOW_TEMP, HIGH_TEMP, 180, 0);
   target = constrain(target, 0, 180);   // stay on the dial
 
   if (target != lastTarget) {   // print only changes
@@ -130,7 +131,8 @@ const int MODE_BUTTON = 4;
 const int SERVO_PIN = 9;
 const int COMFORT_LED = 7;      // NEW: green LED + 220 ohm resistor
 
-// the scales on your dial (left end = 0, right end = 180)
+// the scales on your dial. Our servos turn counterclockwise as the angle goes up,
+// so the LEFT end of the dial is 180 degrees and the RIGHT end is 0 degrees.
 const int LOW_TEMP = 0;
 const int HIGH_TEMP = 40;
 const int LOW_HUM = 20;
@@ -186,8 +188,8 @@ void loop() {
   if (isnan(reading)) return;   // no reading this time
 
   int target;
-  if (showHumidity) target = map(reading, LOW_HUM, HIGH_HUM, 0, 180);
-  else target = map(reading, LOW_TEMP, HIGH_TEMP, 0, 180);
+  if (showHumidity) target = map(reading, LOW_HUM, HIGH_HUM, 180, 0);
+  else target = map(reading, LOW_TEMP, HIGH_TEMP, 180, 0);
   target = constrain(target, 0, 180);   // stay on the dial
 
   if (target != lastTarget) {   // print only changes
@@ -221,7 +223,8 @@ const int DHT_PIN = 2;
 const int MODE_BUTTON = 4;
 const int SERVO_PIN = 9;
 
-// the scales on your dial (left end = 0, right end = 180)
+// the scales on your dial. Our servos turn counterclockwise as the angle goes up,
+// so the LEFT end of the dial is 180 degrees and the RIGHT end is 0 degrees.
 const int LOW_TEMP = 0;
 const int HIGH_TEMP = 40;
 const int LOW_HUM = 20;
@@ -274,9 +277,9 @@ void loop() {
 
   // ...and use the right scale for this mode
   int target;
-  if (mode == HUMIDITY) target = map(reading, LOW_HUM, HIGH_HUM, 0, 180);
-  else if (mode == FAHRENHEIT) target = map(reading, LOW_F, HIGH_F, 0, 180);
-  else target = map(reading, LOW_TEMP, HIGH_TEMP, 0, 180);
+  if (mode == HUMIDITY) target = map(reading, LOW_HUM, HIGH_HUM, 180, 0);
+  else if (mode == FAHRENHEIT) target = map(reading, LOW_F, HIGH_F, 180, 0);
+  else target = map(reading, LOW_TEMP, HIGH_TEMP, 180, 0);
   target = constrain(target, 0, 180);   // stay on the dial
 
   if (target != lastTarget) {   // print only changes
@@ -313,7 +316,8 @@ const int SERVO_PIN = 9;
 const int ALARM_LED = 7;     // NEW: red LED + 220 ohm resistor
 const int ALARM_BUZZER = 8;  // NEW: active buzzer (optional)
 
-// the scales on your dial (left end = 0, right end = 180)
+// the scales on your dial. Our servos turn counterclockwise as the angle goes up,
+// so the LEFT end of the dial is 180 degrees and the RIGHT end is 0 degrees.
 const int LOW_TEMP = 0;
 const int HIGH_TEMP = 40;
 const int LOW_HUM = 20;
@@ -382,8 +386,8 @@ void loop() {
   if (isnan(reading)) return;   // no reading this time
 
   int target;
-  if (showHumidity) target = map(reading, LOW_HUM, HIGH_HUM, 0, 180);
-  else target = map(reading, LOW_TEMP, HIGH_TEMP, 0, 180);
+  if (showHumidity) target = map(reading, LOW_HUM, HIGH_HUM, 180, 0);
+  else target = map(reading, LOW_TEMP, HIGH_TEMP, 180, 0);
   target = constrain(target, 0, 180);   // stay on the dial
 
   if (target != lastTarget) {   // print only changes
@@ -417,7 +421,8 @@ const int MODE_BUTTON = 4;
 const int SERVO_PIN = 9;
 const int THERM_PIN = A0;    // NEW: the thermistor divider from part 4
 
-// the scales on your dial (left end = 0, right end = 180)
+// the scales on your dial. Our servos turn counterclockwise as the angle goes up,
+// so the LEFT end of the dial is 180 degrees and the RIGHT end is 0 degrees.
 const int LOW_TEMP = 0;
 const int HIGH_TEMP = 40;
 const int LOW_HUM = 20;
@@ -489,8 +494,8 @@ void loop() {
   if (isnan(reading)) return;   // no reading this time
 
   int target;
-  if (showHumidity) target = map(reading, LOW_HUM, HIGH_HUM, 0, 180);
-  else target = map(reading, LOW_TEMP, HIGH_TEMP, 0, 180);
+  if (showHumidity) target = map(reading, LOW_HUM, HIGH_HUM, 180, 0);
+  else target = map(reading, LOW_TEMP, HIGH_TEMP, 180, 0);
   target = constrain(target, 0, 180);   // stay on the dial
   lastTarget = target;
 

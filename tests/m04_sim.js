@@ -29,9 +29,10 @@ async function run(browser, step, edit, label, shot) {
   await expect('PASS', 5, null, 'dht: given code', 'dht');
   await expect('RETRY', 5, c => c.replace('  Serial.print(humidity, 0);\n', ''), 'dht: no humidity');
   await expect('RETRY', 6, null, 'needle: template');
-  const done = c => c.replace('  int angle = 90;', '  int angle = map(temperature, LOW_TEMP, HIGH_TEMP, 0, 180);\n  angle = constrain(angle, 0, 180);');
+  const done = c => c.replace('  int angle = 90;', '  int angle = map(temperature, LOW_TEMP, HIGH_TEMP, 180, 0);\n  angle = constrain(angle, 0, 180);');
   await expect('PASS', 6, done, 'needle: hint answer', 'needle');
-  await expect('RETRY', 6, c => c.replace('  int angle = 90;', '  int angle = map(temperature, LOW_TEMP, HIGH_TEMP, 0, 180);'), 'needle: no constrain');
+  await expect('RETRY', 6, c => c.replace('  int angle = 90;', '  int angle = map(temperature, LOW_TEMP, HIGH_TEMP, 180, 0);'), 'needle: no constrain');
+  await expect('backwards for our servos', 6, c => c.replace('  int angle = 90;', '  int angle = map(temperature, LOW_TEMP, HIGH_TEMP, 0, 180);\n  angle = constrain(angle, 0, 180);'), 'needle: old 0-180 direction');
   await expect('RETRY', 6, c => c.replace('  int angle = 90;', '  int angle = map(temperature, 0, 180, LOW_TEMP, HIGH_TEMP);\n  angle = constrain(angle, 0, 180);'), 'needle: map backwards');
   await expect('PASS', 7, null, 'thermistor: given code', 'therm');
   await expect('RETRY', 7, c => c.replace('return kelvin - 273.15;', 'return kelvin;'), 'thermistor: kelvin');

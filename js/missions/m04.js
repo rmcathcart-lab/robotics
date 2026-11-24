@@ -31,9 +31,10 @@
     st.stop = function () { stopAnim(st); };
   }
   function stopAnim(st) { if (st.raf) cancelAnimationFrame(st.raf); st.raf = null; }
-  /* a point on a dial: servo angle a (0 = left end, 180 = right end), radius r around cx, cy */
-  function pt(cx, cy, r, a) { var th = (180 - a) * Math.PI / 180; return [cx + r * Math.cos(th), cy - r * Math.sin(th)]; }
-  function arcPath(cx, cy, r, a0, a1) { var p0 = pt(cx, cy, r, a0), p1 = pt(cx, cy, r, a1); return 'M' + p0[0].toFixed(1) + ' ' + p0[1].toFixed(1) + ' A' + r + ' ' + r + ' 0 0 1 ' + p1[0].toFixed(1) + ' ' + p1[1].toFixed(1); }
+  /* a point on a dial: servo angle a, radius r around cx, cy. Our kit's servos turn COUNTERCLOCKWISE as the angle
+   * goes up, so 0° points right, 90° straight up and 180° left (the cold, left end of the dial is 180°). */
+  function pt(cx, cy, r, a) { var th = a * Math.PI / 180; return [cx + r * Math.cos(th), cy - r * Math.sin(th)]; }
+  function arcPath(cx, cy, r, a0, a1) { var p0 = pt(cx, cy, r, Math.max(a0, a1)), p1 = pt(cx, cy, r, Math.min(a0, a1)); return 'M' + p0[0].toFixed(1) + ' ' + p0[1].toFixed(1) + ' A' + r + ' ' + r + ' 0 0 1 ' + p1[0].toFixed(1) + ' ' + p1[1].toFixed(1); }
   function merge() { var o = {}; for (var i = 0; i < arguments.length; i++) for (var k in arguments[i]) o[k] = arguments[i][k]; return o; }
   /* thermistor maths (the ELEGOO Steinhart–Hart numbers) */
   var SH = [0.001129148, 0.000234125, 0.0000000876741];
@@ -146,8 +147,8 @@
     '',
     'const int DHT_PIN = 2;',
     'const int SERVO_PIN = 9;',
-    'const int LOW_TEMP = 0;     // left end of the dial (0 degrees)',
-    'const int HIGH_TEMP = 40;   // right end (180 degrees)',
+    'const int LOW_TEMP = 0;     // left end of the dial (the servo at 180 degrees)',
+    'const int HIGH_TEMP = 40;   // right end (the servo at 0 degrees)',
     '',
     'DHT dht(DHT_PIN, DHT11);',
     'Servo needle;',
@@ -162,7 +163,7 @@
     '  float temperature = dht.readTemperature();',
     '  if (isnan(temperature)) return;   // no reading',
     '',
-    '  // YOUR TURN: map() the temperature to an angle',
+    '  // YOUR TURN: map() the temperature to an angle (left end = 180, right end = 0)',
     '  int angle = 90;',
     '',
     '  // YOUR TURN: constrain() the angle to 0-180',
@@ -231,7 +232,7 @@
     '',
     'void loop() {',
     '  for (int i = 0; i < 5; i++) {',
-    '    int angle = map(TICKS[i], 0, 40, 0, 180);',
+    '    int angle = map(TICKS[i], 0, 40, 180, 0);   // 0 C at the left (180), 40 C at the right (0)',
     '    needle.write(angle);',
     '    Serial.print("Mark ");',
     '    Serial.print(TICKS[i]);',
@@ -254,7 +255,8 @@
     'const int MODE_BUTTON = 4;',
     'const int SERVO_PIN = 9;',
     '',
-    '// the scales on your dial (left end = 0, right end = 180)',
+    '// the scales on your dial. Our servos turn counterclockwise as the angle goes up,',
+    '// so the LEFT end of the dial is 180 degrees and the RIGHT end is 0 degrees.',
     'const int LOW_TEMP = 0;',
     'const int HIGH_TEMP = 40;',
     'const int LOW_HUM = 20;',
@@ -294,8 +296,8 @@
     '  if (isnan(reading)) return;   // no reading this time',
     '',
     '  int target;',
-    '  if (showHumidity) target = map(reading, LOW_HUM, HIGH_HUM, 0, 180);',
-    '  else target = map(reading, LOW_TEMP, HIGH_TEMP, 0, 180);',
+    '  if (showHumidity) target = map(reading, LOW_HUM, HIGH_HUM, 180, 0);',
+    '  else target = map(reading, LOW_TEMP, HIGH_TEMP, 180, 0);',
     '  target = constrain(target, 0, 180);   // stay on the dial',
     '',
     '  if (target != lastTarget) {   // print only changes',
@@ -314,7 +316,7 @@
     '}'].join('\n');
 
   /* ================= art helpers ================= */
-  /* a dial: scales [{ lo, hi, step, r, unit, col }], returns { set(angle), g } — angle 0 = left end, 180 = right end */
+  /* a dial: scales [{ lo, hi, step, r, unit, col }] (lo on the left), returns { set(servoAngle), g } — 180 = left end, 0 = right end */
   function dialArt(svg, cx, cy, R, scales, o) {
     o = o || {};
     var g = S('g', {}, svg);
@@ -326,7 +328,7 @@
     scales.forEach(function (sc) {
       var n = Math.round((sc.hi - sc.lo) / sc.step);
       for (var i = 0; i <= n; i++) {
-        var a = i / n * 180, p0 = pt(cx, cy, sc.r, a), p1 = pt(cx, cy, sc.r - (sc.tick || 14), a), pl = pt(cx, cy, sc.r - (sc.tick || 14) - 14, a);
+        var a = 180 - i / n * 180, p0 = pt(cx, cy, sc.r, a), p1 = pt(cx, cy, sc.r - (sc.tick || 14), a), pl = pt(cx, cy, sc.r - (sc.tick || 14) - 14, a);
         S('line', { x1: p0[0], y1: p0[1], x2: p1[0], y2: p1[1], stroke: sc.col || ink, 'stroke-width': 2.5 }, g);
         if (!sc.every || i % sc.every === 0) T(g, pl[0], pl[1] + 4, String(sc.lo + i * sc.step), { 'text-anchor': 'middle', 'font-size': sc.fs || 13, fill: sc.col || ink, 'font-weight': 600 });
       }
@@ -337,7 +339,7 @@
     S('path', { d: 'M' + (cx - 6) + ' ' + (cy - L + 14) + ' L' + cx + ' ' + (cy - L - 8) + ' L' + (cx + 6) + ' ' + (cy - L + 14) + ' Z', fill: o.tip || '#e5484d' }, ng);
     S('circle', { cx: cx, cy: cy, r: 13, fill: '#f4f7fb', stroke: '#c9d3de', 'stroke-width': 2 }, g);
     S('circle', { cx: cx, cy: cy, r: 4, fill: '#9aa5b1' }, g);
-    var api = { g: g, set: function (a) { a = Math.max(0, Math.min(180, a)); ng.setAttribute('transform', 'rotate(' + (a - 90).toFixed(2) + ' ' + cx + ' ' + cy + ')'); api.a = a; }, a: 90 };
+    var api = { g: g, set: function (a) { a = Math.max(0, Math.min(180, a)); ng.setAttribute('transform', 'rotate(' + (90 - a).toFixed(2) + ' ' + cx + ' ' + cy + ')'); api.a = a; }, a: 90 };
     api.set(o.angle != null ? o.angle : 90);
     return api;
   }
@@ -382,7 +384,7 @@
         var d = dialArt(svg, 270, 300, 200, [
           { lo: 0, hi: 40, step: 5, r: 200, unit: '°C', ux: -62, fs: 14 },
           { lo: 20, hi: 90, step: 10, r: 136, unit: '% RH', ux: 62, fs: 11, tick: 10, col: '#2c5f8a' }
-        ], { zones: [{ r: 208, a0: 0, a1: 67, col: '#4da3ff', w: 8 }, { r: 208, a0: 81, a1: 108, col: '#3ee07a', w: 8 }, { r: 208, a0: 135, a1: 180, col: '#ff4d4d', w: 8 }] });
+        ], { zones: [{ r: 208, a0: 113, a1: 180, col: '#4da3ff', w: 8 }, { r: 208, a0: 72, a1: 99, col: '#3ee07a', w: 8 }, { r: 208, a0: 0, a1: 45, col: '#ff4d4d', w: 8 }] });
         dhtIcon(svg, 560, 40, 1.2);
         var breath = S('g', { opacity: 0 }, svg);
         [[660, 80, 14], [686, 60, 18], [660, 40, 11]].forEach(function (c) { S('circle', { cx: c[0], cy: c[1], r: c[2], fill: '#cfe3f5', opacity: 0.35 }, breath); });
@@ -394,7 +396,7 @@
         st.v = 22; st.hum = false; st.target = 22;
         loopAnim(st, function () {
           st.v += (st.target - st.v) * 0.035;
-          var a = st.hum ? (st.v - 20) / 70 * 180 : st.v / 40 * 180;
+          var a = 180 - (st.hum ? (st.v - 20) / 70 * 180 : st.v / 40 * 180);
           d.set(a); big.textContent = Math.round(st.v) + (st.hum ? ' %' : ' °C');
         });
         var seq = [
@@ -614,6 +616,7 @@
     servoExplainer(b);
     UI.html(b, '<h2>Talking to a servo: the control pulse</h2><p>The UNO tells the servo where to go with a <b>pulse</b> on the orange wire, 50 times a second (once every 20 ms). The <b>length</b> of the HIGH pulse is the message: about <b>1 ms means 0°</b>, <b>1.5 ms means 90°</b>, and <b>2 ms means 180°</b>. Drag the slider to change the pulse.</p>');
     pulseLab(b, ctx);
+    UI.callout(b, '', 'Which way is 0°?', '<p>Look at the protractor in the lab: on the servos in our kits, the angle goes up <b>counterclockwise</b>. <b>0° points right</b>, 90° points straight up, and <b>180° points left</b>. (Some other servos turn the opposite way — there’s no rule — so it’s always worth checking with a sweep.) You’ll need this when you build the gauge: the cold, left-hand end of the dial will be 180°.</p>');
     UI.html(b, '<p class="small muted">Real hobby servos vary a little, so the Arduino Servo library actually stretches the range to about 0.5–2.4 ms to get the full swing out of an SG90. You never have to work out pulses yourself: <code>needle.write(90)</code> does it.</p>');
     UI.numq(b, ctx, { id: 'q-servo1', q: 'Using 1 ms = 0° and 2 ms = 180°, what angle does a <b>1.25 ms</b> pulse ask for?', answer: 45, tol: 1, unit: '°', explain: '1.25 ms is a quarter of the way from 1 to 2 ms, and a quarter of 180° is <b>45°</b>.', hint: 'How far is 1.25 between 1 and 2 (as a fraction)? Take that fraction of 180°.' });
     UI.mcq(b, ctx, { id: 'q-servo2', q: 'You push the needle with your finger while the servo is holding 90°. It pushes back. How does it know it’s been moved?', options: ['The motor feels it', 'The potentiometer on the output shaft reports the new angle, and the control board drives the motor back', 'The UNO sends a stronger pulse', 'It doesn’t know — it just guesses'], answer: 1, explain: 'That loop — measure, compare with the target, correct — is called <b>feedback</b>. It’s how almost every robot holds a position.', hints: { 2: 'The pulse stays exactly the same. Something <i>inside</i> the servo notices.' } });
@@ -688,7 +691,7 @@
         st.err = S('rect', { x: 520, y: 290, width: 0, height: 12, rx: 3, fill: CY }, svg);
         st.setAngle = function (a) {
           st.a = a;
-          var out = a - 90, g3 = -out * 38 / 11, g2 = -g3 * 34 / 12, m = -g2 * 40 / 12;
+          var out = 90 - a, g3 = -out * 38 / 11, g2 = -g3 * 34 / 12, m = -g2 * 40 / 12;
           st.go.setAttribute('transform', 'rotate(' + out + ')'); st.g3.setAttribute('transform', 'rotate(' + g3 + ')'); st.g3p.setAttribute('transform', 'rotate(' + g3 + ')');
           st.g2.setAttribute('transform', 'rotate(' + g2 + ')'); st.g2p.setAttribute('transform', 'rotate(' + g2 + ')'); st.gm.setAttribute('transform', 'rotate(' + m + ')');
           st.rotor.setAttribute('transform', 'rotate(' + m + ' 134 234)');
@@ -725,7 +728,7 @@
             var e = tg - a, v = Math.max(-140, Math.min(140, e * 5)); if (Math.abs(e) < 0.5) v = 0;
             if (t - pushT < 0.35) v = 0;
             a += v * dt; st.setAngle(a);
-            st.text('THE FEEDBACK LOOP', ['Target (from the pulse): ' + tg + '°', 'Actual (from the pot): ' + Math.round(a) + '°', 'Error: ' + Math.round(tg - a) + '°', 'Motor: ' + (v === 0 ? 'OFF — holding' : v > 0 ? 'ON →' : 'ON ←'), t - pushT < 1.4 ? 'A finger pushed the needle!' : '']);
+            st.text('THE FEEDBACK LOOP', ['Target (from the pulse): ' + tg + '°', 'Actual (from the pot): ' + Math.round(a) + '°', 'Error: ' + Math.round(tg - a) + '°', 'Motor: ' + (v === 0 ? 'OFF — holding' : v > 0 ? 'ON ←' : 'ON →'), t - pushT < 1.4 ? 'A finger pushed the needle!' : '']);
             st.lines[4].setAttribute('fill', SIG);
             st.lines[3].setAttribute('fill', v === 0 ? GO : CY);
             st.err.setAttribute('width', Math.min(260, Math.abs(tg - a) * 2));
@@ -774,7 +777,7 @@
       al.textContent = ang + '°'; target = ang;
     }
     var target = 90, raf;
-    (function tick() { shown += (target - shown) * 0.12; horn.setAttribute('transform', 'rotate(' + (shown - 90).toFixed(2) + ' ' + cx + ' ' + cy + ')'); raf = requestAnimationFrame(tick); })();
+    (function tick() { shown += (target - shown) * 0.12; horn.setAttribute('transform', 'rotate(' + (90 - shown).toFixed(2) + ' ' + cx + ' ' + cy + ')'); raf = requestAnimationFrame(tick); })();
     if (RL.onLeave) RL.onLeave(function () { cancelAnimationFrame(raf); });
     draw();
   }
@@ -823,7 +826,7 @@
           S('path', { d: 'M' + (cx - 6) + ' ' + cy + ' L' + (cx - 3) + ' ' + (cy - 90) + ' L' + (cx + 3) + ' ' + (cy - 90) + ' L' + (cx + 6) + ' ' + cy + ' Z', fill: '#f4f7fb' }, horn);
           S('circle', { cx: cx, cy: cy, r: 11, fill: '#f4f7fb' }, horn);
           var a = 90, tg = 90;
-          loopAnim(st, function (t) { tg = Math.floor(t / 1.8) % 2 ? 120 : 90; a += (tg - a) * 0.08; horn.setAttribute('transform', 'rotate(' + (a - 90) + ' ' + cx + ' ' + cy + ')'); });
+          loopAnim(st, function (t) { tg = Math.floor(t / 1.8) % 2 ? 120 : 90; a += (tg - a) * 0.08; horn.setAttribute('transform', 'rotate(' + (90 - a) + ' ' + cx + ' ' + cy + ')'); });
         } }
       ] });
   }
@@ -875,15 +878,17 @@
   steps.push({ id: 'needle', title: 'Code it: temperature → needle', time: '20 min', render: function (b, ctx) {
     UI.html(b, '<p class="lead">Now join the two halves. The DHT11 gives a temperature; the servo wants an angle from 0 to 180. You need a rule that turns one into the other. That’s exactly what <code>map()</code> does — you used it in Mission 02 to turn knob readings into brightness.</p>');
     mapLab(b, ctx);
-    UI.html(b, '<div class="callout"><span class="label">The key idea</span><p><code>map(value, fromLow, fromHigh, toLow, toHigh)</code> slides a number from one range onto another, keeping it the same fraction of the way along. 23 °C is 57.5% of the way from 0 to 40, so it becomes 57.5% of 180° = 103°. map() works in whole numbers, so 103.5 is cut down to <b>103</b>.</p></div>');
-    UI.mcq(b, ctx, { id: 'q-map1', q: 'Your dial runs from 10 °C (left) to 30 °C (right). Which line gives the right angle?', options: ['<code>map(temperature, 0, 180, 10, 30)</code>', '<code>map(temperature, 10, 30, 0, 180)</code>', '<code>map(temperature, 10, 30, 180, 0)</code>', '<code>map(10, 30, temperature, 0, 180)</code>'], answer: 1, explain: 'The first range is where the number comes <b>from</b> (temperatures), the second is where it goes <b>to</b> (angles).', hints: { 0: 'That turns angles into temperatures — backwards.', 2: 'That would put 10 °C on the right end. Close: that’s how you’d flip the dial.', 3: 'The value you’re converting always comes first.' } });
-    UI.numq(b, ctx, { id: 'q-map2', q: 'With <code>map(temperature, 0, 40, 0, 180)</code>, what angle does <b>45 °C</b> give?', answer: 202, tol: 1, unit: '°', explain: '45 × 180 ÷ 40 = 202.5 → <b>202</b>. map() doesn’t stop at the end of the range, so you’ll add <code>constrain()</code> to keep the angle between 0 and 180.', hint: 'map() just keeps going past the end of the range: 45 × 180 ÷ 40.' });
+    UI.html(b, '<div class="callout"><span class="label">The key idea</span><p><code>map(value, fromLow, fromHigh, toLow, toHigh)</code> slides a number from one range onto another, keeping it the same fraction of the way along.</p>' +
+      '<p><b>Why 180 first, then 0?</b> Our kit’s servos turn counterclockwise as the angle goes up, so the <b>left</b> (cold) end of the dial is <b>180°</b> and the <b>right</b> (hot) end is <b>0°</b>. The “to” range runs from the angle for LOW_TEMP to the angle for HIGH_TEMP: <code>map(temperature, LOW_TEMP, HIGH_TEMP, 180, 0)</code>. As the temperature goes up, the angle goes <i>down</i> and the needle swings clockwise, left to right.</p>' +
+      '<p>23 °C is 57.5% of the way from 0 to 40, so the needle goes 57.5% of the way from 180° towards 0°: 180 − 103.5 = 76.5. map() works in whole numbers (it cuts off the decimal part of its working), so it gives <b>77</b>.</p></div>');
+    UI.mcq(b, ctx, { id: 'q-map1b', q: 'Your dial runs from 10 °C (left) to 30 °C (right), with our kit’s servo (180° = left, 0° = right). Which line gives the right angle?', options: ['<code>map(temperature, 180, 0, 10, 30)</code>', '<code>map(temperature, 10, 30, 0, 180)</code>', '<code>map(temperature, 10, 30, 180, 0)</code>', '<code>map(10, 30, temperature, 180, 0)</code>'], answer: 2, explain: 'The first range is where the number comes <b>from</b> (temperatures, 10 to 30), the second is where it goes <b>to</b>: the angle for 10 °C (180°, left) then the angle for 30 °C (0°, right).', hints: { 0: 'That turns angles into temperatures — backwards.', 1: 'That would send 10 °C to 0°, which is the <b>right</b> end with our servos: the dial would read backwards.', 3: 'The value you’re converting always comes first.' } });
+    UI.numq(b, ctx, { id: 'q-map2b', q: 'With <code>map(temperature, 0, 40, 180, 0)</code>, what angle does <b>45 °C</b> give?', answer: -22, tol: 1, unit: '°', explain: '45 °C is past the right-hand end. 45 × 180 ÷ 40 = 202.5, which map() cuts to 202, and 180 − 202 = <b>−22°</b>. A servo can’t go to −22°! map() doesn’t stop at the end of the range, so you’ll add <code>constrain()</code> to keep the angle between 0 and 180.', hint: 'map() just keeps going past the end of the range. Work out how far past 180° it moves (45 × 180 ÷ 40), then take that away from 180. The answer can be negative.' });
     UI.html(b, '<h2>Your turn</h2><p>Finish the sketch so the needle follows the temperature. Replace <code>int angle = 90;</code> with a <code>map()</code>, then add a <code>constrain()</code> line. Check the Serial Monitor: it prints the temperature and the angle you calculated.</p>');
     RL.Code.walk(b, NEEDLE, [
       { lines: [7, 8], title: 'The ends of your dial', html: '<p>Two constants say which temperature sits at each end of the dial. Want a different range? Change these two numbers — nothing else.</p>' },
       { lines: [10, 11], title: 'Two objects', html: '<p>One DHT object and one Servo object. Each library gives you its own class.</p>' },
       { lines: [20, 21], title: 'Read, and bail out on NaN', html: '<p><code>if (isnan(temperature)) return;</code> is a one-line if: no braces needed when there’s only one instruction.</p><p class="small muted">No <code>delay(2000)</code> this time: if you ask a DHT11 too often, the Adafruit library hands back the last reading instead of bothering the sensor.</p>' },
-      { lines: [23, 26], title: 'Your turn', html: '<p>Turn <code>temperature</code> into <code>angle</code> with map(), using LOW_TEMP, HIGH_TEMP, 0 and 180. Then <code>angle = constrain(angle, 0, 180);</code> stops it going past either end.</p>' },
+      { lines: [23, 26], title: 'Your turn', html: '<p>Turn <code>temperature</code> into <code>angle</code> with map(), using LOW_TEMP, HIGH_TEMP, then <b>180 and 0</b> (the left end of the dial first, because our servos count counterclockwise). Then <code>angle = constrain(angle, 0, 180);</code> stops it going past either end.</p>' },
       { lines: [28, 33], title: 'Move and report', html: '<p>Move the needle, print the numbers, and wait a second before the next reading.</p>' }
     ], { name: 'temperature_needle', download: false });
     RL.Sim.create(b, devices({ title: 'Temperature → needle', code: NEEDLE, name: 'temperature_needle', key: 'sim-needle', ctx: ctx, runHint: 'drag the DHT11 temperature slider and watch the servo.', checkAfter: 1500,
@@ -896,15 +901,16 @@
           setTimeout(function () {
             var lines = sim.serialText().trim().split('\n'), last = lines[lines.length - 1] || '', m = /->\s*(-?\d+)/.exec(last), printed = m ? Number(m[1]) : null, r;
             if (res.a10 === 90 && res.a30 === 90) r = { pass: false, msg: 'The needle stays at 90°. Replace <code>int angle = 90;</code> with a map() that uses <code>temperature</code>.' };
-            else if (Math.abs(res.a10 - 45) > 2 || Math.abs(res.a30 - 135) > 2) r = { pass: false, msg: 'At 10 °C the needle went to ' + res.a10 + '° and at 30 °C to ' + res.a30 + '°. With a 0–40 °C dial they should be 45° and 135°. Check the order of the numbers in map().' };
-            else if (printed == null || printed > 180) r = { pass: false, msg: 'The needle follows the temperature. But at 48 °C your code printed ' + (printed == null ? 'no angle' : printed + '°') + ' — add <code>angle = constrain(angle, 0, 180);</code>.' };
-            else r = { pass: true, msg: '10 °C → 45°, 30 °C → 135°, and 48 °C is held at ' + printed + '°. Your needle maths works.' };
+            else if (Math.abs(res.a10 - 45) <= 2 && Math.abs(res.a30 - 135) <= 2) r = { pass: false, msg: 'At 10 °C the needle went to 45° and at 30 °C to 135°: that’s backwards for our servos (it would swing right to left). Use <b>180, 0</b> as the last two numbers in map().' };
+            else if (Math.abs(res.a10 - 135) > 2 || Math.abs(res.a30 - 45) > 2) r = { pass: false, msg: 'At 10 °C the needle went to ' + res.a10 + '° and at 30 °C to ' + res.a30 + '°. With a 0–40 °C dial they should be 135° and 45°. Check the order of the numbers in map().' };
+            else if (printed == null || printed < 0 || printed > 180) r = { pass: false, msg: 'The needle follows the temperature. But at 48 °C your code printed ' + (printed == null ? 'no angle' : printed + '°') + ' — add <code>angle = constrain(angle, 0, 180);</code>.' };
+            else r = { pass: true, msg: '10 °C → 135°, 30 °C → 45°, and 48 °C is held at ' + printed + '°. Your needle maths works.' };
             sim.setTemp(22); ctx.check('sim-needle-pass', r.pass ? 1 : 0); resolve(r);
           }, 4500);
         });
       } }));
     var hint = el('details', 'chal'); hint.innerHTML = '<summary>Stuck? Show the two lines</summary><p class="small">Replace the angle line, and add the constrain line under it:</p>';
-    RL.Code.block(hint, '  int angle = map(temperature, LOW_TEMP, HIGH_TEMP, 0, 180);\n  angle = constrain(angle, 0, 180);', { download: false });
+    RL.Code.block(hint, '  int angle = map(temperature, LOW_TEMP, HIGH_TEMP, 180, 0);\n  angle = constrain(angle, 0, 180);', { download: false });
     b.appendChild(hint);
     UI.html(b, '<p style="margin-top:20px">When it passes, upload it to your board. Warm the sensor with your fingers: the servo shaft should creep round as the temperature climbs.</p>');
   } });
@@ -917,8 +923,8 @@
     [['0–40 °C', 0, 40], ['15–30 °C (indoor)', 15, 30], ['0–50 °C (full DHT11 range)', 0, 50]].forEach(function (p) { var bt = el('button', p[1] === lo && p[2] === hi ? 'on' : '', esc(p[0])); bt.type = 'button'; bt.addEventListener('click', function () { sLo.set(p[1]); sHi.set(p[2]); pills.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === bt); }); }); pills.appendChild(bt); });
     box.appendChild(pills);
     var ctl = el('div', ''); box.appendChild(ctl);
-    var sLo = slider(ctl, 'Left end (0°)', 0, 25, 1, lo, function (v) { return v + ' °C'; }, function (v) { lo = v; build(); });
-    var sHi = slider(ctl, 'Right end (180°)', 20, 50, 1, hi, function (v) { return v + ' °C'; }, function (v) { hi = v; build(); });
+    var sLo = slider(ctl, 'Left end (180°)', 0, 25, 1, lo, function (v) { return v + ' °C'; }, function (v) { lo = v; build(); });
+    var sHi = slider(ctl, 'Right end (0°)', 20, 50, 1, hi, function (v) { return v + ' °C'; }, function (v) { hi = v; build(); });
     slider(ctl, 'Temperature', 0, 50, 0.5, temp, function (v) { return v + ' °C'; }, function (v) { temp = v; upd(); ctx.check('lab-map', 1); });
     var ro = el('div', 'readouts'); box.appendChild(ro);
     b.appendChild(box);
@@ -941,17 +947,18 @@
     }
     var st = {};
     function upd() {
-      var raw = Math.trunc((Math.trunc(temp) - lo) * 180 / (hi - lo)), ang = Math.max(0, Math.min(180, raw));
+      // Arduino's map(): (x − lo) × (0 − 180) ÷ (hi − lo) + 180, in whole numbers (the division drops the decimals)
+      var swing = Math.trunc((Math.trunc(temp) - lo) * 180 / (hi - lo)), raw = 180 - swing, ang = Math.max(0, Math.min(180, raw));
       target = ang;
-      st.f1.textContent = 'map(' + Math.trunc(temp) + ', ' + lo + ', ' + hi + ', 0, 180)';
-      st.f2.textContent = '(' + Math.trunc(temp) + ' − ' + lo + ') × 180 ÷ (' + hi + ' − ' + lo + ')';
-      st.f3.textContent = '= ' + ((Math.trunc(temp) - lo) * 180 / (hi - lo)).toFixed(1) + '  →  whole number';
+      st.f1.textContent = 'map(' + Math.trunc(temp) + ', ' + lo + ', ' + hi + ', 180, 0)';
+      st.f2.textContent = '180 − (' + Math.trunc(temp) + ' − ' + lo + ') × 180 ÷ (' + hi + ' − ' + lo + ')';
+      st.f3.textContent = '= 180 − ' + ((Math.trunc(temp) - lo) * 180 / (hi - lo)).toFixed(1) + '  →  whole number';
       st.f4.textContent = raw + '°';
       var out = raw < 0 || raw > 180;
       st.f5.textContent = out ? 'OFF THE DIAL: a servo only goes 0–180°.' : '';
       st.f6.textContent = out ? 'constrain(angle, 0, 180) gives ' + ang + '°' : '';
       st.f4.setAttribute('fill', out ? SIG : CY);
-      ro.innerHTML = '<div><span class="label">Temperature</span><b>' + temp + ' °C</b></div><div><span class="label">Angle</span><b>' + ang + '°</b></div><div><span class="label">Each degree C</span><span class="small">moves the needle ' + (180 / (hi - lo)).toFixed(1) + '°</span></div><div><span class="label">In code</span><span class="small"><code>map(temperature, ' + lo + ', ' + hi + ', 0, 180)</code></span></div>';
+      ro.innerHTML = '<div><span class="label">Temperature</span><b>' + temp + ' °C</b></div><div><span class="label">Angle</span><b>' + ang + '°</b></div><div><span class="label">Each degree C</span><span class="small">moves the needle ' + (180 / (hi - lo)).toFixed(1) + '°</span></div><div><span class="label">In code</span><span class="small"><code>map(temperature, ' + lo + ', ' + hi + ', 180, 0)</code></span></div>';
     }
     var target = 90, raf;
     (function tick() { cur += (target - cur) * 0.1; if (d) d.set(cur); raf = requestAnimationFrame(tick); })();
@@ -1096,8 +1103,8 @@
     UI.html(b, '<h2>Calibrate: let the servo draw the scale</h2><p>Servos aren’t perfect, and you’ll never fit the horn at exactly the right angle. So don’t draw the ticks with a protractor — run this calibration sketch and mark the dial wherever the needle <i>actually</i> points.</p>');
     RL.Sim.create(b, devices({ title: 'Calibration', code: CALIB, name: 'calibrate_dial', key: 'sim-calib', ctx: ctx, runHint: 'read the Serial Monitor and watch the needle.', checkAfter: 17800,
       check: function (log) {
-        var a = log.filter(function (e) { return e.dev === 'servo'; }).map(function (e) { return e.v; }), want = [90, 0, 45, 90, 135], ok = want.every(function (w) { return a.indexOf(w) >= 0; });
-        var r = ok ? { pass: true, msg: 'The needle visited 0°, 45°, 90° and 135°, one tick every 4 seconds. Mark each one on your dial (the last one, 180°, comes next).' } : { pass: false, msg: 'The needle didn’t visit every tick. Check the TICKS array and the map() line.' };
+        var a = log.filter(function (e) { return e.dev === 'servo'; }).map(function (e) { return e.v; }), want = [90, 180, 135, 90, 45], ok = want.every(function (w) { return a.indexOf(w) >= 0; });
+        var r = ok ? { pass: true, msg: 'The needle visited 180° (0 °C, far left), 135°, 90° and 45°, one tick every 4 seconds. Mark each one on your dial (the last one, 0° for 40 °C, comes next).' } : { pass: false, msg: 'The needle didn’t visit every tick. Check the TICKS array and the map() line.' };
         ctx.check('sim-calib-pass', r.pass ? 1 : 0); return r;
       } }));
     UI.html(b, '<ol><li>Upload the calibration sketch. The needle goes to <b>90°</b> for 5 seconds: push the horn on so the needle points <b>straight up</b>.</li><li>The Serial Monitor then says “Mark 0 C here”. Draw a tick under the needle tip and label it.</li><li>Repeat for 10, 20, 30 and 40. It loops, so you can check your ticks a second time.</li><li>Fill in the in-between ticks by eye, then add your humidity scale the same way (20, 37.5, 55, 72.5, 90% fall on the same five ticks).</li></ol>');
@@ -1147,7 +1154,7 @@
         base(svg);
         S('rect', { x: 160, y: 40, width: 480, height: 320, rx: 4, fill: CB, stroke: CBD, 'stroke-width': 2 }, svg);
         S('path', { d: arcPath(400, 280, 200, 0, 180), fill: 'none', stroke: CINK, 'stroke-width': 2 }, svg);
-        var d = dialArt(svg, 400, 280, 200, [], { card: false, len: 180, angle: 90 }), ticks = [0, 45, 90, 135, 180], lab = ['0', '10', '20', '30', '40'];
+        var d = dialArt(svg, 400, 280, 200, [], { card: false, len: 180, angle: 90 }), ticks = [180, 135, 90, 45, 0], lab = ['0', '10', '20', '30', '40'];
         var tickG = S('g', {}, svg), i = 0;
         loopAnim(st, function () { d.set(d.a + ((st.tg == null ? 90 : st.tg) - d.a) * 0.08); });
         (function next() {
@@ -1162,7 +1169,7 @@
         var d = dialArt(svg, 400, 300, 210, [
           { lo: 0, hi: 40, step: 10, r: 210, unit: '°C', ux: -66, fs: 15 },
           { lo: 20, hi: 90, step: 17.5, r: 140, unit: '% RH', ux: 66, fs: 10, tick: 10, col: '#2c5f8a', every: 1 }
-        ], { zones: [{ r: 218, a0: 0, a1: 67, col: '#4da3ff', w: 8 }, { r: 218, a0: 81, a1: 108, col: '#3ee07a', w: 8 }, { r: 218, a0: 135, a1: 180, col: '#ff4d4d', w: 8 }] });
+        ], { zones: [{ r: 218, a0: 113, a1: 180, col: '#4da3ff', w: 8 }, { r: 218, a0: 72, a1: 99, col: '#3ee07a', w: 8 }, { r: 218, a0: 0, a1: 45, col: '#ff4d4d', w: 8 }] });
         d.g.querySelectorAll('text').forEach(function (t) { if (/\./.test(t.textContent)) t.textContent = String(Math.round(Number(t.textContent))); });
         dhtIcon(svg, 680, 110, 1);
         T(svg, 708, 210, 'sensor on', { 'text-anchor': 'middle', fill: CY, 'font-size': 11 }); T(svg, 708, 226, 'the outside', { 'text-anchor': 'middle', fill: CY, 'font-size': 11 });
@@ -1176,21 +1183,21 @@
   steps.push({ id: 'gauge', title: 'Code it: the finished gauge', time: '15 min', render: function (b, ctx) {
     UI.html(b, '<p class="lead">The final sketch adds two things: a <b>mode button</b> that flips between temperature and humidity, and a needle that <b>eases</b> into place one degree at a time instead of jumping.</p>');
     RL.Code.walk(b, GAUGE_CODE, [
-      { lines: [13, 17], title: 'Two scales', html: '<p>Each scale on your dial gets its own pair of constants. If your calibrated dial uses different numbers, change them here.</p>' },
-      { lines: [22, 24], title: 'Variables that remember', html: '<p><code>bool</code> holds just <code>true</code> or <code>false</code> — perfect for a two-way mode. <code>needleAngle</code> remembers where the needle is, so it can move a little each time loop() runs.</p>' },
-      { lines: [31, 32], title: 'INPUT_PULLUP', html: '<p>Instead of an external pull-down resistor (Mission 01), the UNO switches on a resistor <i>inside</i> the chip that pulls pin 4 up to 5 V. So the button reads <b>HIGH when it’s not pressed</b> and <b>LOW when pressed</b>, because pressing connects the pin to GND.</p>' },
-      { lines: [37, 44], title: 'Flip the mode', html: '<p><code>!</code> means “not”: <code>!showHumidity</code> turns true into false and false into true. The L LED shows the mode.</p><p>The empty <code>while</code> loop waits until the button is released, so holding the button flips the mode only once. The short delay ignores the button’s contact bounce.</p>' },
-      { lines: [47, 50], title: 'Read the right sensor', html: '<p>A one-line <code>if</code> / <code>else</code>: in humidity mode read humidity, otherwise read temperature. Then skip a broken reading.</p>' },
-      { lines: [52, 55], title: 'One reading, two scales', html: '<p>Map the reading onto the matching scale. Both scales share the same 0–180° swing, and constrain() keeps the target on the dial.</p>' },
-      { lines: [57, 63], title: 'Print only changes', html: '<p>loop() runs about 60 times a second, so printing every time would flood the Serial Monitor. This prints only when the target changes. <code>condition ? a : b</code> picks <code>a</code> if the condition is true, otherwise <code>b</code>.</p>' },
-      { lines: [66, 69], title: 'Ease the needle', html: '<p>Move one degree toward the target, wait 15 ms, repeat. A big change glides across the dial in a second or two, and a reading that flickers between two values only nudges the needle by a degree. That’s smoothing for the <i>movement</i>, as averaging was for the <i>reading</i>.</p>' }
+      { lines: [13, 18], title: 'Two scales', html: '<p>Each scale on your dial gets its own pair of constants. If your calibrated dial uses different numbers, change them here. The comment is a reminder of which way our servos count: 180° is the left end, 0° the right.</p>' },
+      { lines: [23, 25], title: 'Variables that remember', html: '<p><code>bool</code> holds just <code>true</code> or <code>false</code> — perfect for a two-way mode. <code>needleAngle</code> remembers where the needle is, so it can move a little each time loop() runs.</p>' },
+      { lines: [32, 33], title: 'INPUT_PULLUP', html: '<p>Instead of an external pull-down resistor (Mission 01), the UNO switches on a resistor <i>inside</i> the chip that pulls pin 4 up to 5 V. So the button reads <b>HIGH when it’s not pressed</b> and <b>LOW when pressed</b>, because pressing connects the pin to GND.</p>' },
+      { lines: [38, 45], title: 'Flip the mode', html: '<p><code>!</code> means “not”: <code>!showHumidity</code> turns true into false and false into true. The L LED shows the mode.</p><p>The empty <code>while</code> loop waits until the button is released, so holding the button flips the mode only once. The short delay ignores the button’s contact bounce.</p>' },
+      { lines: [48, 51], title: 'Read the right sensor', html: '<p>A one-line <code>if</code> / <code>else</code>: in humidity mode read humidity, otherwise read temperature. Then skip a broken reading.</p>' },
+      { lines: [53, 56], title: 'One reading, two scales', html: '<p>Map the reading onto the matching scale. Both scales share the same swing, from 180° (left end) to 0° (right end), and constrain() keeps the target on the dial.</p>' },
+      { lines: [58, 64], title: 'Print only changes', html: '<p>loop() runs about 60 times a second, so printing every time would flood the Serial Monitor. This prints only when the target changes. <code>condition ? a : b</code> picks <code>a</code> if the condition is true, otherwise <code>b</code>.</p>' },
+      { lines: [67, 70], title: 'Ease the needle', html: '<p>Move one degree toward the target, wait 15 ms, repeat. A big change glides across the dial in a second or two, and a reading that flickers between two values only nudges the needle by a degree. That’s smoothing for the <i>movement</i>, as averaging was for the <i>reading</i>.</p>' }
     ], { name: 'weather_gauge' });
     UI.html(b, '<h2>Test it on the Virtual UNO</h2><p>Run it, drag the sliders, and click the <b>button on the breadboard</b> to switch modes (the L LED on the UNO lights in humidity mode). <b>Check my code</b> tests both modes.</p>');
     RL.Sim.create(b, devices({ title: 'Weather gauge', code: GAUGE_CODE, name: 'weather_gauge', key: 'sim-gauge', ctx: ctx, runHint: 'click the mode button on the breadboard, and move the DHT11 sliders.', checkAfter: 2200,
       check: function (log, sim) {
         return new Promise(function (resolve) {
           var res = {};
-          sim.setTemp(20); sim.setHum(76);
+          sim.setTemp(20); sim.setHum(76);   // 76% humidity -> 36 degrees (180 - 56/70 x 180)
           setTimeout(function () { res.temp = servoAngle(sim); res.led0 = sim.pin(13).v; sim.press(4, true); }, 2200);
           setTimeout(function () { sim.press(4, false); }, 2500);
           setTimeout(function () { res.hum = servoAngle(sim); res.led1 = sim.pin(13).v; sim.press(4, true); }, 4500);
@@ -1198,17 +1205,17 @@
           setTimeout(function () {
             res.back = servoAngle(sim); var r;
             if (Math.abs(res.temp - 90) > 3) r = { pass: false, msg: 'In temperature mode at 20 °C the needle should point at 90° (half way on a 0–40 °C dial), but it’s at ' + res.temp + '°.' };
-            else if (Math.abs(res.hum - 144) > 3) r = { pass: false, msg: 'After pressing the button, 76% humidity should put the needle at 144°, but it’s at ' + res.hum + '°. Does the button flip <code>showHumidity</code>?' };
+            else if (Math.abs(res.hum - 36) > 3) r = { pass: false, msg: 'After pressing the button, 76% humidity should put the needle at 36° (well over to the right), but it’s at ' + res.hum + '°. Does the button flip <code>showHumidity</code>?' };
             else if (!res.led1 || res.led0) r = { pass: false, msg: 'The needle works in both modes, but the L LED should be on only in humidity mode.' };
             else if (Math.abs(res.back - 90) > 3) r = { pass: false, msg: 'A second press should go back to temperature mode (90°), but the needle is at ' + res.back + '°.' };
-            else r = { pass: true, msg: 'Temperature mode → 90°, press → humidity mode → 144° with the L LED on, press → back to 90°. Your gauge is finished.' };
+            else r = { pass: true, msg: 'Temperature mode → 90°, press → humidity mode → 36° with the L LED on, press → back to 90°. Your gauge is finished.' };
             sim.setTemp(22); sim.setHum(45);
             ctx.check('sim-gauge-pass', r.pass ? 1 : 0); resolve(r);
           }, 7000);
         });
       } }));
     UI.html(b, '<h2>Upload to your gauge</h2><p>Upload, and test it in its cardboard home. If something’s off, check here before you change the code.</p>');
-    UI.html(b, '<div class="tests"><div class="trow"><div><b>The needle points the wrong way (hot on the cold side)</b><br><span class="small muted">Your servo is mounted the other way round. Swap the 0 and 180 in both map() lines: <code>map(reading, LOW_TEMP, HIGH_TEMP, 180, 0)</code>.</span></div></div><div class="trow"><div><b>The needle is a few degrees off everywhere</b><br><span class="small muted">The horn is one notch out. Run the calibration sketch and refit the horn at 90°.</span></div></div><div class="trow"><div><b>The mode flips by itself, or never flips</b><br><span class="small muted">Check <code>INPUT_PULLUP</code>, and that the button straddles the gap with pin 4 on row 13 and GND on row 11.</span></div></div><div class="trow"><div><b>The needle jitters back and forth</b><br><span class="small muted">The reading is flickering between two values. That’s normal for a DHT11 sitting right on the edge of a degree — the easing keeps it small.</span></div></div><div class="trow"><div><b>The UNO restarts when the needle moves</b><br><span class="small muted">The servo is pulling too much current through USB. Make sure the needle isn’t rubbing on the dial, and use a powered USB port.</span></div></div></div>');
+    UI.html(b, '<div class="tests"><div class="trow"><div><b>The needle points the wrong way (hot on the cold side)</b><br><span class="small muted">Your servo turns the other way from ours (a different model), or it’s mounted facing the other way. Swap the 180 and 0 in both map() lines: <code>map(reading, LOW_TEMP, HIGH_TEMP, 0, 180)</code>, and in the calibration sketch.</span></div></div><div class="trow"><div><b>The needle is a few degrees off everywhere</b><br><span class="small muted">The horn is one notch out. Run the calibration sketch and refit the horn at 90°.</span></div></div><div class="trow"><div><b>The mode flips by itself, or never flips</b><br><span class="small muted">Check <code>INPUT_PULLUP</code>, and that the button straddles the gap with pin 4 on row 13 and GND on row 11.</span></div></div><div class="trow"><div><b>The needle jitters back and forth</b><br><span class="small muted">The reading is flickering between two values. That’s normal for a DHT11 sitting right on the edge of a degree — the easing keeps it small.</span></div></div><div class="trow"><div><b>The UNO restarts when the needle moves</b><br><span class="small muted">The servo is pulling too much current through USB. Make sure the needle isn’t rubbing on the dial, and use a powered USB port.</span></div></div></div>');
   } });
 
   /* ---------- 10 test & improve ---------- */

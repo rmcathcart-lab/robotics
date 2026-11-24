@@ -175,7 +175,7 @@
       c.s('circle', { cx: hx, cy: hy, r: 9, fill: '#f4f7fb', stroke: '#c9d3de' }, g._horn);
       c.s('circle', { cx: hx, cy: hy, r: 3, fill: '#9aa5b1' }, g);
       g._angleText = lbl(c.txt, g, x + 32, y + 146, '90°', { 'text-anchor': 'middle', 'font-size': 10, fill: '#22d3ee' });
-      g._setAngle = function (a) { a = Math.max(0, Math.min(180, a)); g._horn.setAttribute('transform', 'rotate(' + (a - 90) + ' ' + hx + ' ' + hy + ')'); g._angleText.textContent = Math.round(a) + '°'; };
+      g._setAngle = function (a) { a = Math.max(0, Math.min(180, a)); g._horn.setAttribute('transform', 'rotate(' + (90 - a) + ' ' + hx + ' ' + hy + ')');   /* like our kit's servos: 0° points right, 180° left */ g._angleText.textContent = Math.round(a) + '°'; };
       g._setAngle(p.angle != null ? p.angle : 90);
     }
   });
