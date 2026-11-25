@@ -148,8 +148,8 @@
   });
 
   /* ---------- power supply module on the top of the breadboard (ELEGOO Power MB V2).
-   * Beside each side's rail pins is a 3-pin header: 5V · VCC · 3.3. A jumper cap across 5V + VCC gives that side 5 V,
-   * across VCC + 3.3 gives 3.3 V, and with the cap pulled off (parked on one pin) that side gets no power.
+   * Beside each side's rail pins is a 4-pin header: 5V · VCC · VCC · 3.3 (the two middle pins are the rail). A jumper cap on
+   * the two pins at the 5V end gives that side 5 V, on the two middle pins that side is OFF, at the 3.3 end it gets 3.3 V.
    * p.left / p.right = '5V' (default), '3.3' or 'OFF'. ---------- */
   Bd.part('psu', {
     under: false,
@@ -158,17 +158,17 @@
       c.s('rect', { x: x, y: y, width: W + 12, height: 62, rx: 4, fill: '#16191e', stroke: '#3b4350' }, g);
       c.s('rect', { x: x + W / 2 - 26, y: y - 16, width: 52, height: 40, rx: 3, fill: '#0b0d10', stroke: '#3b4350' }, g);
       c.s('rect', { x: x + W / 2 + 34, y: y + 8, width: 26, height: 20, rx: 2, fill: '#c0c6cc' }, g);
-      var sides = [[x + 54, p.left || '5V'], [x + W - 86, p.right || '5V']];
+      var sides = [[x + 48, p.left || '5V'], [x + W - 92, p.right || '5V']];
       sides.forEach(function (sd) {
-        var hx = sd[0], set = sd[1], on = set !== 'OFF', col = on ? '#e5e7eb' : '#6b7280';
-        ['5V', 'VCC', '3.3'].forEach(function (n, k) {
-          c.s('rect', { x: hx + k * 12, y: y + 19, width: 5, height: 5, fill: '#c9b458' }, g);
-          lbl(c.txt, g, hx + 2.5 + k * 12, y + 13, n, { 'text-anchor': 'middle', 'font-size': 5.5, fill: '#8ea6bb' });
-        });
-        // the jumper cap: across 5V+VCC, across VCC+3.3, or parked on the lone 5V pin (OFF)
-        var cx0 = set === '3.3' ? hx + 9 : set === 'OFF' ? hx - 4 : hx - 3, cw = set === 'OFF' ? 13 : 20;
-        c.s('rect', { x: cx0, y: y + 15, width: cw, height: 13, rx: 2, fill: col, stroke: '#9ca3af', opacity: on ? 1 : 0.85 }, g);
-        lbl(c.txt, g, hx + 14, y + 42, on ? set : 'OFF (cap pulled)', { 'text-anchor': 'middle', 'font-size': 8, fill: on ? '#facc15' : '#9ca3af' });
+        var hx = sd[0], set = sd[1], on = set !== 'OFF';
+        for (var k = 0; k < 4; k++) c.s('rect', { x: hx + k * 10, y: y + 19, width: 5, height: 5, fill: '#c9b458' }, g);
+        lbl(c.txt, g, hx + 2.5, y + 13, '5V', { 'text-anchor': 'middle', 'font-size': 5.5, fill: '#8ea6bb' });
+        lbl(c.txt, g, hx + 17.5, y + 13, 'VCC', { 'text-anchor': 'middle', 'font-size': 5.5, fill: '#8ea6bb' });
+        lbl(c.txt, g, hx + 32.5, y + 13, '3.3', { 'text-anchor': 'middle', 'font-size': 5.5, fill: '#8ea6bb' });
+        // the jumper cap covers two neighbouring pins: 5V end, middle (off) or 3.3 end
+        var first = set === '3.3' ? 2 : set === 'OFF' ? 1 : 0;
+        c.s('rect', { x: hx + first * 10 - 3, y: y + 15, width: 21, height: 13, rx: 2, fill: on ? '#e5e7eb' : '#9ca3af', stroke: '#6b7280' }, g);
+        lbl(c.txt, g, hx + 17.5, y + 42, on ? set : 'OFF (cap in the middle)', { 'text-anchor': 'middle', 'font-size': 8, fill: on ? '#facc15' : '#9ca3af' });
       });
       g._led = c.s('circle', { cx: x + W / 2 - 40, cy: y + 30, r: 3, fill: '#4ade80' }, g);
       lbl(c.txt, g, x + W / 2, y + 55, 'POWER MODULE · 9V IN · LEFT ' + (p.left || '5V') + ' · RIGHT ' + (p.right || '5V'), { 'text-anchor': 'middle', fill: '#8ea6bb', 'font-size': 7.5 });
