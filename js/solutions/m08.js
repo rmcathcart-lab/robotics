@@ -8,7 +8,7 @@
 const int ENABLE = 5;      // L293D pin 1: speed (PWM)
 const int IN1 = 3;         // L293D pin 2: direction
 const int IN2 = 4;         // L293D pin 7: direction
-const int RELAY = 7;       // relay module S: the fan's power
+const int RELAY = 7;       // L293D IN3 -> relay coil: the fan's power
 const int KNOB = A0;       // potentiometer middle leg
 const int DHT_PIN = 2;     // DHT11 S`;
   var CONSTS = `const float ON_TEMP = 26.0;
@@ -247,7 +247,7 @@ const int KICK_MS = 150;     // NEW: how long the full-power kick lasts`,
 const int ENABLE = 5;      // L293D pin 1: speed (PWM)
 const int IN1 = 3;         // L293D pin 2: direction
 const int IN2 = 4;         // L293D pin 7: direction
-const int RELAY = 7;       // relay module S: the fan's power
+const int RELAY = 7;       // L293D IN3 -> relay coil: the fan's power
 
 int testSpeeds[] = { 100, 150, 200, 255 };   // the speeds to test (add more if you like)
 const int NUM_TESTS = 4;                     // how many speeds are in the list

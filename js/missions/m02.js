@@ -81,10 +81,10 @@
     r_ldr: { type: 'res', from: 'e14', to: 'e18', ohms: 10000, name: '10 kΩ resistor (e14–e18)' },
     w_lg: { type: 'wire', from: 'a18', to: 'L-18', color: 'black', name: 'Black jumper: a18 → − rail' },
     w_a1: { type: 'wire', from: 'A1', to: 'a14', color: 'yellow', via: [[18, 390], [20, 470], [64, 486], [300, 488], [336, 462], [340, 300]], name: 'Yellow wire: A1 → a14' },
-    pot: { type: 'pot', at: 'e21', side: 'right', name: '10 kΩ potentiometer (e21, e23, e25)' },
-    w_p5: { type: 'wire', from: 'L+21', to: 'a21', color: 'red', name: 'Red jumper: + rail → a21' },
-    w_pg: { type: 'wire', from: 'a25', to: 'L-25', color: 'black', name: 'Black jumper: a25 → − rail' },
-    w_a0: { type: 'wire', from: 'A0', to: 'a23', color: 'purple', via: [[6, 372], [8, 484], [52, 502], [300, 503], [354, 484], [360, 436]], name: 'Purple wire: A0 → a23' }
+    pot: { type: 'pot', at: 'f21', wiper: 'd22', name: '10 kΩ potentiometer (outer legs f21 and f23, middle leg across the gap in row 22)' },
+    w_p5: { type: 'wire', from: 'R+21', to: 'j21', color: 'red', name: 'Red jumper: right + rail → j21' },
+    w_pg: { type: 'wire', from: 'j23', to: 'R-23', color: 'black', name: 'Black jumper: j23 → right − rail' },
+    w_a0: { type: 'wire', from: 'A0', to: 'a22', color: 'purple', via: [[6, 372], [8, 484], [52, 502], [300, 503], [354, 484], [360, 422]], name: 'Purple wire: A0 → a22' }
   };
   var ALL = merge(POWER, LAMP, SENSE);
   var LAMP_IDS = Object.keys(merge(POWER, LAMP)), ALL_IDS = Object.keys(ALL);
@@ -845,9 +845,9 @@
       { title: 'Light sensor: the top half', add: ['w_l5', 'ldr'], html: '<p>A <b>red</b> jumper from the <b>+ rail to a11</b>. Then push the photoresistor’s legs into <b>c11</b> and <b>c14</b>. It works either way around.</p>' },
       { title: 'Light sensor: the bottom half', add: ['r_ldr', 'w_lg'], html: '<p>A <b>10 kΩ</b> resistor (' + RL.resistorName(10000) + ') from <b>e14 to e18</b>, and a <b>black</b> jumper from <b>a18 to the − rail</b>.</p><p>Row 14 is now the middle of the divider: photoresistor above (to 5V), 10 kΩ below (to GND).</p>' },
       { title: 'Row 14 → A1', add: ['w_a1'], html: '<p>A wire from <b>A1</b> (on the far side of the UNO) to <b>a14</b>. Run it around the bottom of the board, away from the other wires.</p>' },
-      { title: 'The knob', add: ['pot', 'w_p5', 'w_pg'], html: '<p>Push the potentiometer’s three legs into <b>e21, e23 and e25</b>, with the knob over the centre gap. Add a <b>red</b> jumper from the <b>+ rail to a21</b> and a <b>black</b> jumper from <b>a25 to the − rail</b>. The two outer legs now sit at 5V and GND.</p>' },
-      { title: 'Wiper → A0', add: ['w_a0'], html: '<p>A wire from <b>A0</b> to <b>a23</b>, the middle leg (the wiper). Route it around the bottom of the UNO too.</p>' },
-      { title: 'Check your build', view: 'all', html: '<p>Two dividers, the same pattern: <b>red jumper on top, black jumper on the bottom, analog wire in the middle</b>. Light sensor: rows 11 / 14 / 18 → A1. Knob: rows 21 / 23 / 25 → A0.</p>' }
+      { title: 'The knob', add: ['pot', 'w_p5', 'w_pg'], html: '<p>Your potentiometer has <b>two legs side by side</b> (the outer legs, the two ends of the track) and <b>one leg on its own</b> on the other side (the middle leg, the wiper). Push the two side-by-side legs into <b>f21 and f23</b>, so the lone leg reaches back across the centre gap into <b>row 22</b> (e22 or d22, whichever it reaches).</p><p>Add a <b>red</b> jumper from the <b>right + rail to j21</b> and a <b>black</b> jumper from <b>j23 to the right − rail</b>. The two outer legs now sit at 5V and GND. (The bridges at the bottom of the board power the right rails too.)</p>' },
+      { title: 'Wiper → A0', add: ['w_a0'], html: '<p>A wire from <b>A0</b> to <b>a22</b>: row 22 is the middle leg’s row (the wiper). Route it around the bottom of the UNO too.</p>' },
+      { title: 'Check your build', view: 'all', html: '<p>Two dividers, the same pattern: <b>red jumper on top, black jumper on the bottom, analog wire in the middle</b>. Light sensor: rows 11 / 14 / 18 → A1. Knob: rows 21 / 22 / 23 → A0.</p>' }
     ] });
     UI.html(b, '<h2>Talking to your laptop: the Serial Monitor</h2><p>How do you know what numbers your sensors are giving? You ask the UNO to <b>send them back</b> through the USB cable.</p>');
     serialXp(b);

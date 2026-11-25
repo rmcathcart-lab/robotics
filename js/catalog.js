@@ -123,7 +123,7 @@
       id: 'm08', unit: 2, num: '08', title: 'Smart fan', days: 2, ready: true, level: 4,
       tagline: 'Drive a DC motor with an H-bridge, control speed and direction, and switch it on automatically when it gets warm.',
       discover: ['DC motors', 'H-bridges (L293D)', 'PWM speed control', 'Relays', 'Why motors need their own power', 'Thermostat logic'],
-      parts: ['DC motor + fan blade', 'L293D chip', 'Relay module', 'Power supply module + 9V battery', 'DHT11 sensor module', 'Potentiometer', 'Jumper wires'], extras: ['Cardboard (fan stand)', 'Hot glue', 'Popsicle sticks'],
+      parts: ['DC motor + fan blade', 'L293D chip', '5V relay (SRD-05VDC-SL-C)', 'Power supply module + 9V battery', 'DHT11 sensor module', 'Potentiometer', 'Jumper wires', 'Female-to-male wires ×4 (for the relay)'], extras: ['Cardboard (fan stand)', 'Hot glue', 'Popsicle sticks'],
       criteria: [
         { id: 'build', name: 'Circuit', desc: 'Motor powered through the L293D from the power module, with a shared ground; relay and sensor wired correctly.' },
         { id: 'code', name: 'Code', desc: 'Controls speed and direction, and switches on automatically above a set temperature without flickering on and off.' },

@@ -1,7 +1,7 @@
 /* More parts for RL.Board: every component in the ELEGOO Super Starter Kit.
  * Breadboard parts give hole names (like the LED): rgb, pot, ldr, therm, tilt, buzzer, chip.
  * Modules sit beside the breadboard (at: [x, y], use a wider vb such as RL.Board.WIDE) with their pins on the left edge,
- * so wires can be drawn to 'partId.PIN' (e.g. 'dht.S'): servo, dht, sonar, joystick, ir, relay, stepper, dcmotor, seg1,
+ * so wires can be drawn to 'partId.PIN' (e.g. 'dht.S'): servo, dht, sonar, joystick, ir, relay (a bare relay), stepper, dcmotor, seg1,
  * seg4. The LCD plugs into the breadboard (at: 'j3' = its pin 1) and shows its screen beside the board. psu = the
  * power-supply module on the top of the breadboard.
  * Each part exposes setters the Virtual UNO uses (g._setRGB, g._setValue, g._sound, g._setAngle, g._setText …). */
@@ -48,17 +48,21 @@
     }
   });
 
-  /* ---------- potentiometer: 3 legs 2 rows apart in one column (left, wiper, right) ---------- */
+  /* ---------- potentiometer (the kit's 10 kΩ knob): two outer legs side by side, the wiper on its own on the other side.
+   * at = one outer leg (e.g. 'e21'); the other outer leg is two rows down ('e23'); wiper = the hole the lone middle leg
+   * reaches, in the row between them, usually across the centre gap (e.g. 'g22'). ---------- */
   Bd.part('pot', {
-    pins: function (p) { var c = colOf(p.at), r = rowOf(p.at); return { L: hole(c + r), W: hole(c + (r + 2)), R: hole(c + (r + 4)) }; },
+    pins: function (p) { var c = colOf(p.at), r = rowOf(p.at); return { L: hole(c + r), R: hole(c + (r + 2)), W: hole(p.wiper || ('abcdefghij'['abcdefghij'.indexOf(c) + 3] + (r + 1))) }; },
     draw: function (g, p, c) {
-      var pins = this.pins(p), dx = p.side === 'right' ? 34 : -34, cx = pins.W[0] + dx, cy = pins.W[1];
-      [pins.L, pins.W, pins.R].forEach(function (q) { lead(c, g, q, [cx - dx * 0.5, q[1]]); });
-      legs(c, g, [pins.L, pins.W, pins.R]);
-      c.s('rect', { x: cx - 24, y: cy - 30, width: 48, height: 60, rx: 4, fill: '#1e5aa8', stroke: '#2e74c3' }, g);
-      c.s('circle', { cx: cx, cy: cy, r: 18, fill: '#2b3038', stroke: '#6b7280', 'stroke-width': 1.5 }, g);
-      g._knob = c.s('line', { x1: cx, y1: cy, x2: cx, y2: cy - 16, stroke: '#e6f1fa', 'stroke-width': 3, 'stroke-linecap': 'round' }, g);
-      lbl(c.txt, g, cx, cy + 40, p.label || '10 kΩ', { 'text-anchor': 'middle', fill: '#1c2733' });
+      var pins = this.pins(p), cx = (pins.L[0] + pins.W[0]) / 2, cy = pins.W[1], rr = Math.max(17, Math.abs(pins.W[0] - pins.L[0]) / 2 + 9);
+      c.s('circle', { cx: cx, cy: cy, r: rr, fill: '#202329', stroke: '#4b5563', 'stroke-width': 1.5, opacity: 0.6 }, g);
+      // the three legs drawn on top of the (see-through) body, so you can see which holes they go in
+      [pins.L, pins.R, pins.W].forEach(function (q) { c.s('rect', { x: q[0] - 4, y: q[1] - 1.8, width: 8, height: 3.6, rx: 1, fill: '#d6dde4', stroke: '#11151a', 'stroke-width': 0.6 }, g); });
+      var kr = Math.min(rr - 6, 16);
+      c.s('circle', { cx: cx, cy: cy, r: kr, fill: '#2b3038', stroke: '#6b7280', 'stroke-width': 1 }, g);
+      for (var k = 0; k < 16; k++) { var a = k * Math.PI / 8; c.s('line', { x1: cx + kr * Math.cos(a), y1: cy + kr * Math.sin(a), x2: cx + (kr - 3) * Math.cos(a), y2: cy + (kr - 3) * Math.sin(a), stroke: '#11151a', 'stroke-width': 1.2 }, g); }
+      g._knob = c.s('line', { x1: cx, y1: cy, x2: cx, y2: cy - (kr - 3), stroke: '#e6f1fa', 'stroke-width': 3, 'stroke-linecap': 'round' }, g);
+      if (p.label !== ' ') lbl(c.txt, g, cx, cy + rr + 11, p.label || '10 kΩ', { 'text-anchor': 'middle', fill: '#1c2733' });
       g._setValue = function (v) { var a = -135 + 270 * (v / 1023); g._knob.setAttribute('transform', 'rotate(' + a + ' ' + cx + ' ' + cy + ')'); };
       g._setValue(p.value != null ? p.value : 512);
     }
@@ -143,17 +147,31 @@
     }
   });
 
-  /* ---------- power supply module on the top of the breadboard ---------- */
+  /* ---------- power supply module on the top of the breadboard (ELEGOO Power MB V2).
+   * Beside each side's rail pins is a 3-pin header: 5V · VCC · 3.3. A jumper cap across 5V + VCC gives that side 5 V,
+   * across VCC + 3.3 gives 3.3 V, and with the cap pulled off (parked on one pin) that side gets no power.
+   * p.left / p.right = '5V' (default), '3.3' or 'OFF'. ---------- */
   Bd.part('psu', {
     under: false,
     draw: function (g, p, c) {
-      var x = BB[0] - 6, y = BB[1] - 30;
-      c.s('rect', { x: x, y: y, width: BB[2] + 12, height: 62, rx: 4, fill: '#16191e', stroke: '#3b4350' }, g);
-      c.s('rect', { x: x + BB[2] / 2 - 26, y: y - 16, width: 52, height: 40, rx: 3, fill: '#0b0d10', stroke: '#3b4350' }, g);
-      c.s('rect', { x: x + BB[2] / 2 + 34, y: y + 8, width: 26, height: 20, rx: 2, fill: '#c0c6cc' }, g);
-      [[x + 18, '5V'], [x + BB[2] - 30, '5V']].forEach(function (j) { c.s('rect', { x: j[0], y: y + 16, width: 22, height: 14, rx: 2, fill: '#facc15' }, g); lbl(c.txt, g, j[0] + 11, y + 44, j[1], { 'text-anchor': 'middle', fill: '#facc15', 'font-size': 9 }); });
-      g._led = c.s('circle', { cx: x + 80, cy: y + 22, r: 3.5, fill: '#4ade80' }, g);
-      lbl(c.txt, g, x + BB[2] / 2, y + 54, 'POWER SUPPLY MODULE · 9V IN', { 'text-anchor': 'middle', fill: '#8ea6bb' });
+      var x = BB[0] - 6, y = BB[1] - 30, W = BB[2];
+      c.s('rect', { x: x, y: y, width: W + 12, height: 62, rx: 4, fill: '#16191e', stroke: '#3b4350' }, g);
+      c.s('rect', { x: x + W / 2 - 26, y: y - 16, width: 52, height: 40, rx: 3, fill: '#0b0d10', stroke: '#3b4350' }, g);
+      c.s('rect', { x: x + W / 2 + 34, y: y + 8, width: 26, height: 20, rx: 2, fill: '#c0c6cc' }, g);
+      var sides = [[x + 54, p.left || '5V'], [x + W - 86, p.right || '5V']];
+      sides.forEach(function (sd) {
+        var hx = sd[0], set = sd[1], on = set !== 'OFF', col = on ? '#e5e7eb' : '#6b7280';
+        ['5V', 'VCC', '3.3'].forEach(function (n, k) {
+          c.s('rect', { x: hx + k * 12, y: y + 19, width: 5, height: 5, fill: '#c9b458' }, g);
+          lbl(c.txt, g, hx + 2.5 + k * 12, y + 13, n, { 'text-anchor': 'middle', 'font-size': 5.5, fill: '#8ea6bb' });
+        });
+        // the jumper cap: across 5V+VCC, across VCC+3.3, or parked on the lone 5V pin (OFF)
+        var cx0 = set === '3.3' ? hx + 9 : set === 'OFF' ? hx - 4 : hx - 3, cw = set === 'OFF' ? 13 : 20;
+        c.s('rect', { x: cx0, y: y + 15, width: cw, height: 13, rx: 2, fill: col, stroke: '#9ca3af', opacity: on ? 1 : 0.85 }, g);
+        lbl(c.txt, g, hx + 14, y + 42, on ? set : 'OFF (cap pulled)', { 'text-anchor': 'middle', 'font-size': 8, fill: on ? '#facc15' : '#9ca3af' });
+      });
+      g._led = c.s('circle', { cx: x + W / 2 - 40, cy: y + 30, r: 3, fill: '#4ade80' }, g);
+      lbl(c.txt, g, x + W / 2, y + 55, 'POWER MODULE · 9V IN · LEFT ' + (p.left || '5V') + ' · RIGHT ' + (p.right || '5V'), { 'text-anchor': 'middle', fill: '#8ea6bb', 'font-size': 7.5 });
       g._ends = [];
     }
   });
@@ -227,18 +245,24 @@
       var t = null; g._blink = function () { g._led.setAttribute('fill', '#ff4d4d'); clearTimeout(t); t = setTimeout(function () { g._led.setAttribute('fill', '#5b1d1d'); }, 150); };
     }
   });
+  /* ---------- relay: a bare SRD-05VDC-SL-C (the blue box, no module board), seen from above with its 5 pins brought out
+   * on female-to-male jumper wires. One end: coil, COM, coil. Other end: NC and NO. Pins: C1, COM, C2, NC, NO. ---------- */
   Bd.part('relay', {
-    pins: function (p) { var o = modPins(p, ['S', 'V', 'G'], 30); o.NO = [p.at[0] + 92, p.at[1] + 24]; o.COM = [p.at[0] + 92, p.at[1] + 52]; o.NC = [p.at[0] + 92, p.at[1] + 80]; return o; },
+    pins: function (p) { var x = p.at[0], y = p.at[1]; return { C1: [x - 10, y + 22], COM: [x - 10, y + 50], C2: [x - 10, y + 78], NC: [x + 106, y + 30], NO: [x + 106, y + 70] }; },
     draw: function (g, p, c) {
-      var x = p.at[0], y = p.at[1];
-      pcb(c, g, p, 84, 104, '#1d5fa8');
-      header(c, g, p, ['S', 'V', 'G'], 30, ['S', '+', '−']);
-      c.s('rect', { x: x + 20, y: y + 12, width: 40, height: 58, rx: 3, fill: '#2563eb', stroke: '#93c5fd' }, g);
-      lbl(c.txt, g, x + 40, y + 44, 'RELAY', { 'text-anchor': 'middle', 'font-size': 7 });
-      ['NO', 'COM', 'NC'].forEach(function (k, i) { c.s('rect', { x: x + 64, y: y + 16 + i * 28, width: 18, height: 18, rx: 2, fill: '#2a7de1', stroke: '#93c5fd' }, g); c.s('circle', { cx: x + 73, cy: y + 25 + i * 28, r: 4, fill: '#c0c6cc' }, g); lbl(c.txt, g, x + 73, y + 13 + i * 28, k, { 'text-anchor': 'middle', 'font-size': 6.5 }); });
-      g._led = c.s('circle', { cx: x + 12, cy: y + 92, r: 3.5, fill: '#5b1d1d' }, g);
-      g._arm = c.s('line', { x1: x + 30, y1: y + 60, x2: x + 50, y2: y + 52, stroke: '#facc15', 'stroke-width': 2 }, g);
-      g._click = function (on) { g._led.setAttribute('fill', on ? '#ff4d4d' : '#5b1d1d'); g._arm.setAttribute('y2', on ? y + 22 : y + 52); };
+      var x = p.at[0], y = p.at[1], pins = this.pins(p);
+      c.s('rect', { x: x, y: y, width: 96, height: 100, rx: 5, fill: '#2f6fd6', stroke: '#93c5fd', 'stroke-width': 1.2 }, g);
+      lbl(c.txt, g, x + 48, y + 20, 'SONGLE', { 'text-anchor': 'middle', 'font-size': 7, 'font-style': 'italic' });
+      lbl(c.txt, g, x + 48, y + 92, 'SRD-05VDC-SL-C', { 'text-anchor': 'middle', 'font-size': 6 });
+      // pin stubs and labels
+      [['C1', 'coil'], ['COM', 'COM'], ['C2', 'coil']].forEach(function (k) { var q = pins[k[0]]; c.s('rect', { x: q[0], y: q[1] - 2, width: 12, height: 4, fill: '#c0c6cc' }, g); lbl(c.txt, g, x + 6, q[1] + 3, k[1], { 'font-size': 6.5 }); });
+      [['NC', 'NC'], ['NO', 'NO']].forEach(function (k) { var q = pins[k[0]]; c.s('rect', { x: q[0] - 12, y: q[1] - 2, width: 12, height: 4, fill: '#c0c6cc' }, g); lbl(c.txt, g, x + 90, q[1] + 3, k[1], { 'font-size': 6.5, 'text-anchor': 'end' }); });
+      // a peek inside: the contact swings from NC to NO when the coil is on
+      c.s('circle', { cx: x + 40, cy: y + 50, r: 3, fill: '#e6f1fa' }, g);
+      g._arm = c.s('line', { x1: x + 40, y1: y + 50, x2: x + 66, y2: y + 34, stroke: '#facc15', 'stroke-width': 2.5, 'stroke-linecap': 'round' }, g);
+      c.s('circle', { cx: x + 70, cy: y + 32, r: 2.5, fill: '#e6f1fa' }, g); c.s('circle', { cx: x + 70, cy: y + 68, r: 2.5, fill: '#e6f1fa' }, g);
+      g._led = c.s('text', { x: x + 48, y: y + 62, 'text-anchor': 'middle', 'font-family': MONO, 'font-size': 8, 'font-weight': 700, fill: '#facc15', opacity: 0 }, g); g._led.textContent = 'CLICK';
+      g._click = function (on) { g._arm.setAttribute('y2', on ? y + 66 : y + 34); g._led.setAttribute('opacity', on ? 1 : 0); };
     }
   });
   Bd.part('stepper', {

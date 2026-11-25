@@ -157,7 +157,7 @@ void loop() {
 ` + beeper('STOP_CM') },
 
     'Adjustable stop line': { name: 'parking_adjustable',
-      note: '<p><b>Wiring:</b> a potentiometer: outer legs to <b>5V</b> and <b>GND</b>, middle leg (the wiper) to <b>A0</b>.</p><p><b>The idea:</b> the stop distance can’t be a <code>const</code> any more, because it changes while the program runs. It becomes a normal variable, <code>stopCm</code>, set every loop with <code>map()</code>: the knob’s 0–1023 becomes 5–30 cm.</p><p>The red zone has to stay <b>further out</b> than the stop line, so it moves too: it starts 10 cm before the stop line.</p>',
+      note: '<p><b>Wiring:</b> a potentiometer: the two legs side by side go to <b>5V</b> and <b>GND</b>, and the leg on its own (the middle leg, the wiper) to <b>A0</b>. Put it across the centre gap so each leg has its own row.</p><p><b>The idea:</b> the stop distance can’t be a <code>const</code> any more, because it changes while the program runs. It becomes a normal variable, <code>stopCm</code>, set every loop with <code>map()</code>: the knob’s 0–1023 becomes 5–30 cm.</p><p>The red zone has to stay <b>further out</b> than the stop line, so it moves too: it starts 10 cm before the stop line.</p>',
       code: `
 /*
   Mission 05 extension: Adjustable stop line

@@ -1,7 +1,7 @@
 /* Mission 08: Smart fan — the guide.
  * A cardboard desk fan: DC motor + fan blade driven through an L293D H-bridge (speed on pin 5, direction on pins 3 and 4),
- * powered from the power-supply module, with a speed knob on A0, a relay "power switch" on pin 7 and a DHT11 thermostat
- * on pin 2. Circuit parts are shared below so the build guides and the Virtual UNOs always match. */
+ * powered from the power-supply module, with a speed knob on A0, a relay "power switch" on pin 7 (a bare relay whose coil is
+ * driven by the L293D's spare half: pin 7 → IN3, OUT3 → coil) and a DHT11 thermostat on pin 2. Circuit parts are shared below so the build guides and the Virtual UNOs always match. */
 (function (root) {
   'use strict';
   var RL = root.RL, UI = RL.UI, B = RL.Board, el = RL.el, esc = RL.esc;
@@ -42,28 +42,9 @@
   function merge() { var o = {}; for (var i = 0; i < arguments.length; i++) for (var k in arguments[i]) o[k] = arguments[i][k]; return o; }
   function minus(list, drop) { return list.filter(function (x) { return drop.indexOf(x) < 0; }); }
 
-  /* ================= a power-supply module with the right-hand jumper set to OFF ================= */
-  B.part('m08-psu', {
-    draw: function (g, p, c) {
-      var BBx = B.BB, x = BBx[0] - 6, y = BBx[1] - 30, W = BBx[2];
-      c.s('rect', { x: x, y: y, width: W + 12, height: 62, rx: 4, fill: '#16191e', stroke: '#3b4350' }, g);
-      c.s('rect', { x: x + W / 2 - 26, y: y - 16, width: 52, height: 40, rx: 3, fill: '#0b0d10', stroke: '#3b4350' }, g);
-      c.s('rect', { x: x + W / 2 + 34, y: y + 8, width: 26, height: 20, rx: 2, fill: '#c0c6cc' }, g);
-      // 3-pin jumper headers: 5V · OFF · 3.3V ; the left cap sits on 5V, the right cap on OFF
-      [[x + 14, 0, '5V'], [x + W - 44, 1, 'OFF']].forEach(function (j) {
-        for (var k = 0; k < 3; k++) c.s('rect', { x: j[0] + k * 10, y: y + 20, width: 5, height: 5, fill: '#c9b458' }, g);
-        c.s('rect', { x: j[0] - 3 + j[1] * 10, y: y + 15, width: 21, height: 15, rx: 2, fill: j[1] ? '#9ca3af' : '#facc15' }, g);
-        c.txt(g, j[0] + 12, y + 44, j[2], { 'font-family': 'IBM Plex Mono, monospace', 'font-size': 9, fill: j[1] ? '#9ca3af' : '#facc15', 'text-anchor': 'middle' });
-      });
-      c.s('circle', { cx: x + 80, cy: y + 22, r: 3.5, fill: '#4ade80' }, g);
-      c.txt(g, x + W / 2, y + 54, 'POWER MODULE · 9V IN · LEFT 5V · RIGHT OFF', { 'font-family': 'IBM Plex Mono, monospace', 'font-size': 8, fill: '#8ea6bb', 'text-anchor': 'middle' });
-      g._ends = [];
-    }
-  });
-
   /* ================= circuit parts ================= */
   var POWER = {
-    psu: { type: 'm08-psu', name: 'Power supply module' },
+    psu: { type: 'psu', left: '5V', right: 'OFF', name: 'Power supply module (left jumper on 5V, right jumper pulled off)' },
     gnd: { type: 'wire', from: 'GNDd', to: 'L-4', color: 'black', name: 'Black wire: UNO GND → left − rail' },
     gbr: { type: 'wire', from: 'L-28', to: 'R-28', color: 'black', via: [[432, 542], [648, 542]], name: 'Black bridge: − rail to − rail (common ground)' },
     p5v: { type: 'wire', from: '5V', to: 'R+29', color: 'red', via: [[10, 296], [8, 470], [70, 562], [380, 568], [700, 566]], name: 'Red wire: UNO 5V → right + rail' }
@@ -83,18 +64,21 @@
     motor: { type: 'dcmotor', at: [826, 196], label: 'DC MOTOR + FAN', name: 'DC motor + fan blade' },
     ma: { type: 'wire', from: 'c7', to: 'motor.A', color: 'blue', via: [[560, 150], [722, 168], [790, 222]], name: 'Wire: OUT1 (c7) → motor' },
     mb: { type: 'wire', from: 'c10', to: 'motor.B', color: 'purple', via: [[560, 226], [726, 248]], name: 'Wire: OUT2 (c10) → motor' },
-    pot: { type: 'pot', at: 'f22', label: 'SPEED', name: '10 kΩ potentiometer (speed knob)' },
-    kv: { type: 'wire', from: 'j22', to: 'R+22', color: 'red', name: 'Red jumper: knob → right + rail' },
-    kg: { type: 'wire', from: 'j26', to: 'R-26', color: 'black', name: 'Black jumper: knob → right − rail' },
-    kw: { type: 'wire', from: 'h24', to: 'A0', color: 'white', via: [[598, 520], [560, 556], [370, 556], [60, 548], [8, 460], [10, 380]], name: 'White wire: knob middle leg → A0' }
+    pot: { type: 'pot', at: 'f22', wiper: 'd23', label: 'SPEED', name: '10 kΩ potentiometer (outer legs f22 and f24, middle leg across the gap in row 23)' },
+    kv: { type: 'wire', from: 'j22', to: 'R+22', color: 'red', name: 'Red jumper: j22 (outer leg) → right + rail' },
+    kg: { type: 'wire', from: 'j24', to: 'R-24', color: 'black', name: 'Black jumper: j24 (outer leg) → right − rail' },
+    kw: { type: 'wire', from: 'a23', to: 'A0', color: 'white', via: [[436, 470], [400, 556], [60, 548], [8, 460], [10, 380]], name: 'White wire: a23 (middle leg’s row) → A0' }
   };
+  /* the relay is a bare SRD-05VDC-SL-C. Its coil needs ~72 mA and kicks back a voltage spike when it switches off, so
+   * the L293D's unused second half drives it (it has spike-catching diodes built in): pin 7 → IN3, OUT3 → coil. */
   var RELAY = {
-    relay: { type: 'relay', at: [750, 40], name: 'Relay module' },
-    rs: { type: 'wire', from: 'D7', to: 'relay.S', color: 'orange', via: [[420, 278], [700, 276], [714, 200], [718, 96]], name: 'Wire: pin 7 → relay S' },
-    rv: { type: 'wire', from: 'relay.V', to: 'R+3', color: 'red', name: 'Red wire: relay + → right + rail' },
-    rg: { type: 'wire', from: 'relay.G', to: 'R-4', color: 'black', name: 'Black wire: relay − → right − rail' },
-    rcom: { type: 'wire', from: 'c7', to: 'relay.COM', color: 'blue', via: [[560, 150], [722, 160], [868, 158], [872, 104]], name: 'Wire: OUT1 (c7) → relay COM' },
-    rno: { type: 'wire', from: 'relay.NO', to: 'motor.A', color: 'blue', via: [[886, 58], [890, 170], [800, 204]], name: 'Wire: relay NO → motor' }
+    relay: { type: 'relay', at: [750, 40], name: 'Relay (on female-to-male jumper wires)' },
+    ren: { type: 'wire', from: 'j12', to: 'R+12', color: 'red', name: 'Red jumper: EN2 (pin 9, j12) → right + rail' },
+    rin: { type: 'wire', from: 'D7', to: 'i11', color: 'orange', via: [[420, 278], [604, 278], [604, 244]], name: 'Wire: pin 7 → IN3 (pin 10, i11)' },
+    rc1: { type: 'wire', from: 'j10', to: 'relay.C1', color: 'yellow', via: [[704, 214], [718, 62]], name: 'Wire: OUT3 (pin 11, j10) → relay coil pin' },
+    rc2: { type: 'wire', from: 'relay.C2', to: 'R-6', color: 'black', via: [[714, 118]], name: 'Black wire: relay’s other coil pin → right − rail' },
+    rcom: { type: 'wire', from: 'c7', to: 'relay.COM', color: 'blue', via: [[560, 150], [722, 150], [726, 90]], name: 'Wire: OUT1 (c7) → relay COM' },
+    rno: { type: 'wire', from: 'relay.NO', to: 'motor.A', color: 'blue', via: [[884, 110], [884, 196], [806, 222]], name: 'Wire: relay NO → motor' }
   };
   var SENSOR = {
     dht: { type: 'dht', at: [760, 330], name: 'DHT11 module' },
@@ -185,7 +169,7 @@
     'const int ENABLE = 5;',
     'const int IN1 = 3;',
     'const int IN2 = 4;',
-    'const int RELAY = 7;    // relay module S pin',
+    'const int RELAY = 7;    // L293D IN3: OUT3 powers the relay coil',
     '',
     'void setup() {',
     '  pinMode(ENABLE, OUTPUT);',
@@ -275,7 +259,7 @@
     'const int ENABLE = 5;      // L293D pin 1: speed (PWM)',
     'const int IN1 = 3;         // L293D pin 2: direction',
     'const int IN2 = 4;         // L293D pin 7: direction',
-    'const int RELAY = 7;       // relay module S: the fan\'s power',
+    'const int RELAY = 7;       // L293D IN3 -> relay coil: the fan\'s power',
     'const int KNOB = A0;       // potentiometer middle leg',
     'const int DHT_PIN = 2;     // DHT11 S',
     '',
@@ -710,7 +694,7 @@
       { id: 'gnd', x: 181, y: 187, title: 'Pins 4, 5, 12, 13 · GND', html: '<p>All four go to ground. They also pull heat out of the chip into the breadboard, which is why there are four.</p>' },
       { id: 'vcc2', x: 181, y: 320, title: 'Pin 8 · VCC2 (motor power)', html: '<p>The supply the motor actually runs on, from the <b>power module</b> (4.5 to 36 V is allowed). This is where the battery’s current comes in.</p>' },
       { id: 'vcc1', x: 339, y: 54, title: 'Pin 16 · VCC1 (logic power)', html: '<p>5 V from the UNO to run the chip’s own brain. Keeping logic and motor power separate means a hungry motor can’t brown out the UNO.</p>' },
-      { id: 'right', x: 339, y: 244, title: 'Pins 9–15 · the second bridge', html: '<p>ENABLE 3,4, IN3, IN4, OUT3 and OUT4: a second, identical H-bridge for another motor. Leave them empty in this mission.</p>' }
+      { id: 'right', x: 339, y: 244, title: 'Pins 9–15 · the second bridge', html: '<p>ENABLE 3,4, IN3, IN4, OUT3 and OUT4: a second, identical H-bridge, for another motor or anything else that needs more current than a pin can give. Leave them empty for now: in Step 07, half of it will power the relay’s coil.</p>' }
     ] });
   }
 
@@ -719,7 +703,9 @@
     UI.html(b, '<p class="lead">This circuit has two power systems: the <b>left rails</b> carry motor power from the power module, and the <b>right rails</b> carry 5 V from the UNO for the chip’s logic, the knob and (later) the sensors. The two grounds are joined; the two + rails are not.</p>');
     UI.callout(b, 'safety', 'Safety', '<p>Keep the USB cable unplugged, the battery disconnected, and the power module switched off until the last step. Don’t fit the fan blade yet: test the bare motor shaft first.</p>');
     B.guide(b, { title: 'Motor driver + speed knob', parts: PARTS, vb: WIDE, base: [], steps: [
-      { title: 'Fit the power module', add: ['psu'], html: '<p>Press the power supply module onto the top end of your breadboard so its pins go into the rails. Check that its <b>+</b> pins line up with the red <b>+</b> lines and its <b>−</b> pins with the blue <b>−</b> lines on <i>both</i> sides.</p><p>Set the <b>left jumper to 5V</b> and the <b>right jumper to OFF</b>. Now only the left rails get the module’s power.</p>' },
+      { title: 'Fit the power module', add: ['psu'], html: '<p>Press the power supply module onto the top end of your breadboard so its pins go into the rails. Check that its <b>+</b> pins line up with the red <b>+</b> lines and its <b>−</b> pins with the blue <b>−</b> lines on <i>both</i> sides.</p>' +
+        '<p>Beside each side’s pins is a little 3-pin header labelled <b>5V · VCC · 3.3</b> with a jumper cap on it. The cap chooses that side’s voltage: across <b>5V and VCC</b> = 5 V, across <b>VCC and 3.3</b> = 3.3 V, and <b>no cap = no power</b> on that side.</p>' +
+        '<p><b>Left side:</b> cap across <b>5V and VCC</b>. <b>Right side:</b> pull the cap off (push it onto just one pin so it doesn’t get lost). Now only the left rails get the module’s power.</p>' },
       { title: 'Common ground', add: ['gnd', 'gbr'], html: '<p>Black wire from the UNO’s <b>GND</b> (beside pin 13) to the <b>left − rail</b>. Then a black bridge at the bottom from the <b>left − rail to the right − rail</b>.</p><p>Now the UNO, the module and both sides of the board share one ground.</p>' },
       { title: 'UNO 5V to the right + rail', add: ['p5v'], html: '<p>Red wire from the UNO’s <b>5V</b> pin, around the bottom, to the <b>right + rail</b>. This rail is for logic only.</p><p class="small muted">Never bridge the two + rails in this circuit: that would connect two power supplies together.</p>' },
       { title: 'Place the L293D', add: ['chip'], html: '<p>Find the notch (a half-moon dent) at one end of the chip. Point it <b>up</b>. Press the chip across the centre gap so <b>pin 1</b> (beside the dot) is in <b>e5</b>. Pins 1–8 go down column e; pins 9–16 come back up column f.</p><p class="small muted">Press gently and evenly: chip legs bend easily.</p>' },
@@ -727,8 +713,8 @@
       { title: 'Two power pins', add: ['cv1', 'cv2'], html: '<p><b>VCC1</b> (pin 16, row 5 right): red jumper <b>j5 → right + rail</b> (UNO 5V, logic).</p><p><b>VCC2</b> (pin 8, row 12 left): red jumper <b>a12 → left + rail</b> (module 5V, motor power).</p>' },
       { title: 'Control wires from the UNO', add: ['wen', 'win1', 'win2'], html: '<p><b>Pin 5 → a5</b> (ENABLE, the speed pin — it has a ~). <b>Pin 3 → a6</b> (IN1). <b>Pin 4 → a11</b> (IN2).</p>' },
       { title: 'Connect the motor', add: ['motor', 'ma', 'mb'], html: '<p>The motor has two wires (or two tabs). Connect one to <b>c7</b> (OUT1) and the other to <b>c10</b> (OUT2). A motor has no + or − — swapping them just swaps forward and backward.</p><p>Leave the blade off for now. Tape the motor to the desk so it can’t roll away.</p>' },
-      { title: 'Add the speed knob', add: ['pot', 'kv', 'kg', 'kw'], html: '<p>Push the potentiometer’s three legs into <b>f22, f24 and f26</b>. Red jumper <b>j22 → right + rail</b>, black jumper <b>j26 → right − rail</b>, and a white wire from the middle leg’s row (<b>h24</b>) around the bottom to <b>A0</b>.</p><p class="small muted">Same voltage-divider knob as Mission 02 — but powered from the UNO’s 5V so its readings match the UNO.</p>' },
-      { title: 'Check your build, then power up', view: 'all', html: '<p>Check row by row: chip notch up, four GND jumpers, VCC1 to the <b>right</b> + rail, VCC2 to the <b>left</b> + rail, wires on pins 5, 3, 4, motor on c7/c10.</p><p>Plug the 9V battery into the module, then the USB cable. Switch the module on: its green LED lights. Nothing spins yet — that’s the code’s job.</p>' }
+      { title: 'Add the speed knob', add: ['pot', 'kv', 'kg', 'kw'], html: '<p>Your potentiometer has <b>two legs side by side</b> (the two ends of the track) and <b>one leg on its own</b> on the other side (the middle leg, the wiper). Push the two side-by-side legs into <b>f22 and f24</b>, so the lone leg reaches back across the centre gap into <b>row 23</b> (e23 or d23, whichever it reaches).</p><p>Red jumper <b>j22 → right + rail</b>, black jumper <b>j24 → right − rail</b>, and a white wire from <b>a23</b> (the middle leg’s row) around the bottom to <b>A0</b>.</p><p class="small muted">Same voltage-divider knob as Mission 02 — but powered from the UNO’s 5V so its readings match the UNO.</p>' },
+      { title: 'Check your build, then power up', view: 'all', html: '<p>Check row by row: chip notch up, four GND jumpers, VCC1 to the <b>right</b> + rail, VCC2 to the <b>left</b> + rail, wires on pins 5, 3, 4, motor on c7/c10, knob legs in rows 22, 23 and 24. And on the module: left cap on 5V, right cap off.</p><p>Plug the 9V battery into the module, then the USB cable. Switch the module on: its green LED lights. Nothing spins yet — that’s the code’s job.</p>' }
     ] });
     UI.callout(b, 'plain', 'Why two different + rails?', '<p>When a motor starts, it gulps current and the supply voltage dips for a moment. If the UNO shared that supply, the dip could reset it mid-program. With its own USB power for logic and the battery for the motor, the UNO never notices. Only the grounds are joined, so both sides agree what “0 V” means.</p>');
     UI.mcq(b, ctx, { id: 'q-gnd', q: 'You forget the black bridge between the two − rails. What happens?', options: ['Nothing — it’s just a spare wire', 'The motor spins backward', 'The L293D’s right-side ground pins and the UNO lose their shared ground, so the chip can’t read the pins properly and the motor may not run', 'The battery drains faster'], answer: 2, explain: 'Without a common ground the UNO’s HIGH has no reference on the chip’s side. Grounds must always be joined between the parts that talk to each other.' });
@@ -755,7 +741,7 @@
         ctx.check('sim-spin-pass', r.pass ? 1 : 0); return r;
       } });
     UI.html(b, '<h2>Upload it for real</h2><p>Battery in, module on, USB in. Upload the sketch and open the Serial Monitor (the magnifying glass, top right of the IDE) at <b>9600 baud</b>. Hold a small strip of tape on the motor shaft like a flag so you can see which way it turns.</p>');
-    UI.html(b, '<div class="tests"><div class="trow"><div><b>Nothing happens at all</b><br><span class="small muted">Is the module switched on (green LED) with the left jumper on 5V? Is the battery fresh? Check VCC2 (a12) goes to the <i>left</i> + rail.</span></div></div><div class="trow"><div><b>It only spins one way</b><br><span class="small muted">One of the direction wires is loose or on the wrong row: pin 3 → a6, pin 4 → a11.</span></div></div><div class="trow"><div><b>It hums but doesn’t turn</b><br><span class="small muted">The battery is weak, or the shaft is touching something. Give it a flick to start it.</span></div></div><div class="trow"><div><b>The UNO resets when the motor starts</b><br><span class="small muted">Motor power is reaching the UNO side. Check the right jumper on the module is OFF and that the two + rails aren’t connected.</span></div></div></div>');
+    UI.html(b, '<div class="tests"><div class="trow"><div><b>Nothing happens at all</b><br><span class="small muted">Is the module switched on (green LED) with the left jumper cap across 5V and VCC? Is the battery fresh? Check VCC2 (a12) goes to the <i>left</i> + rail.</span></div></div><div class="trow"><div><b>It only spins one way</b><br><span class="small muted">One of the direction wires is loose or on the wrong row: pin 3 → a6, pin 4 → a11.</span></div></div><div class="trow"><div><b>It hums but doesn’t turn</b><br><span class="small muted">The battery is weak, or the shaft is touching something. Give it a flick to start it.</span></div></div><div class="trow"><div><b>The UNO resets when the motor starts</b><br><span class="small muted">Motor power is reaching the UNO side. Check the jumper cap on the module’s <b>right</b> side is pulled off (or parked on one pin) and that the two + rails aren’t connected.</span></div></div></div>');
   } });
 
   /* ---------- 06 PWM speed ---------- */
@@ -830,22 +816,25 @@
   steps.push({ id: 'relay', title: 'Relays: a switch you can hear', time: '20 min', render: function (b, ctx) {
     UI.html(b, '<p class="lead">A <b>relay</b> is a switch flipped by an electromagnet. A tiny signal from the UNO moves a real metal contact — with a satisfying <b>click</b> — that can switch a completely separate circuit. Thermostats, car headlights and elevators all click with relays.</p>');
     relayExplainer(b);
-    UI.mcq(b, ctx, { id: 'q-relay', q: 'Why can a relay controlled by your UNO safely switch a circuit with a completely different power supply?', options: ['Because the relay changes the voltage to 5 V', 'Because the coil side and the contact side never touch electrically — only the magnetic pull crosses between them', 'Because relays only work with batteries', 'Because the UNO’s ground is connected to the contacts'], answer: 1, explain: 'That separation is called <b>isolation</b>. The UNO only powers the coil; the switched circuit has its own wires and supply.', hints: { 0: 'A relay doesn’t convert anything — it just closes or opens a contact.', 3: 'The contacts aren’t connected to the UNO at all. That’s the point.' } });
+    UI.mcq(b, ctx, { id: 'q-relay', q: 'Why can a relay controlled by your UNO safely switch a circuit with a completely different power supply?', options: ['Because the relay changes the voltage to 5 V', 'Because the coil side and the contact side never touch electrically — only the magnetic pull crosses between them', 'Because relays only work with batteries', 'Because the UNO’s ground is connected to the contacts'], answer: 1, explain: 'That separation is called <b>isolation</b>. The UNO only controls the coil; the switched circuit has its own wires and supply.', hints: { 0: 'A relay doesn’t convert anything — it just closes or opens a contact.', 3: 'The contacts aren’t connected to the UNO at all. That’s the point.' } });
     UI.html(b, '<h2>Build: the relay as the fan’s power switch</h2><p>The relay goes in the motor’s wire. When it clicks on, the motor is connected; when it clicks off, the motor is cut off no matter what the L293D is doing — just like the power switch on a real fan.</p>');
-    UI.callout(b, 'safety', 'Safety', '<p>Unplug the USB and switch the module off before rewiring. The relay module is rated for mains voltage, but in this class it <b>only ever switches the 5 V motor circuit</b>. Never connect anything that plugs into a wall.</p>');
+    UI.html(b, '<h3>Your relay: a bare relay</h3><p>The relay in your kit is just the blue box with five pins underneath — no circuit board around it. That matters, because <b>pin 7 can’t power its coil directly</b>:</p><ul><li>The coil needs about <b>72 mA</b> (5 V ÷ its 70 Ω coil). An UNO pin should only ever give about 20 mA.</li><li>When the coil switches off it kicks back a <b>voltage spike</b> — the same problem as the motor.</li></ul><p>Good news: your L293D has a <b>second half you haven’t used</b> (pins 9–16), and it has spike-catching diodes built in. So pin 7 just tells the L293D’s <b>IN3</b> what to do, and <b>OUT3</b> powers the coil from the power module.</p>');
+    relayPins(b);
+    UI.callout(b, 'safety', 'Safety', '<p>Unplug the USB and switch the module off before rewiring. The relay is rated for mains voltage (it says 250VAC on the top), but in this class it <b>only ever switches the 5 V motor circuit</b>. Never connect anything that plugs into a wall.</p>');
     B.guide(b, { title: 'Relay power switch', parts: PARTS, vb: WIDE, base: BASE_IDS, steps: [
       { title: 'Start from the motor driver', view: 'all', html: '<p>Everything from Step 04 stays: power, the L293D, the motor and the knob.</p>' },
-      { title: 'Power the relay’s coil side', add: ['relay', 'rv', 'rg', 'rs'], html: '<p>Place the relay module to the right of the board. Its three header pins are the <b>coil side</b>: <b>+ → right + rail</b> (red), <b>− → right − rail</b> (black), and <b>S → pin 7</b> (orange).</p><p class="small muted">The coil side runs on the UNO’s 5V, like the knob.</p>' },
-      { title: 'Put the switch in the motor wire', add: ['rcom', 'rno'], remove: ['ma'], html: '<p>Unplug the blue motor wire from c7. Now run a wire from <b>c7 (OUT1) to the relay’s COM</b> screw terminal, and another from <b>NO to the motor</b>. Loosen each screw, slide the wire in, tighten.</p><p>COM = common, NO = normally open (connected only when the relay is on), NC = normally closed (unused here).</p>' },
-      { title: 'Check your build', view: 'all', html: '<p>Trace the motor’s path: OUT1 → COM → (relay contact) → NO → motor → OUT2. The relay’s coil side connects to the UNO; its screw terminals connect only to the motor circuit.</p>' }
+      { title: 'Wake up the L293D’s spare half', add: ['ren', 'rin'], html: '<p>Pins 9–16 (the right-hand side of the chip, column f) are a second driver. Two wires switch it on:</p><ul><li><b>Red jumper: j12 → right + rail.</b> That’s pin 9, <b>EN2</b>. Keeping it HIGH turns the second half on for good.</li><li><b>Orange wire: pin 7 → i11.</b> That’s pin 10, <b>IN3</b>. Whatever pin 7 does, OUT3 copies — but with real power behind it.</li></ul>' },
+      { title: 'Connect the relay’s coil', add: ['relay', 'rc1', 'rc2'], html: '<p>The relay’s pins don’t line up with the breadboard holes, so use <b>female-to-male jumper wires</b>: push each female end firmly onto a relay pin (it slides on), and the male end into the breadboard.</p><p>Turn the relay over and find the end with <b>three pins</b>. The two in the <b>corners</b> are the coil; the one <b>between them</b> is COM.</p><ul><li><b>Yellow wire: j10 → one coil pin.</b> j10 is pin 11, <b>OUT3</b>.</li><li><b>Black wire: the other coil pin → right − rail.</b></li></ul><p class="small muted">A coil has no + or −: either coil pin can go either way.</p>' },
+      { title: 'Put the switch in the motor wire', add: ['rcom', 'rno'], remove: ['ma'], html: '<p>Unplug the blue motor wire from c7. Run a wire from <b>c7 (OUT1) to the relay’s COM</b> (the middle pin of the three-pin end), and another from <b>one of the two pins at the other end to the motor</b>.</p><p>Those two pins are <b>NO</b> (normally open: connected to COM only when the relay is on) and <b>NC</b> (normally closed: connected when it’s off). You want NO. If you picked NC, the click test will show you: the fan runs when the relay is <i>off</i>. Just move that wire to the other pin.</p>' },
+      { title: 'Check your build', view: 'all', html: '<p>Trace the <b>motor’s</b> path: OUT1 → COM → (relay contact) → NO → motor → OUT2.</p><p>Trace the <b>coil’s</b> path: left + rail (module 5V) → VCC2 → inside the L293D → OUT3 (j10) → coil → right − rail. Pin 7 only sends a signal to IN3: no coil current goes through the UNO.</p>' }
     ] });
     UI.html(b, '<h2>Code it: the click test</h2>');
     RL.Code.walk(b, CLICK, [
       { lines: [14, 16], title: 'A steady fan', html: '<p>The L293D is set to forward at speed 200 once, in setup(), and never changes.</p>' },
-      { lines: [21, 23], title: 'Click on', html: '<p>Pin 7 HIGH powers the relay’s coil (through a little transistor on the module). The electromagnet pulls the contact over: <b>click</b>. COM joins NO and the fan gets power.</p>' },
+      { lines: [21, 23], title: 'Click on', html: '<p>Pin 7 HIGH tells the L293D’s IN3 to switch OUT3 on, and OUT3 sends the power module’s 5 V through the relay’s coil. The electromagnet pulls the contact over: <b>click</b>. COM joins NO and the fan gets power.</p>' },
       { lines: [24, 26], title: 'Click off', html: '<p>Pin 7 LOW: the coil lets go, the spring pulls the contact back, and the fan coasts to a stop.</p>' }
     ], { name: 'relay_click' });
-    RL.Sim.create(b, { title: 'Relay click test', code: CLICK, name: 'relay_click', key: 'sim-click', ctx: ctx, board: { parts: PARTS, show: RELAY_IDS, view: SIM_VIEW, vb: WIDE }, motor: MOTOR_R, relays: { 7: 'relay' }, analog: { 0: { label: 'speed knob', value: 512, part: 'pot' } }, runHint: 'watch the relay’s red LED and the fan.',
+    RL.Sim.create(b, { title: 'Relay click test', code: CLICK, name: 'relay_click', key: 'sim-click', ctx: ctx, board: { parts: PARTS, show: RELAY_IDS, view: SIM_VIEW, vb: WIDE }, motor: MOTOR_R, relays: { 7: 'relay' }, analog: { 0: { label: 'speed knob', value: 512, part: 'pot' } }, runHint: 'watch the relay’s contact and the fan.',
       checkAfter: 6600,
       check: function (log) {
         var rl = log.filter(function (e) { return e.dev === 'relay'; }), m = log.filter(function (e) { return e.dev === 'motor'; });
@@ -854,9 +843,25 @@
         var r = !on ? { pass: false, msg: 'The relay never switched on. Is pin 7 an OUTPUT, set HIGH?' } : !off ? { pass: false, msg: 'The relay switched on but never off.' } : !spun ? { pass: false, msg: 'The relay clicks, but the fan never spins. Check ENABLE and the direction pins in setup().' } : !stopped ? { pass: false, msg: 'The fan should stop while the relay is off.' } : { pass: true, msg: 'Click on, fan spins. Click off, fan stops. The relay is your power switch.' };
         ctx.check('sim-click-pass', r.pass ? 1 : 0); return r;
       } });
-    UI.html(b, '<p style="margin-top:16px">Upload it to your board and listen. You should hear a click, see the module’s little LED light, and the fan should start; three seconds later, a clack and it coasts to a stop.</p>');
-    UI.callout(b, 'plain', 'Clicks the wrong way round?', '<p>Some relay modules are <b>active-low</b>: they switch on when the pin is LOW. If your fan runs while the code says “Relay OFF,” swap HIGH and LOW for the relay in your code. If the relay never clicks, check S is on pin 7 and the module’s + and − go to the <i>right</i> rails.</p>');
+    UI.html(b, '<p style="margin-top:16px">Upload it to your board and listen. A bare relay has no light, so use your ears: a <b>click</b> and the fan starts; three seconds later, a <b>clack</b> and it coasts to a stop.</p>');
+    UI.html(b, '<div class="tests"><div class="trow"><div><b>The fan runs while the code says “Relay OFF”</b><br><span class="small muted">The motor wire is on NC. Move it to the other pin at that end of the relay (NO).</span></div></div><div class="trow"><div><b>The relay never clicks</b><br><span class="small muted">Check: pin 7 → i11, the red jumper from j12 to the right + rail, the yellow wire on j10, the black wire to the − rail, and that both female ends are pushed all the way onto the <i>corner</i> pins of the three-pin end. The coil’s power comes from the module, so it must be switched on.</span></div></div><div class="trow"><div><b>It clicks, but the fan never runs</b><br><span class="small muted">COM and NO aren’t in the motor’s path. Check c7 → COM (the middle pin) and the other pin → motor.</span></div></div></div>');
   } });
+  /* the bare relay seen from underneath: which pin is which */
+  function relayPins(b) {
+    var box = el('div', 'xp'); box.innerHTML = '<div class="xp-h"><span class="label">Look underneath</span><h3>Your relay’s five pins</h3></div>';
+    var stage = el('div', 'xp-stage'), svg = S('svg', { viewBox: '0 0 820 250', role: 'img', 'aria-label': 'The relay from underneath: coil, COM and coil at one end, NC and NO at the other' }, null);
+    stage.appendChild(svg); box.appendChild(stage); b.appendChild(box);
+    bg(svg, 820, 250);
+    S('rect', { x: 300, y: 36, width: 220, height: 180, rx: 10, fill: '#1c1f24', stroke: '#2f6fd6', 'stroke-width': 6 }, svg);
+    T(svg, 410, 240, 'THE RELAY, UPSIDE DOWN', { 'text-anchor': 'middle', 'font-size': 10, fill: MUT, 'letter-spacing': '2' });
+    [[332, 66, 'COIL', CY, 'end'], [362, 126, 'COM', GO, 'in'], [332, 186, 'COIL', CY, 'end'], [488, 66, 'NO or NC', SIG, 'start'], [488, 186, 'NC or NO', SIG, 'start']].forEach(function (p) {
+      S('circle', { cx: p[0], cy: p[1], r: 8, fill: '#c0c6cc', stroke: '#e6f1fa' }, svg);
+      if (p[4] === 'in') T(svg, p[0] + 16, p[1] + 5, p[2], { 'font-size': 13, 'font-weight': 700, fill: p[3] });
+      else T(svg, p[4] === 'end' ? p[0] - 44 : p[0] + 44, p[1] + 5, p[2], { 'text-anchor': p[4], 'font-size': 13, 'font-weight': 700, fill: p[3] });
+    });
+    [['THREE-PIN END', 'the two corners: the coil', 'between them: COM']].forEach(function (L) { L.forEach(function (t, k) { T(svg, 24, 96 + k * 20, t, { 'font-size': k ? 12 : 11, fill: k ? INK : MUT, 'letter-spacing': k ? '0' : '2' }); }); });
+    [['TWO-PIN END', 'NO and NC', 'the click test shows which']].forEach(function (L) { L.forEach(function (t, k) { T(svg, 622, 96 + k * 20, t, { 'font-size': k ? 12 : 11, fill: k ? INK : MUT, 'letter-spacing': k ? '0' : '2' }); }); });
+  }
   function relayExplainer(b) {
     UI.explainer(b, { label: 'Explainer', title: 'Inside a relay', w: 820, h: 360,
       init: function (svg, S2, st) {
@@ -864,7 +869,7 @@
         // control side box + load side box
         st.ctrlBox = S('rect', { x: 20, y: 40, width: 330, height: 290, rx: 8, fill: 'none', stroke: GRID, 'stroke-width': 2, 'stroke-dasharray': '6 6' }, svg);
         st.loadBox = S('rect', { x: 430, y: 40, width: 370, height: 290, rx: 8, fill: 'none', stroke: GRID, 'stroke-width': 2, 'stroke-dasharray': '6 6' }, svg);
-        st.ctrlT = T(svg, 36, 64, 'COIL SIDE · UNO', { fill: MUT, 'font-size': 11, 'letter-spacing': '2' });
+        st.ctrlT = T(svg, 36, 64, 'COIL SIDE · CONTROL', { fill: MUT, 'font-size': 11, 'letter-spacing': '2' });
         st.loadT = T(svg, 446, 64, 'CONTACT SIDE · FAN CIRCUIT', { fill: MUT, 'font-size': 11, 'letter-spacing': '2' });
         // coil on an iron core
         S('rect', { x: 200, y: 140, width: 60, height: 124, rx: 4, fill: '#5b6472' }, svg);
@@ -876,7 +881,7 @@
         [44, 64].forEach(function (r) { S('ellipse', { cx: 230, cy: 202, rx: r, ry: r * 1.2, fill: 'none', stroke: CY, 'stroke-width': 1.5, 'stroke-dasharray': '5 6' }, st.fieldG); });
         // control wires from S and −
         S('path', { d: 'M40 180 L192 180 M40 250 L192 250', stroke: LINE, 'stroke-width': 2.5, fill: 'none' }, svg);
-        T(svg, 40, 172, 'S · PIN 7', { 'font-size': 10, fill: MUT, 'letter-spacing': '1' }); T(svg, 40, 242, '− · GND', { 'font-size': 10, fill: MUT, 'letter-spacing': '1' });
+        T(svg, 40, 172, 'PIN 7 → L293D', { 'font-size': 10, fill: MUT, 'letter-spacing': '1' }); T(svg, 40, 242, 'GND', { 'font-size': 10, fill: MUT, 'letter-spacing': '1' });
         st.sig = T(svg, 40, 218, 'LOW', { 'font-size': 13, fill: MUT, 'letter-spacing': '1' });
         // armature: hinged at the left (120,120), lies across the top of the coil
         S('rect', { x: 104, y: 112, width: 16, height: 30, rx: 2, fill: '#3b4350' }, svg);
@@ -932,10 +937,10 @@
         { cap: '<b>On: the electromagnet wins.</b> Pin 7 goes HIGH and current flows through the coil. The coil and its iron core become a magnet strong enough to pull the armature down — <b>click</b> — so COM touches NO and the fan’s circuit is complete.', draw: function (svg, S2, st) { st.extra.innerHTML = ''; st.set(false); st.say(''); st.later(function () { st.set(true); st.say('CLICK'); }, 700); st.later(function () { st.say(''); }, 1700); } },
         { cap: '<b>Isolation: two circuits that never touch.</b> The cyan box (coil side) is connected to the UNO. The green box (contact side) has its own wires and power. Only the <b>magnetic pull</b> crosses the gap, and the moving contact sits on an insulating block, so the switched circuit could even be a different voltage. The click you hear is the contact slamming over.', draw: function (svg, S2, st) { st.extra.innerHTML = ''; st.set(true, { iso: true }); st.say(''); S('rect', { x: 356, y: 190, width: 68, height: 40, rx: 4, fill: BG, stroke: SIG, 'stroke-dasharray': '3 3' }, st.extra); T(st.extra, 390, 215, 'NO WIRE', { 'text-anchor': 'middle', 'font-size': 10, fill: SIG, 'letter-spacing': '1' }); T(st.extra, 465, 100, 'INSULATOR', { 'text-anchor': 'middle', 'font-size': 10, fill: GO, 'letter-spacing': '1' }); } },
         { cap: '<b>Off again: clack.</b> Pin 7 LOW, the coil lets go, and the spring snaps the contact back to NC. A relay is either fully on or fully off — it can’t do in-between speeds, and it can only click a few times a second. So the L293D handles speed, and the relay is the master power switch.', draw: function (svg, S2, st) { st.extra.innerHTML = ''; st.set(true); st.say(''); st.later(function () { st.set(false); st.say('CLACK'); }, 700); st.later(function () { st.say(''); }, 1700); } },
-        { cap: '<b>On the module:</b> the coil needs about 70 mA, more than a pin should give, so the module has a small <b>transistor</b> that switches the coil for you (the pin only supplies a few mA). It also has a <b>diode</b> across the coil to catch its kickback (the same problem as the motor) and an <b>LED</b> that shows when the coil is on.', draw: function (svg, S2, st) {
+        { cap: '<b>Who powers the coil?</b> The coil needs about 72 mA — more than three times what a pin should give — and it kicks back a spike when it switches off, just like the motor. So pin 7 doesn’t power it: pin 7 tells the L293D’s spare half (<b>IN3</b>), and <b>OUT3</b> feeds the coil from the power module. The L293D has <b>diodes built in</b> that catch the spike.', draw: function (svg, S2, st) {
           st.extra.innerHTML = ''; st.set(true); st.say('');
-          var g = st.extra; S('rect', { x: 34, y: 262, width: 120, height: 60, rx: 4, fill: PANEL, stroke: CY }, g);
-          T(g, 94, 280, 'TRANSISTOR', { 'text-anchor': 'middle', 'font-size': 10, fill: CY, 'letter-spacing': '1' }); T(g, 94, 296, 'DIODE', { 'text-anchor': 'middle', 'font-size': 10, fill: CY, 'letter-spacing': '1' }); T(g, 94, 312, 'LED', { 'text-anchor': 'middle', 'font-size': 10, fill: '#ff4d4d', 'letter-spacing': '1' });
+          var g = st.extra; S('rect', { x: 34, y: 262, width: 150, height: 60, rx: 4, fill: PANEL, stroke: CY }, g);
+          T(g, 109, 280, 'L293D · IN3 → OUT3', { 'text-anchor': 'middle', 'font-size': 10, fill: CY, 'letter-spacing': '1' }); T(g, 109, 296, 'BUILT-IN DIODES', { 'text-anchor': 'middle', 'font-size': 10, fill: CY, 'letter-spacing': '1' }); T(g, 109, 312, 'POWER: MODULE 5V', { 'text-anchor': 'middle', 'font-size': 10, fill: GO, 'letter-spacing': '1' });
         } }
       ] });
   }
@@ -948,8 +953,8 @@
     UI.html(b, '<h2>Wire the DHT11</h2><p>The DHT11 module has three pins: <b>S</b> (signal), <b>+</b> and <b>−</b>. It sends its readings as a burst of digital pulses on one wire, and a library decodes them for you.</p>');
     B.guide(b, { title: 'DHT11 thermostat sensor', parts: PARTS, vb: WIDE, base: RELAY_IDS, steps: [
       { title: 'Start from the relay circuit', view: 'all', html: '<p>Everything from Step 07 stays.</p>' },
-      { title: 'Add the DHT11', add: ['dht', 'dv', 'dg', 'ds'], html: '<p>Place the DHT11 module below the relay. <b>+ → right + rail</b> (red), <b>− → right − rail</b> (black), <b>S → pin 2</b> (yellow).</p><p class="small muted">Check the labels printed on your module: some DHT11 boards order the pins differently.</p>' },
-      { title: 'Check your build', view: 'all', html: '<p>Three modules on the right, all powered from the right rails (UNO 5V): relay (S → 7), DHT11 (S → 2). The motor gets its power through the L293D from the left rails.</p>' }
+      { title: 'Add the DHT11', add: ['dht', 'dv', 'dg', 'ds'], html: '<p>Place the DHT11 module below the relay and the motor. <b>+ → right + rail</b> (red), <b>− → right − rail</b> (black), <b>S → pin 2</b> (yellow).</p><p class="small muted">Check the labels printed on your module: some DHT11 boards order the pins differently.</p>' },
+      { title: 'Check your build', view: 'all', html: '<p>Two parts on the right: the relay (its coil driven by OUT3) and the DHT11 (S → 2, powered from the right rails). The motor and the relay’s coil both get their power through the L293D from the left rails.</p>' }
     ] });
     UI.callout(b, '', 'Install the DHT library (first time only)', '<ol><li>In the Arduino IDE: <b>Sketch → Include Library → Manage Libraries…</b></li><li>Search for <b>DHT sensor library</b> and install the one <b>by Adafruit</b>.</li><li>If it asks to install <b>Adafruit Unified Sensor</b> too, click <b>Install all</b>.</li></ol><p class="small">Cloud Editor: the library is already available — just keep the <code>#include &lt;DHT.h&gt;</code> line.</p>');
     UI.html(b, '<h2>Code it: automatic mode</h2>');
