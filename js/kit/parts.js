@@ -329,6 +329,35 @@
       }
     });
   }
-  segPart('seg1', SEG1, 1); segPart('seg4', SEG4, 4);
+  segPart('seg1', SEG1, 1);
+  /* the 4-digit display as it really looks (5461AS): a black face with white unlit segments in a white frame, numbers up and
+   * decimal points at the bottom. Pins 12–7 along the top edge (left to right) and 1–6 along the bottom edge. */
+  Bd.part('seg4', {
+    pins: function (p) {
+      var o = {}, x = p.at[0], y = p.at[1], H = 96;
+      SEG4.forEach(function (m) { var n = +m[0], i = n <= 6 ? n - 1 : 12 - n, q = [x + 23 + i * 30, n <= 6 ? y + H + 12 : y - 12]; o[m[0]] = q; o[m[1]] = q; });
+      return o;
+    },
+    draw: function (g, p, c) {
+      var x = p.at[0], y = p.at[1], W = 196, H = 96, pins = this.pins(p);
+      SEG4.forEach(function (m) { var q = pins[m[0]], top = +m[0] > 6; c.s('rect', { x: q[0] - 2, y: top ? q[1] : y + H, width: 4, height: 12, fill: '#c0c6cc' }, g); });
+      c.s('rect', { x: x - 3, y: y - 3, width: W + 6, height: H + 6, rx: 3, fill: '#e8ebee', stroke: '#9fb3c8' }, g);
+      c.s('rect', { x: x, y: y, width: W, height: H, rx: 2, fill: '#0d0f12' }, g);
+      // pin numbers and jobs, printed just inside the edges (the real display has no labels: this is the pin map)
+      SEG4.forEach(function (m) { var q = pins[m[0]], top = +m[0] > 6, dig = /^D\d/.test(m[1]);
+        lbl(c.txt, g, q[0], top ? y + 10 : y + H - 4, m[0] + ' ' + m[1], { 'text-anchor': 'middle', 'font-size': 6.5, fill: dig ? '#ff8a3d' : '#7dd3fc' }); });
+      g._digits = [];
+      for (var d = 0; d < 4; d++) g._digits.push(digitW(c, g, x + 20 + d * 44, y + 22));
+      g._setDigit = function (i, bits) { var D = g._digits[i]; if (!D) return; for (var k = 0; k < 8; k++) D[k].setAttribute('fill', (bits >> k) & 1 ? '#ff3b3b' : '#c9ced4'); };
+    }
+  });
+  function digitW(c, g, x, y) { // a slanted white digit: 8 segment elements a b c d e f g dp
+    var w = 24, h = 50, t = 4.5, sk = 'skewX(-8)', grp = c.s('g', { transform: 'translate(' + x + ' ' + y + ') ' + sk }, g), segs = [
+      [t, 0, w - 2 * t, t], [w - t, t, t, h / 2 - t], [w - t, h / 2, t, h / 2 - t], [t, h - t, w - 2 * t, t],
+      [0, h / 2, t, h / 2 - t], [0, t, t, h / 2 - t], [t, h / 2 - t / 2, w - 2 * t, t]];
+    var out = segs.map(function (r) { return c.s('rect', { x: r[0], y: r[1], width: r[2], height: r[3], rx: 1.5, fill: '#c9ced4' }, grp); });
+    out.push(c.s('circle', { cx: w + 6, cy: h - 2, r: 2.6, fill: '#c9ced4' }, grp));
+    return out;
+  }
   Bd.SEG4_PINS = SEG4; Bd.SEG1_PINS = SEG1;
 })(window);

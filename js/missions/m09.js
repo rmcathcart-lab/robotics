@@ -120,14 +120,31 @@
   var VB9 = [0, 0, B.BB[0] + B.BB[2] + 300, B.BB[1] + B.BB[3] + 64];
   var SEGNAME = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'DP'];
   var SEGCOL = ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'white', 'grey'];
-  function bus(pinY, laneL, yB, laneR, ty) { return route([[304, pinY], [laneL, pinY], [laneL, yB], [laneR, yB], [laneR, ty], [780, ty]], 8); }
-  var DISP = { seg: { type: 'seg4', at: [790, 316], name: '4-digit 7-segment display' } };
-  for (k = 0; k < 8; k++) DISP['g' + k] = { type: 'wire', from: 'j' + rowOf(k), to: 'seg.' + SEGNAME[k], color: SEGCOL[k], name: 'Wire: Q' + k + ' row (j' + rowOf(k) + ') → segment ' + SEGNAME[k].toLowerCase(), _seg: 1 };
+  /* the display lies beside the board like the real one: numbers facing up, decimal points at the bottom,
+   * pins 12–7 along the top edge and 1–6 along the bottom edge (see the pin map in the display step) */
+  var SEG_AT = [800, 372], SEG_H = 96;
+  var SEG_X = function (pin) { var i = pin <= 6 ? pin - 1 : 12 - pin; return SEG_AT[0] + 23 + i * 30; };
+  var SEG_TIP = function (pin) { return pin <= 6 ? SEG_AT[1] + SEG_H + 12 : SEG_AT[1] - 12; };
+  // each wire runs along its own horizontal channel above (top pins) or below (bottom pins) the display, then drops onto its pin
+  var SEG_CHAN = function (pin) { return pin <= 6 ? 482 + (pin - 1) * 7 : 346 - (12 - pin) * 8; };
+  var SEGPIN = { A: 11, B: 7, C: 4, D: 2, E: 1, F: 10, G: 5, DP: 3 };
+  // vertical lanes between the board and the display, ordered so a wire to a pin further right never crosses its neighbours
+  var SEG_LANE = { B: 730, F: 748, A: 754, G: 771, C: 776, DP: 781, D: 786, E: 791 }, DIG_LANE = { 8: 736, 9: 742, 12: 760, 6: 766 };
+  var DISP = { seg: { type: 'seg4', at: SEG_AT, name: '4-digit 7-segment display (numbers up, decimal points at the bottom)' } };
+  for (k = 0; k < 8; k++) (function (k) {
+    var n = SEGNAME[k], pin = SEGPIN[n], ry = 70 + (rowOf(k) - 1) * 16, lane = SEG_LANE[n];
+    DISP['g' + k] = { type: 'wire', from: 'j' + rowOf(k), to: 'seg.' + n, color: SEGCOL[k], via: route([[628, ry], [lane, ry], [lane, SEG_CHAN(pin)], [SEG_X(pin), SEG_CHAN(pin)], [SEG_X(pin), SEG_TIP(pin)]], 5),
+      name: 'Wire: Q' + k + ' row (j' + rowOf(k) + ') → segment ' + n.toLowerCase() + ' (display pin ' + pin + ')', _seg: 1 };
+  })(k);
   var UNOY = { 2: 358, 3: 342, 4: 326, 5: 310, 6: 294, 7: 278 };
   var LANE_L = { 7: 376, 6: 368, 5: 360, 4: 352, 3: 344, 2: 336 }, LANE_Y = { 7: 574, 6: 582, 5: 590, 4: 598, 3: 606, 2: 614 }, LANE_R = { 7: 712, 6: 720, 5: 728, 4: 736, 3: 744, 2: 752 };
-  var SEGPIN_Y = function (n) { return 316 + 14 + (n - 1) * 16; };
+  // the buttons' wires: under the board, up the right-hand lanes, across to the pad
+  function bus(pinY, laneL, yB, laneR, ty) { return route([[304, pinY], [laneL, pinY], [laneL, yB], [laneR, yB], [laneR, ty], [780, ty]], 8); }
   [[2, 'D1', 12], [3, 'D2', 9], [4, 'D3', 8], [5, 'D4', 6]].forEach(function (d) {
-    DISP['d' + d[0]] = { type: 'wire', from: 'D' + d[0], to: 'seg.' + d[1], color: ['', '', 'blue', 'green', 'yellow', 'orange'][d[0]], via: bus(UNOY[d[0]], LANE_L[d[0]], LANE_Y[d[0]], LANE_R[d[0]], SEGPIN_Y(d[2])), name: 'Wire: pin ' + d[0] + ' → digit ' + d[1] + ' (display pin ' + d[2] + ')' };
+    var pin = d[2], ch = SEG_CHAN(pin);
+    DISP['d' + d[0]] = { type: 'wire', from: 'D' + d[0], to: 'seg.' + d[1], color: ['', '', 'blue', 'green', 'yellow', 'orange'][d[0]],
+      via: route([[304, UNOY[d[0]]], [LANE_L[d[0]], UNOY[d[0]]], [LANE_L[d[0]], LANE_Y[d[0]]], [DIG_LANE[pin], LANE_Y[d[0]]], [DIG_LANE[pin], ch], [SEG_X(pin), ch], [SEG_X(pin), SEG_TIP(pin)]], 8),
+      name: 'Wire: pin ' + d[0] + ' → digit ' + d[1] + ' (display pin ' + pin + ')' };
   });
   var GAME = {
     p2: { type: 'm09-pad', at: [790, 98], label: 'PLAYER 2', cap: '#3b82f6', name: 'Player 2 button (on its press pad)' },
