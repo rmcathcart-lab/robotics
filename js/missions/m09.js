@@ -871,7 +871,8 @@
     UI.numq(b, ctx, { id: 'q-seg1', q: 'The number <b>1</b> lights only segments <b>b</b> and <b>c</b>. What is that byte in decimal?', answer: 6, tol: 0, unit: '', explain: 'b is bit 1 (worth 2) and c is bit 2 (worth 4): 2 + 4 = <b>6</b> = 0x06.', hint: 'a = bit 0 = 1, b = bit 1 = 2, c = bit 2 = 4. Add the ones that are on.' });
     UI.mcq(b, ctx, { id: 'q-seg2', q: 'Which number does <code>0x7F</code> show?', options: ['7', '8', '0', 'Nothing — it’s too big'], answer: 1, explain: '0x7F = 0111 1111: bits 0–6 (a to g) all on, dp off. All seven segments make an 8.' });
     UI.html(b, '<h2>Wire the display</h2><p>Part B reuses your Part A circuit. The LEDs come out; the resistors stay; and each resistor’s row now feeds one segment of the display instead of an LED. The four <b>digit pins</b> go straight to UNO pins 2–5.</p>');
-    UI.callout(b, '', 'Reading the display’s pins', '<p>Hold the display with the decimal points at the bottom. The bottom row is <b>pins 1–6</b> (left to right); the top row is <b>pins 12–7</b> (left to right). Connect each pin with a <b>female-to-male wire</b> (socket on the display pin, pin end in the breadboard) so the display can later sit in the game board’s window.</p><p class="small">Short on female-to-male wires? Plug the display into the empty bottom end of your long breadboard, across the centre gap, and use normal jumpers to the same places.</p>');
+    segPinout(b);
+    UI.callout(b, '', 'Reading the display’s pins', '<p>The pins aren’t labelled, so go by position. Hold the display with the <b>numbers facing you and the decimal points at the bottom</b>. The bottom row is <b>pins 1–6</b> (left to right); the top row is <b>pins 12–7</b> (left to right). If you turn it over to look at the pins, flip it like the page of a book: left and right swap, top and bottom stay put. Connect each pin with a <b>female-to-male wire</b> (socket on the display pin, pin end in the breadboard) so the display can later sit in the game board’s window.</p><p class="small">Short on female-to-male wires? Plug the display into the empty bottom end of your long breadboard, across the centre gap, and use normal jumpers to the same places.</p>');
     B.guide(b, { title: 'The 4-digit display', parts: PARTS_B, vb: VB9, base: IDS_A, steps: [
       { title: 'Start from the LED bar', view: 'all', html: '<p>Your Part A circuit: chip, three control wires, eight resistor rows with LEDs.</p>' },
       { title: 'Remove the 8 LEDs', remove: LED_IDS.concat(LABEL_IDS), html: '<p>Unplug the eight LEDs (keep them for later projects). <b>Leave the resistors and the chip wires exactly where they are.</b> Each resistor’s right end (column j) is now a segment line.</p>' },
@@ -883,6 +884,46 @@
     ] });
     UI.callout(b, 'plain', 'Engineer’s note: how much current?', '<p>Each lit segment draws roughly 8–10 mA through its 220 Ω resistor. When a digit shows 8 with its dot, all of that current flows out through <b>one</b> UNO digit pin — more than the 20 mA a pin is happy with. It works because each digit is only on a quarter of the time (next step) and the pin’s own resistance limits the current, which is why the digits look a little dimmer than single LEDs. A finished product would add one transistor per digit to carry that current instead.</p>');
   } });
+  /* which pin is which on the 4-digit display (5461AS, common cathode), from the front and from the back */
+  function segPinout(b) {
+    var box = el('div', 'xp'); box.innerHTML = '<div class="xp-h"><span class="label">Pin map</span><h3>Which pin is which</h3></div>';
+    var stage = el('div', 'xp-stage'), svg = S('svg', { viewBox: '0 0 820 600', role: 'img', 'aria-label': 'The 4-digit display pin map. Front view, decimal points at the bottom: top row left to right pins 12 D1, 11 A, 10 F, 9 D2, 8 D3, 7 B; bottom row left to right pins 1 E, 2 D, 3 DP, 4 C, 5 G, 6 D4. From the back, left and right are swapped.' });
+    stage.appendChild(svg); box.appendChild(stage); b.appendChild(box);
+    bg(svg, 820, 600);
+    var TOP = [[12, 'D1'], [11, 'A'], [10, 'F'], [9, 'D2'], [8, 'D3'], [7, 'B']], BOT = [[1, 'E'], [2, 'D'], [3, 'DP'], [4, 'C'], [5, 'G'], [6, 'D4']];
+    function colourOf(n) { return /^D\d/.test(n) ? SIG : CY; }
+    function view(oy, title, back) {
+      var x0 = 230, w = 360, h = 150;
+      T(svg, 410, oy + 18, title, { 'text-anchor': 'middle', 'font-size': 12, fill: MUT, 'letter-spacing': '2' });
+      var y0 = oy + 78;
+      S('rect', { x: x0, y: y0, width: w, height: h, rx: 6, fill: back ? '#c9d3dc' : '#111418', stroke: back ? '#9fb3c8' : '#3b4350', 'stroke-width': 2 }, svg);
+      if (!back) {
+        for (var d = 0; d < 4; d++) {
+          var gx = x0 + 30 + d * 82;
+          T(svg, gx + 26, y0 + 96, '8', { 'text-anchor': 'middle', 'font-size': 86, fill: '#2a2f36', 'font-weight': 700 });
+          S('circle', { cx: gx + 60, cy: y0 + 94, r: 4, fill: '#2a2f36' }, svg);
+          T(svg, gx + 26, y0 + 126, 'digit ' + (d + 1), { 'text-anchor': 'middle', 'font-size': 10, fill: MUT });
+        }
+      } else {
+        T(svg, x0 + w / 2, y0 + h / 2 + 4, 'the back (the side with the pins)', { 'text-anchor': 'middle', 'font-size': 11, fill: '#334155' });
+      }
+      function row(list, y, up) {
+        var items = back ? list.slice().reverse() : list;
+        items.forEach(function (pn, i) {
+          var x = x0 + 30 + i * 60, col = colourOf(pn[1]);
+          S('line', { x1: x, y1: y, x2: x, y2: up ? y - 18 : y + 18, stroke: '#c0c6cc', 'stroke-width': 4 }, svg);
+          S('circle', { cx: x, cy: y, r: 6, fill: '#c0c6cc', stroke: '#e6f1fa' }, svg);
+          var ty = up ? y - 26 : y + 34;
+          T(svg, x, ty, String(pn[0]), { 'text-anchor': 'middle', 'font-size': 11, fill: MUT });
+          T(svg, x, up ? ty - 15 : ty + 16, pn[1], { 'text-anchor': 'middle', 'font-size': 15, 'font-weight': 700, fill: col });
+        });
+      }
+      row(TOP, y0 + 8, true); row(BOT, y0 + h - 8, false);
+    }
+    view(0, 'FRONT · numbers facing you, decimal points at the bottom', false);
+    view(298, 'BACK · flipped left-to-right like a book page (top row still on top)', true);
+    T(svg, 410, 590, 'orange = digit pins (D1–D4, to UNO pins 2–5)   ·   cyan = segment pins (A–G and DP, from the resistors)', { 'text-anchor': 'middle', 'font-size': 11, fill: MUT });
+  }
   function segExplainer(b) {
     var NM = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'dp'];
     UI.explainer(b, { label: 'Explainer', title: 'Inside a 7-segment display', w: 820, h: 340,
